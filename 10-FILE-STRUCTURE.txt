@@ -1,0 +1,411 @@
+================================================================================
+COMPLETE FILE STRUCTURE
+================================================================================
+
+This file lists every file that needs to be created for the project.
+
+================================================================================
+ROOT LEVEL FILES
+================================================================================
+
+.env.local                          # Environment variables (DO NOT commit)
+.env.example                        # Example environment variables
+.gitignore                          # Git ignore file
+next.config.js                      # Next.js configuration
+package.json                        # Dependencies
+tsconfig.json                       # TypeScript configuration
+tailwind.config.ts                  # Tailwind CSS configuration
+postcss.config.js                   # PostCSS configuration
+middleware.ts                       # Next.js middleware for auth
+README.md                           # Project documentation
+vercel.json                         # Vercel deployment config (optional for cron)
+
+================================================================================
+PRISMA FOLDER (/prisma)
+================================================================================
+
+prisma/
+├── schema.prisma                   # Database schema (from 01-DATABASE-SCHEMA.txt)
+└── seed.ts                         # Database seeding script
+
+================================================================================
+APP FOLDER (Next.js 14 App Router)
+================================================================================
+
+app/
+├── layout.tsx                      # Root layout
+├── page.tsx                        # Landing page
+├── globals.css                     # Global styles
+│
+├── (auth)/                         # Auth group (no layout)
+│   ├── login/
+│   │   └── page.tsx               # Patient login
+│   ├── signup/
+│   │   └── page.tsx               # Patient signup
+│   ├── forgot-password/
+│   │   └── page.tsx               # Password reset request
+│   ├── reset-password/
+│   │   └── [token]/
+│   │       └── page.tsx           # Password reset form
+│   └── admin-login/
+│       └── page.tsx               # Admin login (separate)
+│
+├── (patient)/                      # Patient routes group
+│   ├── layout.tsx                 # Patient layout with nav
+│   ├── dashboard/
+│   │   └── page.tsx               # Patient dashboard
+│   ├── profile/
+│   │   ├── page.tsx               # View profile
+│   │   ├── edit/
+│   │   │   └── page.tsx           # Edit profile
+│   │   └── complete/
+│   │       └── page.tsx           # Complete profile (first time)
+│   ├── services/
+│   │   └── page.tsx               # Browse services
+│   ├── book/
+│   │   ├── page.tsx               # Booking flow (4 steps)
+│   │   └── confirmation/
+│   │       └── [id]/
+│   │           └── page.tsx       # Booking confirmation
+│   └── appointments/
+│       ├── page.tsx               # List appointments
+│       ├── [id]/
+│       │   └── page.tsx           # Appointment details
+│       └── [id]/cancel/
+│           └── page.tsx           # Cancel appointment
+│
+├── (admin)/                        # Admin routes group
+│   └── admin/
+│       ├── layout.tsx             # Admin layout with sidebar
+│       ├── dashboard/
+│       │   └── page.tsx           # Admin dashboard
+│       ├── patients/
+│       │   ├── page.tsx           # List patients
+│       │   ├── [id]/
+│       │   │   └── page.tsx       # Patient details
+│       │   └── new/
+│       │       └── page.tsx       # Add patient manually
+│       ├── products/
+│       │   ├── page.tsx           # List products
+│       │   ├── new/
+│       │   │   └── page.tsx       # Add product
+│       │   └── [id]/
+│       │       └── edit/
+│       │           └── page.tsx   # Edit product
+│       ├── appointments/
+│       │   ├── page.tsx           # List appointments
+│       │   ├── [id]/
+│       │   │   └── page.tsx       # Appointment details
+│       │   └── new/
+│       │       └── page.tsx       # Manual booking
+│       ├── schedule/
+│       │   └── page.tsx           # Schedule management
+│       ├── notifications/
+│       │   └── page.tsx           # Email & WhatsApp queues
+│       ├── payments/
+│       │   └── page.tsx           # Payment management
+│       └── settings/
+│           ├── page.tsx           # General settings
+│           └── calendar/
+│               └── page.tsx       # Google Calendar settings
+│
+└── api/                            # API routes
+    ├── auth/
+    │   └── [...nextauth]/
+    │       └── route.ts           # NextAuth.js handler
+    ├── patients/
+    │   ├── route.ts               # GET all, POST create
+    │   └── [id]/
+    │       └── route.ts           # GET, PATCH, DELETE
+    ├── products/
+    │   ├── route.ts               # GET all, POST create
+    │   └── [id]/
+    │       └── route.ts           # GET, PATCH, DELETE
+    ├── appointments/
+    │   ├── create/
+    │   │   └── route.ts           # POST create appointment
+    │   ├── cancel/
+    │   │   └── route.ts           # POST cancel appointment
+    │   └── [id]/
+    │       └── route.ts           # GET, PATCH appointment
+    ├── availability/
+    │   ├── check/
+    │   │   └── route.ts           # GET check availability
+    │   └── calendar/
+    │       └── route.ts           # GET month calendar
+    ├── payments/
+    │   ├── create-intent/
+    │   │   └── route.ts           # POST create payment intent
+    │   └── confirm/
+    │       └── route.ts           # POST confirm payment
+    ├── admin/
+    │   ├── schedule/
+    │   │   ├── slots/
+    │   │   │   └── route.ts       # POST add/edit slots
+    │   │   └── overrides/
+    │   │       └── route.ts       # POST add/edit overrides
+    │   ├── notifications/
+    │   │   ├── queue/
+    │   │   │   └── route.ts       # GET notification queues
+    │   │   ├── mark-sent/
+    │   │   │   └── route.ts       # POST mark as sent
+    │   │   └── history/
+    │   │       └── route.ts       # GET notification history
+    │   ├── refunds/
+    │   │   └── process/
+    │   │       └── route.ts       # POST process refund
+    │   └── calendar/
+    │       ├── status/
+    │       │   └── route.ts       # GET calendar status
+    │       ├── disconnect/
+    │       │   └── route.ts       # POST disconnect
+    │       └── bulk-sync/
+    │           └── route.ts       # POST bulk sync
+    ├── webhooks/
+    │   └── stripe/
+    │       └── route.ts           # POST Stripe webhook
+    └── cron/
+        └── build-queues/
+            └── route.ts           # GET cron job (optional)
+
+================================================================================
+COMPONENTS FOLDER
+================================================================================
+
+components/
+├── ui/                             # shadcn/ui components
+│   ├── button.tsx
+│   ├── card.tsx
+│   ├── input.tsx
+│   ├── label.tsx
+│   ├── select.tsx
+│   ├── dialog.tsx
+│   ├── dropdown-menu.tsx
+│   ├── table.tsx
+│   ├── badge.tsx
+│   ├── calendar.tsx
+│   ├── toast.tsx
+│   ├── toaster.tsx
+│   ├── tabs.tsx
+│   └── separator.tsx
+│
+├── patient/                        # Patient-specific components
+│   ├── PatientHeader.tsx          # Header with navigation
+│   ├── ServiceCard.tsx            # Service display card
+│   ├── AppointmentCard.tsx        # Appointment display card
+│   ├── BookingFlow.tsx            # Booking wizard component
+│   ├── BookingSteps/
+│   │   ├── StepIndicator.tsx     # Progress indicator
+│   │   ├── ServiceSelection.tsx  # Step 1
+│   │   ├── DateTimeSelection.tsx # Step 2
+│   │   ├── PaymentReview.tsx     # Step 3
+│   │   └── Confirmation.tsx      # Step 4
+│   ├── ProfileForm.tsx            # Profile editing form
+│   └── UserMenu.tsx               # User dropdown menu
+│
+├── admin/                          # Admin-specific components
+│   ├── AdminSidebar.tsx           # Sidebar navigation
+│   ├── StatsCard.tsx              # Dashboard stats card
+│   ├── AppointmentsTable.tsx      # Appointments data table
+│   ├── PatientsTable.tsx          # Patients data table
+│   ├── ProductForm.tsx            # Add/Edit product form
+│   ├── ScheduleBuilder.tsx        # Weekly schedule UI
+│   ├── DateOverrideForm.tsx       # Add date override
+│   ├── NotificationQueue.tsx      # Email/WhatsApp queue
+│   ├── EmailQueueItem.tsx         # Individual email item
+│   ├── WhatsAppQueueItem.tsx      # Individual WhatsApp item
+│   └── CalendarView.tsx           # Availability calendar
+│
+├── payment/                        # Payment components
+│   └── PaymentForm.tsx            # Stripe payment form
+│
+└── shared/                         # Shared components
+    ├── LoadingSkeleton.tsx        # Loading state
+    ├── ErrorState.tsx             # Error display
+    ├── EmptyState.tsx             # Empty state
+    └── FormProgress.tsx           # Multi-step form progress
+
+================================================================================
+LIB FOLDER (Utilities & Helpers)
+================================================================================
+
+lib/
+├── db.ts                          # Prisma client singleton
+├── auth.ts                        # NextAuth configuration
+├── utils.ts                       # General utilities
+├── stripe.ts                      # Stripe client setup
+├── refund-policy.ts               # Refund calculation logic
+│
+├── google-calendar.ts             # Google Calendar client
+├── calendar/
+│   ├── create-event.ts           # Create calendar event
+│   ├── update-event.ts           # Update calendar event
+│   ├── delete-event.ts           # Delete calendar event
+│   └── with-retry.ts             # Retry logic wrapper
+│
+├── notifications/
+│   ├── queue-builder.ts          # Build notification queues
+│   ├── email-templates.ts        # Email message templates
+│   └── whatsapp-templates.ts    # WhatsApp message templates
+│
+├── availability/
+│   ├── check-availability.ts     # Check if date available
+│   └── generate-calendar.ts      # Generate month calendar
+│
+└── validations/
+    ├── appointment.ts            # Appointment validation schemas
+    ├── patient.ts                # Patient validation schemas
+    └── product.ts                # Product validation schemas
+
+================================================================================
+TYPES FOLDER (TypeScript Types)
+================================================================================
+
+types/
+├── index.ts                       # Exports all types
+├── appointment.ts                 # Appointment types
+├── patient.ts                     # Patient types
+├── product.ts                     # Product types
+└── next-auth.d.ts                 # NextAuth type extensions
+
+================================================================================
+PUBLIC FOLDER (Static Assets)
+================================================================================
+
+public/
+├── logo.svg                       # KSAA STEMCARE logo
+├── favicon.ico                    # Favicon
+└── images/
+    └── placeholder.png            # Placeholder image
+
+================================================================================
+KEY FILES CONTENT OVERVIEW
+================================================================================
+
+--- middleware.ts ---
+- Protects patient and admin routes
+- Checks user role
+- Redirects unauthorized users
+
+--- app/layout.tsx ---
+- Root HTML structure
+- Font setup (Inter)
+- Toast provider
+- Session provider
+
+--- app/(patient)/layout.tsx ---
+- Patient navigation header
+- Common patient layout
+
+--- app/(admin)/admin/layout.tsx ---
+- Admin sidebar
+- Admin-specific layout
+
+--- lib/db.ts ---
+```typescript
+import { PrismaClient } from '@prisma/client';
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const db = globalForPrisma.prisma || new PrismaClient();
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db;
+```
+
+--- lib/utils.ts ---
+```typescript
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+export function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
+export function formatDate(date: Date): string {
+  return new Intl.DateTimeFormat('en-MY', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(date));
+}
+
+export function formatTime(time: string): string {
+  const [hours, minutes] = time.split(':');
+  const hour = parseInt(hours);
+  const ampm = hour >= 12 ? 'PM' : 'AM';
+  const displayHour = hour % 12 || 12;
+  return `${displayHour}:${minutes} ${ampm}`;
+}
+
+export function formatCurrency(amount: number): string {
+  return `RM ${amount.toFixed(2)}`;
+}
+```
+
+================================================================================
+TOTAL FILE COUNT
+================================================================================
+
+Estimated total files: ~120-150 files
+
+Breakdown:
+- App routes: ~40 files
+- API routes: ~25 files
+- Components: ~30 files
+- Lib utilities: ~15 files
+- Configuration: ~10 files
+- Types: ~5 files
+- Prisma: ~2 files
+
+================================================================================
+DEVELOPMENT WORKFLOW
+================================================================================
+
+1. Create file structure (use mkdir -p)
+2. Install dependencies (npm install)
+3. Setup environment variables (.env.local)
+4. Setup database (Prisma)
+5. Create database schema
+6. Run migrations
+7. Seed database
+8. Implement authentication
+9. Build patient portal (pages first, then components)
+10. Build admin dashboard
+11. Integrate payment system
+12. Integrate calendar sync
+13. Test all flows
+14. Deploy to Vercel
+
+================================================================================
+AUTOMATED SCAFFOLDING (Optional)
+================================================================================
+
+You can create a script to generate this structure:
+
+create-structure.sh:
+```bash
+#!/bin/bash
+
+# Create all directories
+mkdir -p app/{auth,patient,admin,api}
+mkdir -p components/{ui,patient,admin,payment,shared}
+mkdir -p lib/{calendar,notifications,availability,validations}
+mkdir -p types
+mkdir -p prisma
+mkdir -p public/images
+
+# Create placeholder files
+touch middleware.ts
+touch .env.example
+touch README.md
+
+# ... etc
+```
+
+Run:
+```bash
+chmod +x create-structure.sh
+./create-structure.sh
+```
+
+================================================================================

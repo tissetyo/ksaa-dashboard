@@ -1,0 +1,899 @@
+================================================================================
+SUPER ADMIN DASHBOARD - COMPLETE FEATURE SPECIFICATIONS
+================================================================================
+
+BASE URL: /admin/*
+All routes require authentication with SUPERADMIN role
+
+================================================================================
+1. ADMIN AUTHENTICATION
+================================================================================
+
+Route: /admin/login
+
+Page Components:
+- KSAA STEMCARE Admin Portal header
+- Email + Password form
+- "Login to Admin Panel" button
+- Different styling from patient login (more professional)
+
+Security:
+- Separate login route from patients
+- Session timeout after 30 minutes of inactivity
+- IP logging (optional)
+
+On Submit:
+1. Verify admin credentials
+2. Create admin session
+3. Redirect to /admin/dashboard
+
+================================================================================
+2. ADMIN DASHBOARD (HOME)
+================================================================================
+
+Route: /admin/dashboard
+
+Page Layout:
+
+--- HEADER ---
+- KSAA STEMCARE Admin Portal
+- Date: Today's date
+- Admin name + logout button
+
+--- KEY METRICS CARDS (4 Cards in Row) ---
+
+Card 1: Today's Appointments
+┌────────────────────┐
+│ 📅 Today          │
+│                    │
+│    12              │
+│  appointments      │
+│                    │
+│ +3 from yesterday  │
+└────────────────────┘
+
+Card 2: Pending Confirmations
+┌────────────────────┐
+│ ⏳ Pending        │
+│                    │
+│     5              │
+│  to confirm        │
+│                    │
+│ View all →         │
+└────────────────────┘
+
+Card 3: Today's Revenue
+┌────────────────────┐
+│ 💰 Revenue        │
+│                    │
+│  RM 2,450.00       │
+│                    │
+│ +15% from avg      │
+└────────────────────┘
+
+Card 4: Total Patients
+┌────────────────────┐
+│ 👥 Patients       │
+│                    │
+│     148            │
+│  registered        │
+│                    │
+│ +8 this month      │
+└────────────────────┘
+
+--- NOTIFICATION QUEUES (2 Sections Side by Side) ---
+
+Left Section: Email Reminders (Tomorrow)
+┌─────────────────────────────────────────┐
+│ 📧 Email Reminders - Tomorrow           │
+├─────────────────────────────────────────┤
+│ 3 appointments need reminder emails     │
+│                                         │
+│ ☐ Sarah Ahmad - 09:00 AM               │
+│   STEMCARE Facial Treatment             │
+│   [Copy Email] [Mark Sent]              │
+│                                         │
+│ ☐ John Tan - 02:00 PM                  │
+│   STEMCARE Hair Treatment               │
+│   [Copy Email] [Mark Sent]              │
+│                                         │
+│ ☐ Lisa Wong - 04:30 PM                 │
+│   STEMCARE IV Therapy                   │
+│   [Copy Email] [Mark Sent]              │
+│                                         │
+│ [Copy All Emails] [Mark All Sent]       │
+└─────────────────────────────────────────┘
+
+Right Section: WhatsApp Reminders (Tomorrow)
+┌─────────────────────────────────────────┐
+│ 💬 WhatsApp Reminders - Tomorrow        │
+├─────────────────────────────────────────┤
+│ 3 appointments need WhatsApp reminders  │
+│                                         │
+│ ☐ Sarah Ahmad (+60123456789)           │
+│   09:00 AM - STEMCARE Facial            │
+│   [Copy Message] [Open WhatsApp]        │
+│   [Mark Sent]                           │
+│                                         │
+│ ☐ John Tan (+60198765432)              │
+│   02:00 PM - STEMCARE Hair              │
+│   [Copy Message] [Open WhatsApp]        │
+│   [Mark Sent]                           │
+│                                         │
+│ ☐ Lisa Wong (+60187654321)             │
+│   04:30 PM - STEMCARE IV                │
+│   [Copy Message] [Open WhatsApp]        │
+│   [Mark Sent]                           │
+│                                         │
+│ [Copy All Messages]                     │
+└─────────────────────────────────────────┘
+
+--- RECENT ACTIVITY ---
+- Last 5 bookings
+- Last 5 cancellations
+- Pending refund requests
+
+--- QUICK ACTIONS ---
+- [New Appointment] - Manual booking
+- [Add Product] - Quick add service
+- [View Schedule] - Check availability
+- [Patient List] - View all patients
+
+================================================================================
+3. PATIENT MANAGEMENT
+================================================================================
+
+Route: /admin/patients
+
+--- PATIENT LIST VIEW ---
+
+Features:
+- Search bar (search by name, email, phone)
+- Filters:
+  - All Patients
+  - Active (has upcoming appointments)
+  - Inactive (no upcoming appointments)
+  - New (registered this month)
+
+- Sort options:
+  - Name (A-Z, Z-A)
+  - Registration Date (newest first, oldest first)
+  - Total Appointments (high-low, low-high)
+
+- Export button: "Export to CSV"
+
+Table Columns:
+┌──────────┬─────────────────┬──────────────┬──────────────┬─────────┬─────────┐
+│ Name     │ Email           │ Phone        │ Registered   │ Appts   │ Actions │
+├──────────┼─────────────────┼──────────────┼──────────────┼─────────┼─────────┤
+│ Sarah    │ sarah@email.com │ +6012345678  │ 15/01/2026   │ 3       │ [View]  │
+│ Ahmad    │                 │              │              │         │ [Edit]  │
+├──────────┼─────────────────┼──────────────┼──────────────┼─────────┼─────────┤
+│ ...      │ ...             │ ...          │ ...          │ ...     │ ...     │
+└──────────┴─────────────────┴──────────────┴──────────────┴─────────┴─────────┘
+
+Pagination: 20 patients per page
+
+--- PATIENT DETAIL VIEW ---
+
+Route: /admin/patients/[id]
+
+Layout (Tab Navigation):
+
+TAB 1: Profile Information
+- Personal Details (editable)
+  - Full Name
+  - Email
+  - Phone
+  - Address
+
+- Physical Information
+  - Age
+  - Height, Weight
+  - Blood Type
+
+- Emergency Contact
+  - Name
+  - Phone
+
+- Medical History
+  - Allergies
+  - Current Medications
+  - Previous Treatments
+  - Additional Notes
+
+[Edit Profile] [Save Changes]
+
+TAB 2: Appointment History
+- List of all appointments (past and future)
+- Status indicators
+- Payment status
+- Quick actions (View, Cancel, Refund)
+
+TAB 3: Payment History
+- All payment transactions
+- Refund history
+- Outstanding balances
+- Total spent
+
+TAB 4: Admin Notes
+- Internal notes about patient
+- Add note functionality
+- Note history with timestamps
+
+[Back to Patient List]
+
+--- ADD/EDIT PATIENT ---
+
+Admin can manually create patient accounts:
+- Create user account
+- Complete patient profile
+- Send welcome email (template provided)
+
+================================================================================
+4. PRODUCT/SERVICE MANAGEMENT
+================================================================================
+
+Route: /admin/products
+
+--- PRODUCT LIST VIEW ---
+
+Layout:
+- "Add New Product" button (top right)
+- Active Products section
+- Archived Products section (collapsed by default)
+
+Product Table:
+┌──────────────────┬───────────┬──────────┬───────────┬─────────┬─────────┐
+│ Product Name     │ Price     │ Duration │ Daily     │ Status  │ Actions │
+│                  │           │          │ Quota     │         │         │
+├──────────────────┼───────────┼──────────┼───────────┼─────────┼─────────┤
+│ STEMCARE Facial  │ RM 450.00 │ 60 min   │ 5 slots   │ Active  │ [Edit]  │
+│ Treatment        │           │          │           │         │ [Archive]│
+├──────────────────┼───────────┼──────────┼───────────┼─────────┼─────────┤
+│ STEMCARE Hair    │ RM 650.00 │ 90 min   │ 3 slots   │ Active  │ [Edit]  │
+│ Treatment        │           │          │           │         │ [Archive]│
+├──────────────────┼───────────┼──────────┼───────────┼─────────┼─────────┤
+│ STEMCARE IV      │ RM 850.00 │ 120 min  │ 2 slots   │ Active  │ [Edit]  │
+│ Therapy          │           │          │           │         │ [Archive]│
+└──────────────────┴───────────┴──────────┴───────────┴─────────┴─────────┘
+
+--- ADD/EDIT PRODUCT FORM ---
+
+Route: /admin/products/new or /admin/products/[id]/edit
+
+Form Fields:
+
+Product Information:
+- Product Name* (text)
+  Placeholder: "e.g., STEMCARE Facial Treatment"
+
+- Description* (rich text editor or textarea)
+  Placeholder: "Detailed description of the treatment..."
+  Minimum 50 characters
+
+Pricing & Quotas:
+- Price (MYR)* (number)
+  Format: RM XXX.XX
+  Minimum: RM 1.00
+
+- Deposit Percentage* (number, 0-100)
+  Default: 30
+  Help text: "Percentage required for deposit payments (0 = full payment only)"
+
+Service Details:
+- Duration (minutes)* (number)
+  Dropdown or input: 15, 30, 45, 60, 90, 120, 180, Custom
+  Minimum: 15 minutes
+
+- Daily Quota* (number)
+  Help text: "Maximum appointments per day for this service"
+  Minimum: 1
+  Default: 5
+
+Status:
+- Active (toggle switch)
+  Default: ON
+  Help text: "Inactive products won't appear in patient booking"
+
+[Save Product] [Cancel]
+
+Validation:
+- All required fields must be filled
+- Price must be positive number
+- Deposit percentage 0-100
+- Duration minimum 15 minutes
+- Quota minimum 1
+
+On Save:
+1. Create/Update Product record
+2. Show success message
+3. Redirect to /admin/products
+
+--- ARCHIVE PRODUCT ---
+
+Modal Confirmation:
+"Are you sure you want to archive [Product Name]?
+ 
+ This product will no longer be available for new bookings.
+ Existing appointments will not be affected.
+ 
+ You can reactivate this product anytime from the Archived Products section."
+
+[Confirm Archive] [Cancel]
+
+On Confirm:
+1. Set Product.isActive = false
+2. Remove from active product list
+3. Move to archived section
+
+================================================================================
+5. SCHEDULE MANAGEMENT
+================================================================================
+
+Route: /admin/schedule
+
+Page Layout (3 Tabs):
+
+--- TAB 1: WEEKLY SCHEDULE ---
+
+Weekly Schedule Builder:
+
+┌─────────────────────────────────────────────────────────────┐
+│ Monday                                        [+ Add Slot]   │
+├─────────────────────────────────────────────────────────────┤
+│ ✓ 09:00 AM  [Edit] [Delete]                                │
+│ ✓ 11:00 AM  [Edit] [Delete]                                │
+│ ✓ 02:00 PM  [Edit] [Delete]                                │
+│ ✓ 04:00 PM  [Edit] [Delete]                                │
+└─────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────┐
+│ Tuesday                                       [+ Add Slot]   │
+├─────────────────────────────────────────────────────────────┤
+│ ✓ 09:00 AM  [Edit] [Delete]                                │
+│ ✓ 10:30 AM  [Edit] [Delete]                                │
+│ ✓ 01:00 PM  [Edit] [Delete]                                │
+│ ✓ 03:00 PM  [Edit] [Delete]                                │
+└─────────────────────────────────────────────────────────────┘
+
+... (for all 7 days)
+
+Features:
+- Toggle day on/off (checkbox per day)
+- Add multiple time slots per day
+- Edit individual time slots
+- Delete time slots
+- Bulk actions:
+  [Copy Monday to All Weekdays]
+  [Clear All Slots]
+  [Apply Template]
+
+Add Time Slot Modal:
+- Select day (dropdown)
+- Enter time (time picker: HH:MM AM/PM)
+- [Add Slot] [Cancel]
+
+--- TAB 2: DATE OVERRIDES ---
+
+Special Dates Management:
+
+Add Date Override:
+- Date Picker
+- Status: ○ Open  ○ Closed
+- Reason (text): "e.g., Public Holiday, Special Hours"
+- Custom Time Slots (if Open): [+ Add Slot]
+- [Save Override]
+
+Existing Overrides Table:
+┌──────────────┬─────────┬────────────────────┬─────────┐
+│ Date         │ Status  │ Reason             │ Actions │
+├──────────────┼─────────┼────────────────────┼─────────┤
+│ 01/02/2026   │ Closed  │ Chinese New Year   │ [Edit]  │
+│              │         │                    │ [Delete]│
+├──────────────┼─────────┼────────────────────┼─────────┤
+│ 01/05/2026   │ Open    │ Labour Day         │ [Edit]  │
+│              │         │ (10 AM - 2 PM only)│ [Delete]│
+└──────────────┴─────────┴────────────────────┴─────────┘
+
+Sorted by date (upcoming first)
+
+--- TAB 3: AVAILABILITY CALENDAR ---
+
+Calendar View (Monthly):
+
+┌─────────────────────────────────────────────────────────────┐
+│                     February 2026                           │
+│                                      [< Previous] [Next >]  │
+├─────┬─────┬─────┬─────┬─────┬─────┬─────┐
+│ Sun │ Mon │ Tue │ Wed │ Thu │ Fri │ Sat │
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│     │     │     │     │     │     │  1  │
+│     │     │     │     │     │     │ 🟢  │
+├─────┼─────┼─────┼─────┼─────┼─────┼─────┤
+│  2  │  3  │  4  │  5  │  6  │  7  │  8  │
+│ 🟡  │ 🟢  │ 🟢  │ 🔴  │ 🟢  │ ⚫  │ 🟢  │
+└─────┴─────┴─────┴─────┴─────┴─────┴─────┘
+
+Legend:
+🟢 Good availability (>50% quota available)
+🟡 Limited availability (20-50% quota)
+🔴 Fully booked (<20% quota)
+⚫ Closed (no appointments)
+
+Click on any date:
+- Opens modal with details
+- Shows quota per service
+- List of appointments for that day
+- Quick actions (add appointment, close date)
+
+================================================================================
+6. APPOINTMENT MANAGEMENT
+================================================================================
+
+Route: /admin/appointments
+
+--- APPOINTMENT LIST VIEW ---
+
+Filters:
+- Date Range picker (Today, This Week, This Month, Custom)
+- Status: All, Pending, Confirmed, Completed, Cancelled
+- Payment Status: All, Unpaid, Deposit Paid, Full Paid
+- Service: All, [List of products]
+
+Search:
+- By patient name, phone, or email
+
+Sort:
+- Date (nearest first, furthest first)
+- Created date (newest, oldest)
+- Price (high-low, low-high)
+
+Table View:
+┌──────────────┬─────────────┬──────────────┬────────────┬─────────┬─────────┐
+│ Date & Time  │ Patient     │ Service      │ Payment    │ Status  │ Actions │
+├──────────────┼─────────────┼──────────────┼────────────┼─────────┼─────────┤
+│ 02/02/2026   │ Sarah Ahmad │ STEMCARE     │ RM 450.00  │ Confirm │ [View]  │
+│ 09:00 AM     │ +6012345678 │ Facial       │ Full Paid  │ ed      │ [Edit]  │
+│              │             │              │            │         │ [Cancel]│
+├──────────────┼─────────────┼──────────────┼────────────┼─────────┼─────────┤
+│ 02/02/2026   │ John Tan    │ STEMCARE     │ RM 195.00  │ Pending │ [View]  │
+│ 02:00 PM     │ +6019876543 │ Hair         │ Deposit    │         │ [Confir]│
+│              │             │              │ Balance:   │         │ [Cancel]│
+│              │             │              │ RM 455.00  │         │         │
+└──────────────┴─────────────┴──────────────┴────────────┴─────────┴─────────┘
+
+Bulk Actions:
+- Select multiple appointments (checkbox)
+- [Confirm Selected]
+- [Send Reminders]
+- [Export Selected]
+
+Export to CSV: All filtered appointments
+
+--- APPOINTMENT DETAIL VIEW ---
+
+Route: /admin/appointments/[id]
+
+Modal or Side Panel:
+
+Patient Information:
+- Name (clickable → patient detail)
+- Phone (clickable → call/WhatsApp)
+- Email (clickable → email)
+- Medical notes/allergies (highlighted)
+
+Appointment Details:
+- Service name
+- Date & Time
+- Duration
+- Status (with change dropdown)
+- Booking date (created at)
+
+Payment Information:
+- Total amount
+- Paid amount
+- Balance (if deposit)
+- Payment method
+- Transaction ID (Stripe link)
+
+Reminder Status:
+- ☐ Email reminder sent
+- ☐ WhatsApp reminder sent
+
+Google Calendar:
+- Calendar event ID
+- [View in Calendar] link
+
+Admin Notes:
+- Text area for internal notes
+- Save button
+- Note history with timestamps
+
+Actions:
+[Edit Appointment]
+[Mark Balance Paid] (if deposit)
+[Cancel Appointment]
+[Process Refund]
+[Resend Confirmation]
+
+--- EDIT APPOINTMENT ---
+
+Modal Form:
+- Change Date (date picker)
+- Change Time (time picker from available slots)
+- Change Service (dropdown)
+- Update Status (dropdown)
+
+On Save:
+1. Check availability for new slot
+2. Update appointment
+3. Update quota (old slot +1, new slot -1)
+4. Update Google Calendar event
+5. Send notification to patient (add to email queue)
+
+--- CANCEL APPOINTMENT ---
+
+Modal Confirmation:
+"Cancel Appointment for Sarah Ahmad?
+
+Service: STEMCARE Facial Treatment
+Date: 02/02/2026 at 09:00 AM
+
+Cancellation will:
+• Free up the time slot
+• Remove from Google Calendar
+• Create refund request (if applicable)
+
+Reason for cancellation* (required):
+[Textarea]
+
+○ Patient requested
+○ No-show
+○ Medical reasons
+○ Other
+
+[Confirm Cancellation] [Back]"
+
+On Confirm:
+1. Update status to CANCELLED
+2. Decrement quota
+3. Delete calendar event
+4. Create refund request (if payment made)
+5. Send cancellation email to patient
+
+--- MANUAL APPOINTMENT BOOKING ---
+
+Route: /admin/appointments/new
+
+Form:
+1. Select Patient (searchable dropdown or create new)
+2. Select Service
+3. Select Date & Time (check availability)
+4. Payment Status:
+   ○ Not paid (book without payment)
+   ○ Paid at clinic (mark as paid)
+   ○ Paid via Stripe (enter transaction ID)
+5. Notes (optional)
+
+[Create Appointment]
+
+Process:
+1. Create appointment record
+2. Update quota
+3. Create calendar event
+4. Send confirmation to patient
+
+================================================================================
+7. NOTIFICATION MANAGEMENT
+================================================================================
+
+Route: /admin/notifications
+
+Page Tabs:
+- Email Queue
+- WhatsApp Queue
+- Sent History
+
+--- EMAIL QUEUE TAB ---
+
+Filter: Tomorrow, Next 7 Days, Custom Date
+
+List of appointments needing email reminders:
+┌─────────────────────────────────────────────────────────────┐
+│ Sarah Ahmad - sarah@email.com                               │
+│ 02/02/2026 at 09:00 AM                                      │
+│ STEMCARE Facial Treatment                                   │
+│                                                             │
+│ Email Template:                                             │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Subject: Appointment Reminder - KSAA STEMCARE           │ │
+│ │                                                         │ │
+│ │ Dear Sarah Ahmad,                                       │ │
+│ │                                                         │ │
+│ │ This is a reminder for your upcoming appointment:      │ │
+│ │                                                         │ │
+│ │ 📅 Date: 02/02/2026                                     │ │
+│ │ ⏰ Time: 09:00 AM                                       │ │
+│ │ 💉 Service: STEMCARE Facial Treatment                  │ │
+│ │ ⏱️ Duration: 60 minutes                                 │ │
+│ │                                                         │ │
+│ │ Please arrive 10 minutes early.                        │ │
+│ │                                                         │ │
+│ │ If you need to cancel or reschedule, please contact   │ │
+│ │ us at least 48 hours in advance.                       │ │
+│ │                                                         │ │
+│ │ Thank you,                                              │ │
+│ │ KSAA STEMCARE Team                                      │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ [Copy Email Content] [Mark as Sent] [Edit Template]        │
+└─────────────────────────────────────────────────────────────┘
+
+"Copy Email Content" button:
+- Copies entire email text to clipboard
+- Shows "Copied!" toast notification
+- Admin can paste into their email client
+
+"Mark as Sent" button:
+- Sets reminderEmailSent = true
+- Removes from queue
+- Adds to Sent History
+
+--- WHATSAPP QUEUE TAB ---
+
+Similar to Email Queue but for WhatsApp:
+
+┌─────────────────────────────────────────────────────────────┐
+│ Sarah Ahmad - +60123456789                                  │
+│ 02/02/2026 at 09:00 AM                                      │
+│ STEMCARE Facial Treatment                                   │
+│                                                             │
+│ WhatsApp Message:                                           │
+│ ┌─────────────────────────────────────────────────────────┐ │
+│ │ Hello Sarah Ahmad,                                      │ │
+│ │                                                         │ │
+│ │ This is a reminder for your STEMCARE appointment:      │ │
+│ │                                                         │ │
+│ │ 📅 Date: 02/02/2026                                     │ │
+│ │ ⏰ Time: 09:00 AM                                       │ │
+│ │ 💉 Service: STEMCARE Facial Treatment                  │ │
+│ │ 📍 Location: KSAA Clinic                                │ │
+│ │                                                         │ │
+│ │ Please arrive 10 minutes early. Reply CONFIRM to       │ │
+│ │ acknowledge.                                            │ │
+│ │                                                         │ │
+│ │ Thank you!                                              │ │
+│ │ KSAA STEMCARE                                           │ │
+│ └─────────────────────────────────────────────────────────┘ │
+│                                                             │
+│ [Copy Message] [Open WhatsApp Web] [Mark as Sent]          │
+└─────────────────────────────────────────────────────────────┘
+
+"Copy Message" button:
+- Copies message text to clipboard
+- Shows "Copied!" notification
+
+"Open WhatsApp Web" button:
+- Opens WhatsApp Web in new tab
+- Pre-fills phone number and message
+- URL: https://wa.me/60123456789?text=[encoded message]
+
+"Mark as Sent" button:
+- Sets reminderWhatsAppSent = true
+- Removes from queue
+
+--- SENT HISTORY TAB ---
+
+Record of all sent notifications:
+- Date sent
+- Type (Email/WhatsApp)
+- Patient
+- Appointment date
+- Sent by (admin name)
+
+Filter by date range, type, patient
+
+================================================================================
+8. PAYMENT & REFUND MANAGEMENT
+================================================================================
+
+Route: /admin/payments
+
+Page Tabs:
+- Overview
+- Transactions
+- Refund Requests
+- Outstanding Balances
+
+--- OVERVIEW TAB ---
+
+Revenue Charts:
+- Today's revenue
+- This week revenue
+- This month revenue
+- Total revenue (all time)
+
+Payment Breakdown:
+- Full payments vs Deposits
+- Refunded amounts
+- Outstanding balances
+
+--- TRANSACTIONS TAB ---
+
+All payment records:
+┌──────────────┬─────────────┬────────────────┬────────────┬─────────┐
+│ Date         │ Patient     │ Appointment    │ Amount     │ Status  │
+├──────────────┼─────────────┼────────────────┼────────────┼─────────┤
+│ 01/02/2026   │ Sarah Ahmad │ STEMCARE Facial│ RM 450.00  │ Success │
+│ 10:30 AM     │             │ 02/02 09:00 AM │ Full       │         │
+├──────────────┼─────────────┼────────────────┼────────────┼─────────┤
+│ 01/02/2026   │ John Tan    │ STEMCARE Hair  │ RM 195.00  │ Success │
+│ 02:15 PM     │             │ 02/02 02:00 PM │ Deposit    │         │
+└──────────────┴─────────────┴────────────────┴────────────┴─────────┘
+
+Filters:
+- Date range
+- Payment type (full/deposit)
+- Status
+
+Export to CSV
+
+--- REFUND REQUESTS TAB ---
+
+List of pending and processed refund requests:
+┌─────────────────────────────────────────────────────────────┐
+│ PENDING REFUND REQUEST #1                                   │
+├─────────────────────────────────────────────────────────────┤
+│ Patient: Sarah Ahmad                                        │
+│ Appointment: 05/02/2026 at 09:00 AM                         │
+│ Service: STEMCARE Facial Treatment                          │
+│ Amount Paid: RM 450.00                                      │
+│ Requested Refund: RM 450.00 (Full refund)                   │
+│                                                             │
+│ Reason:                                                     │
+│ "Family emergency, need to travel urgently"                 │
+│                                                             │
+│ Cancellation Policy:                                        │
+│ ✓ Cancelled 7 days before → Eligible for 100% refund       │
+│                                                             │
+│ Requested: 28/01/2026                                       │
+│                                                             │
+│ [Approve Full Refund] [Approve Partial: RM ___]            │
+│ [Reject Request]                                            │
+└─────────────────────────────────────────────────────────────┘
+
+Approve Refund Process:
+1. Click [Approve Full Refund] or enter partial amount
+2. Confirm refund amount modal
+3. Process refund in Stripe dashboard (link provided)
+4. Enter Stripe Refund ID
+5. Mark as processed
+6. Send confirmation email to patient (add to queue)
+
+Reject Refund:
+1. Click [Reject Request]
+2. Enter rejection reason
+3. Send notification to patient
+
+--- OUTSTANDING BALANCES TAB ---
+
+Appointments with deposit paid, balance due:
+┌──────────────┬─────────────┬────────────────┬──────────┬───────────┐
+│ Appointment  │ Patient     │ Service        │ Balance  │ Actions   │
+├──────────────┼─────────────┼────────────────┼──────────┼───────────┤
+│ 02/02/2026   │ John Tan    │ STEMCARE Hair  │ RM 455.00│ [Mark     │
+│ 02:00 PM     │             │                │          │  Paid]    │
+│              │             │                │          │ [Send     │
+│              │             │                │          │  Reminder]│
+└──────────────┴─────────────┴────────────────┴──────────┴───────────┘
+
+"Mark Paid" button:
+- Opens modal to confirm payment received
+- Payment method: Cash / Bank Transfer / Card at clinic
+- Enter transaction reference (optional)
+- Update payment status to FULL_PAID
+
+================================================================================
+9. ANALYTICS & REPORTS
+================================================================================
+
+Route: /admin/analytics
+
+Dashboards:
+1. Appointment Analytics
+   - Total appointments by month
+   - Most popular services
+   - Peak booking times
+   - Cancellation rate
+   - No-show rate
+
+2. Revenue Analytics
+   - Revenue trends (daily, weekly, monthly)
+   - Revenue by service
+   - Average transaction value
+   - Deposit vs Full payment ratio
+
+3. Patient Analytics
+   - New patient registrations
+   - Returning patients
+   - Patient retention rate
+   - Demographics (age groups)
+
+4. Operational Analytics
+   - Average booking lead time
+   - Capacity utilization
+   - Reminder effectiveness
+   - Response time metrics
+
+Export all reports to CSV/PDF
+
+================================================================================
+10. SETTINGS & CONFIGURATION
+================================================================================
+
+Route: /admin/settings
+
+Sections:
+
+--- Clinic Information ---
+- Clinic Name
+- Address
+- Phone
+- Email
+- Operating Hours
+
+--- Email Templates ---
+- Edit email templates for:
+  - Appointment confirmation
+  - Appointment reminder
+  - Cancellation confirmation
+  - Payment receipt
+  - Refund processed
+
+--- WhatsApp Templates ---
+- Edit WhatsApp message templates
+
+--- Google Calendar ---
+- Connected calendar status
+- Reconnect/Disconnect
+- Sync settings
+
+--- Cancellation Policy ---
+- Edit refund policy text
+- Set refund percentages:
+  - >7 days: ___%
+  - 3-7 days: ___%
+  - <3 days: ___%
+
+--- Payment Settings ---
+- Default deposit percentage
+- Stripe settings (view only, configure in .env)
+
+--- Admin Users ---
+- List of admin users
+- Add new admin
+- Remove admin access
+
+================================================================================
+NAVIGATION STRUCTURE
+================================================================================
+
+Admin Sidebar:
+- Dashboard
+- Appointments
+- Patients
+- Products
+- Schedule
+- Notifications
+- Payments
+- Analytics
+- Settings
+- Logout
+
+Top Bar:
+- Search (global search for patients/appointments)
+- Notifications icon (pending actions)
+- Admin profile dropdown
+
+================================================================================

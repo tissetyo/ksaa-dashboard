@@ -1,0 +1,667 @@
+================================================================================
+SCHEDULING SYSTEM - COMPLETE TECHNICAL SPECIFICATION
+================================================================================
+
+OBJECTIVE: Build a robust scheduling system that prevents overbooking, tracks
+           quota in real-time, and provides flexible time slot management.
+
+================================================================================
+1. CORE CONCEPTS
+================================================================================
+
+AVAILABILITY: When a time slot is open for bookings
+QUOTA: Maximum number of appointments allowed per service per day
+TIME SLOT: A specific time when appointments can be booked (e.g., "09:00")
+DATE OVERRIDE: Special handling for specific dates (holidays, special hours)
+
+================================================================================
+2. SCHEDULING COMPONENTS
+================================================================================
+
+--- COMPONENT 1: WEEKLY RECURRING SCHEDULE ---
+
+Database: AvailabilitySlot table
+
+Purpose: Define which time slots are available on each day of the week
+
+Structure:
+- dayOfWeek: 0-6 (0=Sunday, 6=Saturday)
+- timeSlot: String (format "HH:MM" in 24h, e.g., "09:00", "14:30")
+- isActive: Boolean
+
+Example Data:
+┌───────────┬──────────┬──────────┐
+│ Day       │ Time     │ Active   │
+├───────────┼──────────┼──────────┤
+│ 1 (Mon)   │ 09:00    │ true     │
+│ 1 (Mon)   │ 11:00    │ true     │
+│ 1 (Mon)   │ 14:00    │ true     │
+│ 1 (Mon)   │ 16:00    │ true     │
+│ 2 (Tue)   │ 09:00    │ true     │
+│ 2 (Tue)   │ 10:30    │ true     │
+│ 2 (Tue)   │ 13:00    │ true     │
+└───────────┴──────────┴──────────┘
+
+Operations:
+- Admin can add/remove time slots per day
+- Admin can toggle isActive to temporarily disable slots
+- No duplicate (dayOfWeek + timeSlot) combinations allowed
+
+--- COMPONENT 2: DATE-SPECIFIC OVERRIDES ---
+
+Database: DateOverride table
+
+Purpose: Handle special dates that don't follow weekly schedule
+
+Structure:
+- specificDate: DateTime (date to override)
+- isClosed: Boolean (true = clinic closed, false = special hours)
+- reason: String (e.g., "Public Holiday", "Staff Training")
+- customTimeSlots: String (JSON array of time slots if not closed)
+
+Example Data:
+┌──────────────┬──────────┬─────────────────┬──────────────────┐
+│ Date         │ Closed   │ Reason          │ Custom Slots     │
+├──────────────┼──────────┼─────────────────┼──────────────────┤
+│ 01/02/2026   │ true     │ Chinese New Yr  │ null             │
+│ 14/02/2026   │ false    │ Valentine       │ ["10:00","14:00"]│
+│ 01/05/2026   │ true     │ Labour Day      │ null             │
+└──────────────┴──────────┴─────────────────┴──────────────────┘
+
+Priority: DateOverride takes precedence over AvailabilitySlot
+
+--- COMPONENT 3: PRODUCT-SPECIFIC QUOTAS ---
+
+Database: Product table (quotaPerDay field)
+
+Purpose: Each service has its own daily capacity limit
+
+Example:
+- STEMCARE Facial: 5 appointments/day
+- STEMCARE Hair: 3 appointments/day
+- STEMCARE IV Therapy: 2 appointments/day
+
+This allows different services to have different capacities.
+
+--- COMPONENT 4: REAL-TIME QUOTA TRACKING ---
+
+Database: DailyQuota table
+
+Purpose: Track how many slots are booked for each service each day
+
+Structure:
+- productId: FK to Product
+- bookingDate: Date
+- bookedCount: Int (current bookings)
+- maxQuota: Int (copied from Product.quotaPerDay)
+
+Example Data:
+┌─────────────┬──────────────┬─────────────┬──────────┐
+│ Product     │ Date         │ Booked      │ Max      │
+├─────────────┼──────────────┼─────────────┼──────────┤
+│ Facial      │ 02/02/2026   │ 3           │ 5        │
+│ Hair        │ 02/02/2026   │ 2           │ 3        │
+│ IV Therapy  │ 02/02/2026   │ 0           │ 2        │
+│ Facial      │ 03/02/2026   │ 5           │ 5        │
+└─────────────┴──────────────┴─────────────┴──────────┘
+
+Logic:
+- When appointment created → increment bookedCount
+- When appointment cancelled → decrement bookedCount
+- If bookedCount >= maxQuota → No more bookings allowed
+
+================================================================================
+3. AVAILABILITY CHECKING ALGORITHM
+================================================================================
+
+Function: checkAvailability(date, productId)
+
+INPUT:
+- date: The date to check (DateTime)
+- productId: The service being booked (String)
+
+OUTPUT:
+- available: Boolean
+- availableSlots: Array of time slots
+- quotaRemaining: Int
+
+ALGORITHM:
+
+Step 1: Check Date Override
+```typescript
+const override = await db.dateOverride.findUnique({
+  where: { specificDate: date }
+});
+
+if (override && override.isClosed) {
+  return { available: false, reason: "Clinic closed" };
+}
+```
+
+Step 2: Get Available Time Slots
+```typescript
+let timeSlots;
+
+if (override && override.customTimeSlots) {
+  // Use custom slots from override
+  timeSlots = JSON.parse(override.customTimeSlots);
+} else {
+  // Use weekly recurring schedule
+  const dayOfWeek = date.getDay(); // 0-6
+  const slots = await db.availabilitySlot.findMany({
+    where: {
+      dayOfWeek: dayOfWeek,
+      isActive: true
+    }
+  });
+  timeSlots = slots.map(s => s.timeSlot);
+}
+
+if (timeSlots.length === 0) {
+  return { available: false, reason: "No time slots available" };
+}
+```
+
+Step 3: Check Quota
+```typescript
+const quota = await db.dailyQuota.findUnique({
+  where: {
+    productId_bookingDate: {
+      productId: productId,
+      bookingDate: date
+    }
+  }
+});
+
+// If no quota record exists, create one
+if (!quota) {
+  const product = await db.product.findUnique({
+    where: { id: productId }
+  });
+  
+  quota = await db.dailyQuota.create({
+    data: {
+      productId: productId,
+      bookingDate: date,
+      bookedCount: 0,
+      maxQuota: product.quotaPerDay
+    }
+  });
+}
+
+const quotaRemaining = quota.maxQuota - quota.bookedCount;
+
+if (quotaRemaining <= 0) {
+  return { available: false, reason: "Fully booked" };
+}
+```
+
+Step 4: Return Result
+```typescript
+return {
+  available: true,
+  availableSlots: timeSlots,
+  quotaRemaining: quotaRemaining,
+  quotaStatus: quotaRemaining > quota.maxQuota * 0.5 ? 'good' : 
+                quotaRemaining > quota.maxQuota * 0.2 ? 'limited' : 'low'
+};
+```
+
+================================================================================
+4. BOOKING FLOW WITH QUOTA LOCKING
+================================================================================
+
+CRITICAL: Prevent race conditions where multiple users book the last slot
+
+--- STANDARD BOOKING FLOW ---
+
+Step 1: Patient Selects Date & Service
+- Call checkAvailability(date, productId)
+- Display available time slots
+- Show quota status indicator
+
+Step 2: Patient Selects Time Slot
+- Lock temporarily (optional, 5-minute reservation)
+- Proceed to payment
+
+Step 3: Payment Processing
+```typescript
+// Start database transaction
+await db.$transaction(async (tx) => {
+  
+  // 1. Re-check availability (race condition protection)
+  const quota = await tx.dailyQuota.findUnique({
+    where: {
+      productId_bookingDate: {
+        productId: productId,
+        bookingDate: date
+      }
+    }
+  });
+  
+  if (quota.bookedCount >= quota.maxQuota) {
+    throw new Error("Slot no longer available");
+  }
+  
+  // 2. Create Stripe payment intent
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount * 100, // Convert to cents
+    currency: 'myr',
+    metadata: {
+      productId: productId,
+      date: date.toISOString(),
+      timeSlot: timeSlot
+    }
+  });
+  
+  // 3. Create appointment (status: PENDING)
+  const appointment = await tx.appointment.create({
+    data: {
+      patientId: patientId,
+      productId: productId,
+      appointmentDate: date,
+      timeSlot: timeSlot,
+      status: 'PENDING',
+      paymentStatus: 'UNPAID',
+      totalAmountMYR: totalAmount,
+      stripePaymentIntentId: paymentIntent.id
+    }
+  });
+  
+  // 4. Increment quota (reserve the slot)
+  await tx.dailyQuota.update({
+    where: {
+      productId_bookingDate: {
+        productId: productId,
+        bookingDate: date
+      }
+    },
+    data: {
+      bookedCount: { increment: 1 }
+    }
+  });
+  
+  return { appointment, paymentIntent };
+});
+```
+
+Step 4: Payment Confirmation (Stripe Webhook)
+```typescript
+// When payment succeeds
+await db.appointment.update({
+  where: { id: appointmentId },
+  data: {
+    status: 'CONFIRMED',
+    paymentStatus: paymentType === 'full' ? 'FULL_PAID' : 'DEPOSIT_PAID',
+    paidAmountMYR: amountPaid
+  }
+});
+
+// Create Google Calendar event
+await createCalendarEvent(appointment);
+```
+
+Step 5: Payment Failure Handling
+```typescript
+// If payment fails or is cancelled
+await db.$transaction(async (tx) => {
+  
+  // Delete appointment
+  await tx.appointment.delete({
+    where: { id: appointmentId }
+  });
+  
+  // Release quota
+  await tx.dailyQuota.update({
+    where: {
+      productId_bookingDate: {
+        productId: productId,
+        bookingDate: date
+      }
+    },
+    data: {
+      bookedCount: { decrement: 1 }
+    }
+  });
+});
+```
+
+================================================================================
+5. CANCELLATION FLOW
+================================================================================
+
+When appointment is cancelled:
+
+```typescript
+await db.$transaction(async (tx) => {
+  
+  // 1. Update appointment status
+  await tx.appointment.update({
+    where: { id: appointmentId },
+    data: {
+      status: 'CANCELLED',
+      cancelledAt: new Date()
+    }
+  });
+  
+  // 2. Release quota
+  await tx.dailyQuota.update({
+    where: {
+      productId_bookingDate: {
+        productId: appointment.productId,
+        bookingDate: appointment.appointmentDate
+      }
+    },
+    data: {
+      bookedCount: { decrement: 1 }
+    }
+  });
+  
+  // 3. Delete Google Calendar event
+  if (appointment.googleCalendarEventId) {
+    await deleteCalendarEvent(appointment.googleCalendarEventId);
+  }
+  
+  // 4. Create refund request (if applicable)
+  if (appointment.paymentStatus !== 'UNPAID') {
+    const refundAmount = calculateRefund(appointment);
+    await tx.refundRequest.create({
+      data: {
+        appointmentId: appointmentId,
+        patientId: appointment.patientId,
+        requestedRefundMYR: refundAmount,
+        status: 'PENDING'
+      }
+    });
+  }
+});
+```
+
+================================================================================
+6. CALENDAR VIEW GENERATION
+================================================================================
+
+Function: generateMonthCalendar(year, month, productId?)
+
+Purpose: Generate calendar data for patient booking or admin view
+
+```typescript
+async function generateMonthCalendar(year, month, productId = null) {
+  
+  const startDate = new Date(year, month, 1);
+  const endDate = new Date(year, month + 1, 0);
+  const days = [];
+  
+  // Get all date overrides for this month
+  const overrides = await db.dateOverride.findMany({
+    where: {
+      specificDate: {
+        gte: startDate,
+        lte: endDate
+      }
+    }
+  });
+  
+  // Get all availability slots
+  const availabilitySlots = await db.availabilitySlot.findMany({
+    where: { isActive: true }
+  });
+  
+  // Get all quotas for this month (if productId specified)
+  let quotas = [];
+  if (productId) {
+    quotas = await db.dailyQuota.findMany({
+      where: {
+        productId: productId,
+        bookingDate: {
+          gte: startDate,
+          lte: endDate
+        }
+      }
+    });
+  }
+  
+  // Generate each day
+  for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
+    
+    const dayInfo = {
+      date: new Date(date),
+      isAvailable: false,
+      status: 'unavailable', // good, limited, full, closed
+      timeSlots: [],
+      quotaRemaining: 0
+    };
+    
+    // Check override
+    const override = overrides.find(o => 
+      o.specificDate.toDateString() === date.toDateString()
+    );
+    
+    if (override && override.isClosed) {
+      dayInfo.status = 'closed';
+    } else {
+      // Get time slots
+      if (override && override.customTimeSlots) {
+        dayInfo.timeSlots = JSON.parse(override.customTimeSlots);
+      } else {
+        const dayOfWeek = date.getDay();
+        dayInfo.timeSlots = availabilitySlots
+          .filter(s => s.dayOfWeek === dayOfWeek)
+          .map(s => s.timeSlot);
+      }
+      
+      // Check quota
+      if (productId && dayInfo.timeSlots.length > 0) {
+        const quota = quotas.find(q => 
+          q.bookingDate.toDateString() === date.toDateString()
+        );
+        
+        if (quota) {
+          dayInfo.quotaRemaining = quota.maxQuota - quota.bookedCount;
+          
+          if (dayInfo.quotaRemaining > quota.maxQuota * 0.5) {
+            dayInfo.status = 'good';
+            dayInfo.isAvailable = true;
+          } else if (dayInfo.quotaRemaining > 0) {
+            dayInfo.status = 'limited';
+            dayInfo.isAvailable = true;
+          } else {
+            dayInfo.status = 'full';
+          }
+        } else {
+          // No bookings yet, fully available
+          const product = await db.product.findUnique({
+            where: { id: productId }
+          });
+          dayInfo.quotaRemaining = product.quotaPerDay;
+          dayInfo.status = 'good';
+          dayInfo.isAvailable = true;
+        }
+      } else if (dayInfo.timeSlots.length > 0) {
+        dayInfo.isAvailable = true;
+        dayInfo.status = 'good';
+      }
+    }
+    
+    days.push(dayInfo);
+  }
+  
+  return days;
+}
+```
+
+================================================================================
+7. ADMIN SCHEDULE MANAGEMENT
+================================================================================
+
+--- ADD TIME SLOT ---
+
+```typescript
+async function addTimeSlot(dayOfWeek, timeSlot) {
+  
+  // Validate time format (HH:MM)
+  const timeRegex = /^([0-1][0-9]|2[0-3]):[0-5][0-9]$/;
+  if (!timeRegex.test(timeSlot)) {
+    throw new Error("Invalid time format. Use HH:MM (24-hour)");
+  }
+  
+  // Check for duplicates
+  const existing = await db.availabilitySlot.findUnique({
+    where: {
+      dayOfWeek_timeSlot: {
+        dayOfWeek: dayOfWeek,
+        timeSlot: timeSlot
+      }
+    }
+  });
+  
+  if (existing) {
+    throw new Error("This time slot already exists");
+  }
+  
+  // Create slot
+  return await db.availabilitySlot.create({
+    data: {
+      dayOfWeek: dayOfWeek,
+      timeSlot: timeSlot,
+      isActive: true
+    }
+  });
+}
+```
+
+--- BULK COPY SCHEDULE ---
+
+```typescript
+async function copySchedule(fromDay, toDays) {
+  // Get all slots from source day
+  const sourceSlots = await db.availabilitySlot.findMany({
+    where: { dayOfWeek: fromDay }
+  });
+  
+  // For each target day
+  for (const toDay of toDays) {
+    // Delete existing slots
+    await db.availabilitySlot.deleteMany({
+      where: { dayOfWeek: toDay }
+    });
+    
+    // Copy slots
+    for (const slot of sourceSlots) {
+      await db.availabilitySlot.create({
+        data: {
+          dayOfWeek: toDay,
+          timeSlot: slot.timeSlot,
+          isActive: slot.isActive
+        }
+      });
+    }
+  }
+}
+```
+
+--- ADD DATE OVERRIDE ---
+
+```typescript
+async function addDateOverride(date, isClosed, reason, customSlots = null) {
+  
+  return await db.dateOverride.create({
+    data: {
+      specificDate: date,
+      isClosed: isClosed,
+      reason: reason,
+      customTimeSlots: customSlots ? JSON.stringify(customSlots) : null
+    }
+  });
+}
+```
+
+================================================================================
+8. EDGE CASES & HANDLING
+================================================================================
+
+CASE 1: Product quota changed after bookings exist
+Solution: DailyQuota.maxQuota is snapshot at creation time.
+         Admin can manually adjust if needed.
+
+CASE 2: Time slot removed after appointments booked
+Solution: Existing appointments remain valid.
+         Just can't book new appointments for that slot.
+
+CASE 3: Multiple users booking last slot simultaneously
+Solution: Database transaction with quota check.
+         First successful payment gets the slot.
+
+CASE 4: Admin manually creates appointment beyond quota
+Solution: Admin can override quota (system allows).
+         Show warning but permit override.
+
+CASE 5: Patient tries to book in the past
+Solution: Validate appointmentDate >= today in booking form.
+
+CASE 6: Timezone handling (Malaysia = GMT+8)
+Solution: Store all dates in UTC in database.
+         Convert to Malaysian time for display.
+         Use date-fns-tz or similar library.
+
+================================================================================
+9. PERFORMANCE OPTIMIZATION
+================================================================================
+
+INDEXES:
+- AvailabilitySlot: (dayOfWeek, isActive)
+- DateOverride: (specificDate)
+- DailyQuota: (productId, bookingDate), (bookingDate)
+- Appointment: (appointmentDate, status), (productId, appointmentDate)
+
+CACHING:
+- Cache AvailabilitySlots (changes rarely)
+- Cache DateOverrides for next 3 months
+- Real-time quota must NOT be cached
+
+QUERIES:
+- Batch fetch quotas for entire month
+- Use database transactions for consistency
+- Limit calendar generation to one month at a time
+
+================================================================================
+10. TESTING SCENARIOS
+================================================================================
+
+Test 1: Book appointment when quota available ✓
+Test 2: Attempt booking when fully booked ✗
+Test 3: Two users booking last slot (race condition) → One succeeds
+Test 4: Cancel appointment → Quota decremented
+Test 5: Book on holiday (closed date) ✗
+Test 6: Book on date with custom hours ✓
+Test 7: Admin changes weekly schedule → Affects future bookings only
+Test 8: Admin adds date override → Takes precedence
+Test 9: Payment fails → Appointment deleted, quota released
+Test 10: Stripe webhook delayed → Appointment created on confirmation
+
+================================================================================
+11. API ENDPOINTS NEEDED
+================================================================================
+
+GET  /api/availability/check?date=YYYY-MM-DD&productId=xxx
+     → Returns availability status for specific date/product
+
+GET  /api/availability/calendar?year=2026&month=2&productId=xxx
+     → Returns full month calendar with availability
+
+POST /api/appointments/create
+     → Creates appointment with quota check and payment
+
+POST /api/appointments/cancel
+     → Cancels appointment and releases quota
+
+POST /api/admin/schedule/slots (Admin only)
+     → Add/edit/delete time slots
+
+POST /api/admin/schedule/overrides (Admin only)
+     → Add/edit/delete date overrides
+
+GET  /api/admin/quota/daily?date=YYYY-MM-DD (Admin only)
+     → Get all product quotas for specific date
+
+================================================================================

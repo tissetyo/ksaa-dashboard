@@ -1,0 +1,299 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Calendar } from '@/components/ui/calendar';
+import {
+    Check,
+    ChevronLeft,
+    ChevronRight,
+    Calendar as CalendarIcon,
+    Clock,
+    CreditCard,
+    CheckCircle2
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { checkAvailabilityAction } from '@/lib/actions/availability';
+import { createBookingIntent, completeBooking } from '@/lib/actions/booking';
+import { loadStripe } from '@stripe/stripe-js';
+import { Elements } from '@stripe/react-stripe-js';
+import { PaymentForm } from './PaymentForm';
+import { toast } from 'sonner';
+
+const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+
+const STEPS = [
+    { id: 1, name: 'Select Service', icon: CalendarIcon },
+    { id: 2, name: 'Choose Time', icon: Clock },
+    { id: 3, name: 'Payment', icon: CreditCard },
+    { id: 4, name: 'Confirmation', icon: CheckCircle2 },
+];
+
+export function BookingFlow({ products }: { products: any[] }) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
+    const initialServiceId = searchParams.get('service');
+
+    const [currentStep, setCurrentStep] = useState(1);
+    const [selectedProduct, setSelectedProduct] = useState<any>(
+        products.find(p => p.id === initialServiceId) || null
+    );
+    const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+    const [availableSlots, setAvailableSlots] = useState<string[]>([]);
+    const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+    const [paymentType, setPaymentType] = useState<'FULL' | 'DEPOSIT'>('DEPOSIT');
+    const [isLoadingSlots, setIsLoadingSlots] = useState(false);
+    const [clientSecret, setClientSecret] = useState<string | null>(null);
+    const [bookingResult, setBookingResult] = useState<any>(null);
+
+    // Load slots when date/product changes
+    useEffect(() => {
+        if (selectedProduct && selectedDate && currentStep === 2) {
+            loadSlots();
+        }
+    }, [selectedDate, selectedProduct, currentStep]);
+
+    const loadSlots = async () => {
+        if (!selectedProduct || !selectedDate) return;
+        setIsLoadingSlots(true);
+        setSelectedSlot(null);
+        const result = await checkAvailabilityAction(selectedProduct.id, selectedDate.toISOString());
+        if (result.success) {
+            setAvailableSlots(result.slots || []);
+        }
+        setIsLoadingSlots(false);
+    };
+
+    const handleCreateIntent = async () => {
+        if (!selectedProduct) return;
+        const amount = paymentType === 'FULL'
+            ? selectedProduct.priceMYR
+            : (selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100));
+
+        try {
+            const { clientSecret } = await createBookingIntent(selectedProduct.id, amount);
+            setClientSecret(clientSecret);
+            setCurrentStep(3);
+        } catch (error) {
+            toast.error('Failed to initialize payment');
+        }
+    };
+
+    const handlePaymentSuccess = async (paymentIntentId: string) => {
+        if (!selectedProduct || !selectedDate || !selectedSlot) return;
+
+        const amount = paymentType === 'FULL'
+            ? selectedProduct.priceMYR
+            : (selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100));
+
+        try {
+            const result = await completeBooking({
+                productId: selectedProduct.id,
+                appointmentDate: selectedDate.toISOString(),
+                timeSlot: selectedSlot,
+                paymentAmount: amount,
+                paymentType,
+                stripePaymentIntentId: paymentIntentId,
+            });
+
+            if (result.success) {
+                setBookingResult(result);
+                setCurrentStep(4);
+            }
+        } catch (error) {
+            toast.error('Booking failed but payment was successful. Please contact support.');
+        }
+    };
+
+    // Render Step Content
+    const renderStepContent = () => {
+        switch (currentStep) {
+            case 1:
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {products.map((p) => (
+                            <Card
+                                key={p.id}
+                                className={cn(
+                                    "cursor-pointer transition-all hover:border-blue-500",
+                                    selectedProduct?.id === p.id ? "border-2 border-blue-500 bg-blue-50" : ""
+                                )}
+                                onClick={() => setSelectedProduct(p)}
+                            >
+                                <CardContent className="p-4 flex items-center justify-between">
+                                    <div>
+                                        <h3 className="font-bold">{p.name}</h3>
+                                        <p className="text-sm text-gray-500">RM {p.priceMYR.toFixed(2)}</p>
+                                    </div>
+                                    {selectedProduct?.id === p.id && <Check className="text-blue-600" />}
+                                </CardContent>
+                            </Card>
+                        ))}
+                    </div>
+                );
+            case 2:
+                return (
+                    <div className="flex flex-col md:flex-row gap-8">
+                        <div className="flex-1">
+                            <Calendar
+                                mode="single"
+                                selected={selectedDate}
+                                onSelect={setSelectedDate}
+                                disabled={(date) => date < new Date() || date.getDay() === 0} // Disable past and Sundays
+                                className="rounded-md border"
+                            />
+                        </div>
+                        <div className="flex-1 space-y-4">
+                            <h4 className="font-medium">Available Slots for {selectedDate ? format(selectedDate, 'PP') : ''}</h4>
+                            {isLoadingSlots ? (
+                                <p>Loading slots...</p>
+                            ) : availableSlots.length > 0 ? (
+                                <div className="grid grid-cols-3 gap-2">
+                                    {availableSlots.map((slot) => (
+                                        <Button
+                                            key={slot}
+                                            variant={selectedSlot === slot ? 'default' : 'outline'}
+                                            onClick={() => setSelectedSlot(slot)}
+                                            className="w-full"
+                                        >
+                                            {slot}
+                                        </Button>
+                                    ))}
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">No slots available for this date.</p>
+                            )}
+                        </div>
+                    </div>
+                );
+            case 3:
+                return (
+                    <div className="space-y-6">
+                        <div className="bg-gray-50 p-4 rounded-lg">
+                            <h4 className="font-bold mb-2">Booking Summary</h4>
+                            <p className="text-sm">Service: {selectedProduct.name}</p>
+                            <p className="text-sm">Date: {format(selectedDate!, 'PP')}</p>
+                            <p className="text-sm">Time: {selectedSlot}</p>
+                            <div className="mt-4 border-t pt-4">
+                                <p className="font-bold">Total: RM {selectedProduct.priceMYR.toFixed(2)}</p>
+                            </div>
+                        </div>
+
+                        <div className="space-y-4">
+                            <h4 className="font-medium">Selected Payment: {paymentType === 'FULL' ? 'Full Payment' : `Deposit (${selectedProduct.depositPercentage}%)`}</h4>
+                            {clientSecret && (
+                                <Elements stripe={stripePromise} options={{ clientSecret }}>
+                                    <PaymentForm
+                                        amount={paymentType === 'FULL' ? selectedProduct.priceMYR : (selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100))}
+                                        onPaymentSuccess={handlePaymentSuccess}
+                                    />
+                                </Elements>
+                            )}
+                        </div>
+                    </div>
+                );
+            case 4:
+                return (
+                    <div className="text-center py-10 space-y-4">
+                        <div className="flex justify-center">
+                            <CheckCircle2 className="h-20 w-20 text-green-500" />
+                        </div>
+                        <h2 className="text-2xl font-bold italic">KSA A STEMCARE | Appointment Confirmed!</h2>
+                        <p className="text-gray-600">Your appointment for {selectedProduct.name} has been successfully scheduled.</p>
+                        <div className="pt-6">
+                            <Button onClick={() => router.push('/dashboard')}>Go to Dashboard</Button>
+                        </div>
+                    </div>
+                );
+            default:
+                return null;
+        }
+    };
+
+    return (
+        <div className="max-w-4xl mx-auto py-8 px-4">
+            {/* Stepper */}
+            <div className="mb-12">
+                <div className="flex items-center justify-between relative">
+                    {STEPS.map((step, idx) => (
+                        <div key={step.id} className="flex flex-col items-center z-10">
+                            <div className={cn(
+                                "w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2 bg-white transition-colors",
+                                currentStep >= step.id ? "border-blue-600 text-blue-600" : "border-gray-300 text-gray-300"
+                            )}>
+                                <step.icon className="h-5 w-5" />
+                            </div>
+                            <span className={cn(
+                                "text-xs font-medium",
+                                currentStep >= step.id ? "text-blue-600" : "text-gray-500"
+                            )}>
+                                {step.name}
+                            </span>
+                        </div>
+                    ))}
+                    {/* Progress bar line */}
+                    <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-200 -z-0" />
+                    <div
+                        className="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all duration-300 -z-0"
+                        style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
+                    />
+                </div>
+            </div>
+
+            <Card className="shadow-lg border-blue-50">
+                <CardContent className="p-8">
+                    {renderStepContent()}
+
+                    <div className="mt-8 flex justify-between">
+                        {currentStep > 1 && currentStep < 4 && (
+                            <Button variant="outline" onClick={() => setCurrentStep(currentStep - 1)}>
+                                <ChevronLeft className="mr-2 h-4 w-4" />
+                                Back
+                            </Button>
+                        )}
+                        <div className="ml-auto">
+                            {currentStep === 1 && (
+                                <Button
+                                    disabled={!selectedProduct}
+                                    onClick={() => setCurrentStep(2)}
+                                >
+                                    Next
+                                    <ChevronRight className="ml-2 h-4 w-4" />
+                                </Button>
+                            )}
+                            {currentStep === 2 && (
+                                <div className="flex flex-col items-end gap-2">
+                                    <div className="flex gap-2">
+                                        <Button
+                                            variant={paymentType === 'DEPOSIT' ? 'default' : 'outline'}
+                                            onClick={() => setPaymentType('DEPOSIT')}
+                                        >
+                                            Pay Deposit (RM {(selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100)).toFixed(2)})
+                                        </Button>
+                                        <Button
+                                            variant={paymentType === 'FULL' ? 'default' : 'outline'}
+                                            onClick={() => setPaymentType('FULL')}
+                                        >
+                                            Pay Full (RM {selectedProduct.priceMYR.toFixed(2)})
+                                        </Button>
+                                    </div>
+                                    <Button
+                                        disabled={!selectedSlot}
+                                        onClick={handleCreateIntent}
+                                        className="w-full mt-2"
+                                    >
+                                        Proceed to Payment
+                                        <ChevronRight className="ml-2 h-4 w-4" />
+                                    </Button>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}

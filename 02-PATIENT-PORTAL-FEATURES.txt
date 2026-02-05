@@ -1,0 +1,571 @@
+================================================================================
+PATIENT PORTAL - COMPLETE FEATURE SPECIFICATIONS
+================================================================================
+
+BASE URL: /patient/*
+All routes require authentication (patient role)
+
+================================================================================
+1. AUTHENTICATION FLOWS
+================================================================================
+
+--- SIGN UP FLOW ---
+
+Route: /signup
+
+Page Components:
+1. Email + Password form
+   - Email field (with validation)
+   - Password field (min 8 chars, show strength indicator)
+   - Confirm password field
+   - Terms & Conditions checkbox
+   - "Create Account" button
+
+Validation:
+- Email format validation
+- Email uniqueness check
+- Password minimum 8 characters
+- Password match confirmation
+- All fields required
+
+On Submit:
+1. Hash password (bcrypt)
+2. Create User record (role: PATIENT)
+3. Auto-login user
+4. Redirect to /patient/profile/complete
+
+Success: "Account created! Please complete your profile."
+
+--- LOGIN FLOW ---
+
+Route: /login
+
+Page Components:
+1. Email + Password form
+   - Email field
+   - Password field
+   - "Forgot Password?" link
+   - "Login" button
+   - "Don't have an account? Sign up" link
+
+On Submit:
+1. Verify credentials with NextAuth
+2. Create session
+3. Redirect to /patient/dashboard
+
+--- PASSWORD RESET FLOW ---
+
+Route: /forgot-password
+
+Page Components:
+1. Email form
+   - Email field
+   - "Send Reset Link" button
+
+Implementation:
+- Generate password reset token
+- Store in database with expiry (24h)
+- Send email with reset link (manual - show admin email template)
+
+Route: /reset-password/[token]
+
+Page Components:
+1. New password form
+   - New password field
+   - Confirm password field
+   - "Reset Password" button
+
+On Submit:
+1. Verify token validity
+2. Update password (hashed)
+3. Delete reset token
+4. Auto-login user
+5. Redirect to /patient/dashboard
+
+================================================================================
+2. PATIENT PROFILE MANAGEMENT
+================================================================================
+
+--- COMPLETE PROFILE (First Time) ---
+
+Route: /patient/profile/complete
+
+Page Components (Multi-step form):
+
+STEP 1: Personal Information
+- Full Name* (text)
+- Phone Number* (Malaysia format: +60)
+- Address (textarea)
+- "Next" button
+
+STEP 2: Physical Information
+- Age* (number, 1-120)
+- Height (cm)* (number, 50-250)
+- Weight (kg)* (number, 20-300)
+- Blood Type (dropdown: A+, A-, B+, B-, AB+, AB-, O+, O-, Unknown)
+- "Next" button
+
+STEP 3: Emergency Contact
+- Emergency Contact Name* (text)
+- Emergency Contact Phone* (text)
+- "Next" button
+
+STEP 4: Medical History
+- Known Allergies (textarea)
+  Placeholder: "e.g., Penicillin, Peanuts, Latex"
+- Current Medications (textarea)
+  Placeholder: "List all medications you're currently taking"
+- Previous Treatments (textarea)
+  Placeholder: "Any previous medical treatments or surgeries"
+- Additional Notes (textarea)
+  Placeholder: "Any other health information we should know"
+- "Complete Profile" button
+
+On Submit:
+1. Create Patient record linked to User
+2. Show success message
+3. Redirect to /patient/dashboard
+
+Progress Indicator: Show steps 1/4, 2/4, 3/4, 4/4
+
+--- VIEW/EDIT PROFILE ---
+
+Route: /patient/profile
+
+Page Layout:
+- Header: "My Profile"
+- Profile Information Card (read-only view by default)
+- "Edit Profile" button
+
+Information Sections:
+1. Personal Details
+   - Full Name
+   - Email (from User)
+   - Phone
+   - Address
+
+2. Physical Information
+   - Age
+   - Height (cm)
+   - Weight (kg)
+   - Blood Type
+
+3. Emergency Contact
+   - Name
+   - Phone
+
+4. Medical History
+   - Allergies
+   - Current Medications
+   - Previous Treatments
+   - Additional Notes
+
+Route: /patient/profile/edit
+
+Same form as "Complete Profile" but pre-filled with existing data.
+
+On Save:
+1. Update Patient record
+2. Show success toast: "Profile updated successfully"
+3. Redirect to /patient/profile
+
+================================================================================
+3. BROWSE PRODUCTS/SERVICES
+================================================================================
+
+Route: /patient/services
+
+Page Layout:
+- Header: "Our STEMCARE Services"
+- Filter/Sort bar
+  - Search by name
+  - Sort by: Price (low-high), Price (high-low), Name
+- Product grid (3 columns desktop, 1 column mobile)
+
+Product Card Design:
+┌─────────────────────────┐
+│ Product Image (icon)    │
+│ ─────────────────────   │
+│ Service Name            │
+│ Short Description       │
+│                         │
+│ Duration: XX minutes    │
+│ Price: RM XXX.XX        │
+│                         │
+│ [Book Appointment]      │
+└─────────────────────────┘
+
+On Click "Book Appointment":
+- Redirect to /patient/book?productId={id}
+- Pre-select this product in booking flow
+
+Products Display:
+- Only show active products (isActive = true)
+- Show quota availability indicator:
+  🟢 Good availability
+  🟡 Limited slots
+  🔴 Fully booked for next 7 days
+
+================================================================================
+4. BOOK APPOINTMENT (4-STEP FLOW)
+================================================================================
+
+Route: /patient/book
+Query params: ?productId={id} (optional)
+
+--- STEP 1: SELECT SERVICE ---
+
+Components:
+- "Select a Service" heading
+- Product list (radio buttons)
+- Product details display when selected:
+  - Name
+  - Description
+  - Duration
+  - Price
+  - Deposit option available
+- "Continue" button (disabled until selection)
+
+If productId in URL, auto-select that product.
+
+--- STEP 2: CHOOSE DATE & TIME ---
+
+Components:
+- Calendar widget (show current month)
+- Available dates highlighted in green
+- Unavailable dates greyed out
+- Time slot selection (once date picked)
+
+Calendar Logic:
+1. Get DateOverrides for all dates in month
+2. Get AvailabilitySlots for recurring schedule
+3. For each date:
+   - If DateOverride.isClosed = true → Grey out
+   - Else, check DailyQuota for selected product
+   - If bookedCount >= maxQuota → Grey out
+   - If quota available → Highlight green
+
+Time Slot Display (after date selected):
+- Show available time slots for that day
+- Get AvailabilitySlots for that day of week
+- For each slot, check if quota available
+- Display as buttons:
+
+  [09:00 AM] [10:30 AM] [02:00 PM] [04:00 PM]
+  
+  Disabled if quota full for that slot.
+
+- "Continue" button (enabled when date + time selected)
+
+--- STEP 3: REVIEW & PAYMENT ---
+
+Components:
+- Booking Summary Card:
+  ┌─────────────────────────────┐
+  │ Appointment Summary         │
+  ├─────────────────────────────┤
+  │ Service: [Product Name]     │
+  │ Date: DD/MM/YYYY            │
+  │ Time: HH:MM AM/PM           │
+  │ Duration: XX minutes        │
+  │                             │
+  │ Price: RM XXX.XX            │
+  └─────────────────────────────┘
+
+- Payment Option Selection (radio buttons):
+  ○ Full Payment (RM XXX.XX)
+    Pay 100% now
+  
+  ○ Deposit Payment (RM YYY.YY)
+    Pay [XX]% now, remaining RM ZZZ.ZZ at clinic
+
+- Stripe Payment Element
+  - Card number
+  - Expiry date
+  - CVC
+  - Cardholder name
+
+- Terms checkbox: "I agree to the cancellation policy"
+
+- "Confirm & Pay" button
+
+Payment Process:
+1. Create Stripe PaymentIntent
+2. Amount based on selection (full or deposit)
+3. On successful payment:
+   - Create Appointment record
+   - Create Payment record
+   - Update DailyQuota (increment bookedCount)
+   - Create Google Calendar event
+   - Show success page
+
+On Payment Failure:
+- Show error message
+- Don't create appointment
+- Allow retry
+
+--- STEP 4: CONFIRMATION ---
+
+Route: /patient/book/confirmation/[appointmentId]
+
+Components:
+- Success icon ✓
+- "Appointment Confirmed!" heading
+- Appointment Details Card (same as summary)
+- Payment Receipt:
+  - Amount Paid: RM XXX.XX
+  - Payment Method: **** **** **** 1234
+  - Transaction ID: [Stripe ID]
+  - If deposit: Balance Due: RM YYY.YY
+
+- Action Buttons:
+  [Add to Calendar] - Download .ics file
+  [View Appointment] - Go to appointment details
+  [Book Another] - Return to services
+
+- Information Box:
+  "You will receive a reminder 24 hours before your appointment.
+   If you need to cancel or reschedule, please contact us at least
+   48 hours in advance."
+
+================================================================================
+5. MY APPOINTMENTS
+================================================================================
+
+Route: /patient/appointments
+
+Page Layout:
+- Header: "My Appointments"
+- Tab Navigation:
+  - Upcoming
+  - Past
+  - Cancelled
+
+--- UPCOMING TAB ---
+
+Display:
+- List of appointments where appointmentDate >= today
+- Sorted by date (earliest first)
+- Status: PENDING, CONFIRMED
+
+Appointment Card:
+┌─────────────────────────────────────────┐
+│ [Service Name]                          │
+│ 📅 DD/MM/YYYY at HH:MM AM/PM           │
+│ 💉 Duration: XX minutes                 │
+│ 💰 Paid: RM XXX.XX                      │
+│ ⚠️  Balance Due: RM YYY.YY (if deposit)│
+│                                         │
+│ Status: [Confirmed Badge]               │
+│                                         │
+│ [View Details] [Request Cancellation]   │
+└─────────────────────────────────────────┘
+
+- "View Details" → Opens appointment detail modal
+- "Request Cancellation" → Opens cancellation form
+
+--- PAST TAB ---
+
+Display:
+- Appointments where appointmentDate < today
+- Or status = COMPLETED
+- Sorted by date (most recent first)
+
+Appointment Card (Read-only):
+┌─────────────────────────────────────────┐
+│ [Service Name]                          │
+│ 📅 DD/MM/YYYY at HH:MM AM/PM           │
+│ ✓ Completed                             │
+│                                         │
+│ [View Details]                          │
+└─────────────────────────────────────────┘
+
+--- CANCELLED TAB ---
+
+Display:
+- Appointments where status = CANCELLED
+- Sorted by cancellation date (most recent first)
+
+Appointment Card:
+┌─────────────────────────────────────────┐
+│ [Service Name]                          │
+│ 📅 Original Date: DD/MM/YYYY            │
+│ ❌ Cancelled on: DD/MM/YYYY             │
+│ 💰 Refund: RM XXX.XX (if applicable)    │
+│                                         │
+│ [View Details]                          │
+└─────────────────────────────────────────┘
+
+================================================================================
+6. APPOINTMENT DETAILS
+================================================================================
+
+Route: /patient/appointments/[id]
+
+Page Layout:
+
+Appointment Information:
+- Service Name
+- Date & Time
+- Status badge
+- Payment status badge
+
+Service Details:
+- Description
+- Duration
+- Provider information
+
+Payment Information:
+- Total Amount
+- Paid Amount
+- Balance (if deposit)
+- Payment Method
+- Transaction ID
+
+Patient Information:
+- Name
+- Phone
+- Medical notes (if any)
+
+Actions (if upcoming and not cancelled):
+- "Request Cancellation" button
+- "Request Refund" button (if applicable)
+
+================================================================================
+7. REQUEST CANCELLATION
+================================================================================
+
+Route: /patient/appointments/[id]/cancel
+
+Modal/Page Components:
+- Warning message about cancellation policy
+- Reason for cancellation (textarea, required)
+- Refund eligibility info:
+  "Based on our policy, you are eligible for:
+   - Full refund (>7 days before)
+   - 50% refund (3-7 days before)
+   - No refund (<3 days before)"
+
+- "Submit Cancellation Request" button
+- "Go Back" button
+
+On Submit:
+1. Create RefundRequest record (if eligible)
+2. Update Appointment.status to CANCELLED
+3. Decrement DailyQuota.bookedCount
+4. Delete Google Calendar event
+5. Show confirmation message
+6. Redirect to /patient/appointments
+
+Notification to Admin:
+- Add to admin notification queue
+- Admin must process refund manually
+
+================================================================================
+8. PATIENT DASHBOARD (HOME)
+================================================================================
+
+Route: /patient/dashboard
+
+Page Layout:
+
+Welcome Section:
+- "Welcome back, [Patient Name]!"
+- Quick stats:
+  - Upcoming Appointments: X
+  - Total Visits: Y
+
+Upcoming Appointments (Widget):
+- Next 3 upcoming appointments
+- "View All" link to /patient/appointments
+
+Quick Actions:
+- [Book Appointment] → /patient/book
+- [View Services] → /patient/services
+- [My Profile] → /patient/profile
+
+Recent Activity:
+- Last appointment attended
+- Last booking made
+- Profile last updated
+
+Health Reminders (if applicable):
+- Upcoming appointment reminder
+- Outstanding balance notice
+
+================================================================================
+NAVIGATION STRUCTURE
+================================================================================
+
+Patient Portal Layout:
+
+Top Navigation:
+- Logo (links to /patient/dashboard)
+- "Dashboard" link
+- "Services" link
+- "My Appointments" link
+- User Menu (dropdown):
+  - My Profile
+  - Settings
+  - Logout
+
+Mobile Navigation:
+- Hamburger menu
+- Same links as above
+- Bottom navigation bar:
+  - Dashboard icon
+  - Services icon
+  - Appointments icon
+  - Profile icon
+
+================================================================================
+RESPONSIVE DESIGN BREAKPOINTS
+================================================================================
+
+Mobile (< 768px):
+- Single column layout
+- Stack appointment cards
+- Full-width forms
+- Bottom navigation bar
+
+Tablet (768px - 1024px):
+- 2 column grid for appointments
+- Sidebar navigation
+
+Desktop (> 1024px):
+- 3 column grid for services
+- Side navigation
+- Multi-column forms
+
+================================================================================
+ERROR HANDLING
+================================================================================
+
+All forms must handle:
+- Network errors
+- Validation errors
+- Server errors
+- Payment failures
+
+Display user-friendly error messages:
+- "Unable to book appointment. Please try again."
+- "Payment failed. Please check your card details."
+- "This time slot is no longer available."
+
+Show loading states:
+- Skeleton loaders for data fetching
+- Spinner for form submissions
+- Disabled buttons during processing
+
+================================================================================
+ACCESSIBILITY REQUIREMENTS
+================================================================================
+
+- Keyboard navigation support
+- Screen reader friendly labels
+- High contrast mode support
+- Focus indicators on interactive elements
+- Alt text for all images
+- ARIA labels where needed
+
+================================================================================
