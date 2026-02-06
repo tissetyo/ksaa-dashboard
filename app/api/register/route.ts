@@ -4,12 +4,31 @@ import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
     try {
-        const { salutation, email, password, fullName, phone } = await req.json();
+        const { salutation, email, password, fullName, phone, referralCode } = await req.json();
 
         console.log('[REGISTER_DEBUG] Attempting to register:', email);
 
         if (!email || !password || !fullName || !phone) {
             return NextResponse.json({ message: 'Missing fields' }, { status: 400 });
+        }
+
+        // Validate referral code if provided
+        let referredByStaffId = null;
+        if (referralCode) {
+            const staff = await db.staff.findUnique({
+                where: { staffCode: referralCode.toUpperCase() },
+                select: { id: true, isActive: true },
+            });
+
+            if (!staff) {
+                return NextResponse.json({ message: 'Invalid referral code' }, { status: 400 });
+            }
+
+            if (!staff.isActive) {
+                return NextResponse.json({ message: 'Referral code is no longer active' }, { status: 400 });
+            }
+
+            referredByStaffId = staff.id;
         }
 
         const normalizedEmail = email.toLowerCase();
@@ -35,6 +54,7 @@ export async function POST(req: Request) {
                         salutation: salutation || undefined,
                         fullName,
                         phone,
+                        referredByStaffId,
                     },
                 },
             },

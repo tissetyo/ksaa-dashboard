@@ -16,6 +16,7 @@ datasource db {
 
 enum UserRole {
   PATIENT
+  STAFF
   SUPERADMIN
 }
 
@@ -30,6 +31,7 @@ model User {
 
   // Relations
   patient   Patient?
+  staff     Staff?
   accounts  Account[]
   sessions  Session[]
 
@@ -127,6 +129,10 @@ model Patient {
   previousTreatments   String? @db.Text
   additionalNotes      String? @db.Text
 
+  // Referral Tracking
+  referredByStaffId String?
+  referredByStaff   Staff?  @relation("StaffReferrals", fields: [referredByStaffId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -140,6 +146,31 @@ model Patient {
   @@index([phone])
 }
 
+// Staff Members with Referral Codes
+model Staff {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  staffCode   String   @unique // Auto-generated referral code
+  
+  // Personal Information
+  fullName    String
+  email       String
+  phone       String?
+  
+  // Status
+  isActive    Boolean  @default(true)
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referredPatients  Patient[] @relation("StaffReferrals")
+  
+  @@index([staffCode])
+  @@index([email])
+}
+
 // ============================================================================
 // PRODUCTS/SERVICES
 // ============================================================================
@@ -150,8 +181,9 @@ model Product {
   description String @db.Text
   
   // Pricing
-  priceMYR         Float
-  depositPercentage Int   @default(30) // 0-100, percentage for deposit option
+  isFree            Boolean @default(false)
+  priceMYR          Float?
+  depositPercentage Int?    @default(30) // 0-100, percentage for deposit option
   
   // Service Details
   durationMinutes Int

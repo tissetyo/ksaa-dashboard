@@ -18,6 +18,7 @@ export default function SignupPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [fullName, setFullName] = useState('');
     const [phone, setPhone] = useState('');
+    const [referralCode, setReferralCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
 
@@ -34,7 +35,7 @@ export default function SignupPage() {
             const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ salutation, email, password, fullName, phone }),
+                body: JSON.stringify({ salutation, email, password, fullName, phone, referralCode }),
             });
 
             if (response.ok) {
@@ -126,6 +127,17 @@ export default function SignupPage() {
                                 required
                                 disabled={isLoading}
                             />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="referralCode">Referral Code (Optional)</Label>
+                            <Input
+                                id="referralCode"
+                                placeholder="STAFF-XXXXX"
+                                value={referralCode}
+                                onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                                disabled={isLoading}
+                            />
+                            <p className="text-xs text-muted-foreground">Have a referral code from our staff? Enter it here</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="password">Password</Label>
