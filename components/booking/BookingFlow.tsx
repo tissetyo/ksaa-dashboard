@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
-import { checkAvailabilityAction } from '@/lib/actions/availability';
+import { checkAvailabilityAction, checkMonthAvailabilityAction } from '@/lib/actions/availability';
 import { createBookingIntent, completeBooking } from '@/lib/actions/booking';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
@@ -55,10 +55,31 @@ export function BookingFlow({ products }: { products: any[] }) {
         phone?: string;
         email?: string;
     } | null>(null);
+    const [availableDates, setAvailableDates] = useState<string[]>([]);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
 
     // Check if selected product is a free consultation
     const isFreeConsultation = selectedProduct?.priceMYR === 0 &&
         selectedProduct?.name?.toLowerCase().includes('consultation');
+
+    // Load availability for the current month when step 2 is visible
+    useEffect(() => {
+        if (selectedProduct && currentStep === 2) {
+            loadMonthAvailability(currentMonth);
+        }
+    }, [currentStep, currentMonth, selectedProduct]);
+
+    const loadMonthAvailability = async (month: Date) => {
+        if (!selectedProduct) return;
+        const result = await checkMonthAvailabilityAction(
+            selectedProduct.id,
+            month.getFullYear(),
+            month.getMonth()
+        );
+        if (result.success) {
+            setAvailableDates(result.availableDates || []);
+        }
+    };
 
     // Load slots when date/product changes
     useEffect(() => {
@@ -220,12 +241,26 @@ export function BookingFlow({ products }: { products: any[] }) {
                         {/* Date and Time Selection */}
                         <div className="flex flex-col md:flex-row gap-8">
                             <div className="flex-1">
+                                <div className="mb-2">
+                                    <span className="inline-flex items-center gap-1 text-sm text-gray-600">
+                                        <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                        <span>Available slots</span>
+                                    </span>
+                                </div>
                                 <Calendar
                                     mode="single"
                                     selected={selectedDate}
                                     onSelect={setSelectedDate}
-                                    disabled={(date) => date < new Date() || date.getDay() === 0} // Disable past and Sundays
-                                    className="rounded-md border"
+                                    month={currentMonth}
+                                    onMonthChange={setCurrentMonth}
+                                    disabled={(date) => date < new Date() || date.getDay() === 0}
+                                    className="rounded-md border [&_.available]:relative [&_.available]:after:content-[''] [&_.available]:after:absolute [&_.available]:after:bottom-1 [&_.available]:after:left-1/2 [&_.available]:after:-translate-x-1/2 [&_.available]:after:w-1.5 [&_.available]:after:h-1.5 [&_.available]:after:bg-green-500 [&_.available]:after:rounded-full"
+                                    modifiers={{
+                                        available: availableDates.map(d => new Date(d + 'T12:00:00'))
+                                    }}
+                                    modifiersClassNames={{
+                                        available: 'available'
+                                    }}
                                 />
                             </div>
                             <div className="flex-1 space-y-4">
