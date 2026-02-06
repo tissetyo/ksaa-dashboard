@@ -46,7 +46,7 @@ export default async function AdminDashboardPage() {
         },
         {
             title: 'Total Revenue',
-            value: formatCurrency(revenue._sum.amountMYR || 0),
+            value: formatCurrency(revenue || 0),
             icon: TrendingUp,
             description: 'Succeeded payments',
             color: 'text-green-600',
