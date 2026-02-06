@@ -43,10 +43,18 @@ export function ConsultationBookingClient({
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [isBooking, setIsBooking] = useState(false);
 
+    // Helper function to format date as YYYY-MM-DD without timezone conversion
+    const formatDateOnly = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const loadSlots = async (date: Date) => {
         setIsLoadingSlots(true);
         setSelectedSlot(null);
-        const result = await checkAvailabilityAction(product.id, date.toISOString());
+        const result = await checkAvailabilityAction(product.id, formatDateOnly(date));
         if (result.success) {
             setAvailableSlots(result.slots || []);
         }
@@ -91,7 +99,7 @@ export function ConsultationBookingClient({
         try {
             const result = await completeBooking({
                 productId: product.id,
-                appointmentDate: selectedDate.toISOString(),
+                appointmentDate: formatDateOnly(selectedDate),
                 timeSlot: selectedSlot,
                 paymentAmount: 0,
                 paymentType: 'FULL',
@@ -135,8 +143,8 @@ export function ConsultationBookingClient({
                             <div className="flex flex-col items-center flex-1">
                                 <div
                                     className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep >= step.id
-                                            ? 'bg-blue-600 text-white'
-                                            : 'bg-gray-200 text-gray-600'
+                                        ? 'bg-blue-600 text-white'
+                                        : 'bg-gray-200 text-gray-600'
                                         }`}
                                 >
                                     <step.icon className="h-5 w-5" />

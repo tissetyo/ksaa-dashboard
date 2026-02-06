@@ -67,11 +67,19 @@ export function BookingFlow({ products }: { products: any[] }) {
         }
     }, [selectedDate, selectedProduct, currentStep]);
 
+    // Helper function to format date as YYYY-MM-DD without timezone conversion
+    const formatDateOnly = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
     const loadSlots = async () => {
         if (!selectedProduct || !selectedDate) return;
         setIsLoadingSlots(true);
         setSelectedSlot(null);
-        const result = await checkAvailabilityAction(selectedProduct.id, selectedDate.toISOString());
+        const result = await checkAvailabilityAction(selectedProduct.id, formatDateOnly(selectedDate));
         if (result.success) {
             setAvailableSlots(result.slots || []);
         }
@@ -115,7 +123,7 @@ export function BookingFlow({ products }: { products: any[] }) {
         try {
             const result = await completeBooking({
                 productId: selectedProduct.id,
-                appointmentDate: selectedDate.toISOString(),
+                appointmentDate: formatDateOnly(selectedDate),
                 timeSlot: selectedSlot,
                 paymentAmount: 0,
                 paymentType: 'FULL',
@@ -148,7 +156,7 @@ export function BookingFlow({ products }: { products: any[] }) {
         try {
             const result = await completeBooking({
                 productId: selectedProduct.id,
-                appointmentDate: selectedDate.toISOString(),
+                appointmentDate: formatDateOnly(selectedDate),
                 timeSlot: selectedSlot,
                 paymentAmount: amount,
                 paymentType,
