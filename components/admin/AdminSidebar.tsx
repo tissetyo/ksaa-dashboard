@@ -41,15 +41,15 @@ export function AdminSidebar() {
 
     return (
         <div className={cn(
-            "relative bg-navy-900 text-white transition-all duration-300 flex flex-col",
+            "relative bg-white border-r border-gray-200 text-gray-900 transition-all duration-300 flex flex-col",
             isCollapsed ? "w-20" : "w-64"
         )}>
-            <div className="p-6 flex items-center justify-between">
-                {!isCollapsed && <h1 className="text-xl font-bold text-blue-400">KSAA Admin</h1>}
+            <div className="p-6 flex items-center justify-between border-b border-gray-200">
+                {!isCollapsed && <h1 className="text-xl font-bold text-blue-600">KSAA Admin</h1>}
                 <Button
                     variant="ghost"
                     size="icon"
-                    className="text-gray-400 hover:text-white hover:bg-navy-800"
+                    className="text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                     onClick={() => setIsCollapsed(!isCollapsed)}
                 >
                     {isCollapsed ? <ChevronRight /> : <ChevronLeft />}
@@ -62,10 +62,10 @@ export function AdminSidebar() {
                         key={item.href}
                         href={item.href}
                         className={cn(
-                            "flex items-center px-4 py-3 rounded-lg transition-colors",
+                            "flex items-center px-4 py-3 rounded-lg transition-all duration-150",
                             pathname === item.href
                                 ? "bg-blue-600 text-white"
-                                : "text-white hover:bg-navy-800 hover:text-blue-400"
+                                : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
                         )}
                     >
                         <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />
@@ -74,11 +74,11 @@ export function AdminSidebar() {
                 ))}
             </nav>
 
-            <div className="p-4 border-t border-navy-800">
+            <div className="p-4 border-t border-gray-200">
                 <Button
                     variant="ghost"
                     className={cn(
-                        "w-full text-gray-400 hover:text-red-400 hover:bg-navy-800",
+                        "w-full text-gray-600 hover:text-red-600 hover:bg-gray-100",
                         isCollapsed ? "justify-center" : "justify-start"
                     )}
                     onClick={() => signOut({ callbackUrl: '/admin-login' })}
