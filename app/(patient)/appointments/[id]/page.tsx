@@ -48,7 +48,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
         notFound();
     }
 
-    const statusColors = {
+    const statusColors: Record<string, string> = {
         PENDING: 'bg-yellow-100 text-yellow-800',
         CONFIRMED: 'bg-blue-100 text-blue-800',
         COMPLETED: 'bg-green-100 text-green-800',
@@ -56,7 +56,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
         NO_SHOW: 'bg-gray-100 text-gray-800',
     };
 
-    const paymentStatusColors = {
+    const paymentStatusColors: Record<string, string> = {
         UNPAID: 'bg-red-100 text-red-800',
         DEPOSIT_PAID: 'bg-blue-100 text-blue-800',
         FULL_PAID: 'bg-green-100 text-green-800',
@@ -178,7 +178,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
                             <div className="border-t pt-4">
                                 <p className="font-medium text-gray-900 mb-3">Payment History</p>
                                 <div className="space-y-2">
-                                    {appointment.payments.map((payment) => (
+                                    {appointment.payments.map((payment: any) => (
                                         <div key={payment.id} className="flex items-center justify-between text-sm">
                                             <div className="flex items-center gap-2">
                                                 {payment.status === 'SUCCEEDED' ? (
