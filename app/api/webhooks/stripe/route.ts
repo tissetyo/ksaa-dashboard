@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
         // Update Payment record if it exists
         await db.payment.updateMany({
-            where: { stripPaymentIntentId: paymentIntent.id },
+            where: { stripePaymentIntentId: paymentIntent.id },
             data: { status: 'SUCCEEDED' },
         });
     }
