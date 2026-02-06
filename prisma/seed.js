@@ -5,10 +5,11 @@ const bcrypt = require('bcryptjs');
 const prisma = new PrismaClient();
 
 async function main() {
-    const adminEmail = process.env.ADMIN_EMAIL || 'admin@ksaa.com';
-    const adminPassword = 'adminpassword123';
+    const adminEmail = 'admin@ksaa.com';
+    const adminPassword = 'KSAAadmin2024!';
 
     console.log('Seeding database...');
+    console.log('Creating superadmin account...');
 
     // Create Super Admin
     const hashedPassword = await bcrypt.hash(adminPassword, 10);
@@ -43,9 +44,12 @@ async function main() {
             }
         },
     });
-    console.log(`Demo patient created: ${patientEmail}`);
+    console.log(`Demo patient created: ${patientEmail} / ${patientPassword}`);
 
-    console.log(`Admin user created: ${admin.email}`);
+    console.log('\n✅ SUPERADMIN ACCOUNT CREATED:');
+    console.log(`   Email: ${adminEmail}`);
+    console.log(`   Password: ${adminPassword}`);
+    console.log(`   Login at: /admin-login\n`);
 
     const products = [
         {

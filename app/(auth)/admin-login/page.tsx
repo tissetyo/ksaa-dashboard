@@ -51,11 +51,12 @@ export default function AdminLoginPage() {
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email">Admin Email</Label>
+                            <Label htmlFor="email" className="text-gray-200">Admin Email</Label>
                             <Input
                                 id="email"
                                 type="email"
-                                className="bg-navy-800 border-navy-700 text-white"
+                                placeholder="admin@ksaa.com"
+                                className="bg-navy-800 border-navy-700 text-white placeholder:text-gray-400"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -63,11 +64,12 @@ export default function AdminLoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password" className="text-gray-200">Password</Label>
                             <Input
                                 id="password"
                                 type="password"
-                                className="bg-navy-800 border-navy-700 text-white"
+                                placeholder="Enter your password"
+                                className="bg-navy-800 border-navy-700 text-white placeholder:text-gray-400"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
