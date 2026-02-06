@@ -65,7 +65,7 @@ export async function completeBooking(data: {
     const product = await db.product.findUnique({ where: { id: data.productId } });
     if (!product) throw new Error('Product not found');
 
-    const totalAmount = product.priceMYR;
+    const totalAmount = product.priceMYR || 0;
     const paidAmount = data.paymentAmount;
     const balanceAmount = totalAmount - paidAmount;
 
