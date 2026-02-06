@@ -59,8 +59,16 @@ export default async function AdminProductsPage() {
                             products.map((product) => (
                                 <TableRow key={product.id}>
                                     <TableCell className="font-medium">{product.name}</TableCell>
-                                    <TableCell>{formatCurrency(product.priceMYR)}</TableCell>
-                                    <TableCell>{product.depositPercentage}%</TableCell>
+                                    <TableCell>
+                                        {product.isFree ? (
+                                            <Badge variant="secondary">FREE</Badge>
+                                        ) : (
+                                            formatCurrency(product.priceMYR || 0)
+                                        )}
+                                    </TableCell>
+                                    <TableCell>
+                                        {product.isFree ? '-' : `${product.depositPercentage || 0}%`}
+                                    </TableCell>
                                     <TableCell>{product.durationMinutes}m</TableCell>
                                     <TableCell>{product.quotaPerDay}</TableCell>
                                     <TableCell>
