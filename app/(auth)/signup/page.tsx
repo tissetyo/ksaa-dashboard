@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
 
+export const dynamic = 'force-dynamic';
+
 export default function SignupPage() {
     const [salutation, setSalutation] = useState('');
     const [email, setEmail] = useState('');
