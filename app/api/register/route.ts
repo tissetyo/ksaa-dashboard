@@ -40,8 +40,20 @@ export async function POST(req: Request) {
         });
 
         return NextResponse.json({ message: 'User created' }, { status: 201 });
-    } catch (error) {
-        console.error('SIGNUP_ERROR', error);
-        return NextResponse.json({ message: 'Internal error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('[SIGNUP_ERROR]', error);
+
+        // Return a more descriptive error in development or if it's a known Prisma error
+        if (error.code) {
+            return NextResponse.json({
+                message: `Database error: ${error.code}`,
+                details: error.message
+            }, { status: 500 });
+        }
+
+        return NextResponse.json({
+            message: 'Internal server error during registration',
+            error: error?.message || 'Unknown error'
+        }, { status: 500 });
     }
 }
