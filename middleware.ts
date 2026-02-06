@@ -5,7 +5,7 @@ import { NextResponse } from 'next/server';
 const { auth } = NextAuth({
     ...authConfig,
     callbacks: {
-        async session({ session, token }) {
+        session({ session, token }) {
             if (token.sub && session.user) {
                 session.user.id = token.sub;
             }
@@ -14,7 +14,7 @@ const { auth } = NextAuth({
             }
             return session;
         },
-        async jwt({ token }) {
+        jwt({ token }) {
             return token;
         },
     },
