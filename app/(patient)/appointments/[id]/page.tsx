@@ -121,14 +121,6 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
                                 <p className="text-sm text-gray-500">Address will be provided upon confirmation</p>
                             </div>
                         </div>
-
-                        {/* Notes */}
-                        {appointment.notes && (
-                            <div className="bg-blue-50 p-4 rounded-lg">
-                                <p className="font-medium text-gray-900 mb-2">Notes</p>
-                                <p className="text-gray-700">{appointment.notes}</p>
-                            </div>
-                        )}
                     </CardContent>
                 </Card>
 
