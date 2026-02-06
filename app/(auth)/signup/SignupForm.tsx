@@ -87,30 +87,32 @@ function SignupForm() {
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="salutation">Title</Label>
-                            <Select value={salutation} onValueChange={setSalutation}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select title" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="MR">Mr.</SelectItem>
-                                    <SelectItem value="MRS">Mrs.</SelectItem>
-                                    <SelectItem value="MS">Ms.</SelectItem>
-                                    <SelectItem value="DR">Dr.</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="fullName">Full Name</Label>
-                            <Input
-                                id="fullName"
-                                placeholder="John Doe"
-                                value={fullName}
-                                onChange={(e) => setFullName(e.target.value)}
-                                required
-                                disabled={isLoading}
-                            />
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2 col-span-1">
+                                <Label htmlFor="salutation">Title</Label>
+                                <Select value={salutation} onValueChange={setSalutation}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="MR">Mr.</SelectItem>
+                                        <SelectItem value="MRS">Mrs.</SelectItem>
+                                        <SelectItem value="MS">Ms.</SelectItem>
+                                        <SelectItem value="DR">Dr.</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                                <Label htmlFor="fullName">Full Name</Label>
+                                <Input
+                                    id="fullName"
+                                    placeholder="John Doe"
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    required
+                                    disabled={isLoading}
+                                />
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
