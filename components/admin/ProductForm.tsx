@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
 import {
     Select,
     SelectContent,
@@ -18,6 +19,7 @@ import { createProduct, updateProduct } from '@/lib/actions/admin-product';
 
 export function ProductForm({ initialData }: { initialData?: any }) {
     const [isLoading, setIsLoading] = useState(false);
+    const [isFree, setIsFree] = useState(initialData?.isFree ?? false);
     const router = useRouter();
     const isEditing = !!initialData;
 
@@ -71,33 +73,50 @@ export function ProductForm({ initialData }: { initialData?: any }) {
                 />
             </div>
 
+            <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
+                <Switch
+                    id="isFree"
+                    name="isFree"
+                    checked={isFree}
+                    onCheckedChange={setIsFree}
+                />
+                <div>
+                    <Label htmlFor="isFree" className="cursor-pointer">Free Service</Label>
+                    <p className="text-sm text-muted-foreground">This service will be offered at no cost</p>
+                </div>
+            </div>
+
+            {!isFree && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="priceMYR">Price (MYR) *</Label>
+                        <Input
+                            id="priceMYR"
+                            name="priceMYR"
+                            type="number"
+                            step="0.01"
+                            defaultValue={initialData?.priceMYR}
+                            placeholder="0.00"
+                            required={!isFree}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="depositPercentage">Deposit Percentage (%) *</Label>
+                        <Input
+                            id="depositPercentage"
+                            name="depositPercentage"
+                            type="number"
+                            min="0"
+                            max="100"
+                            defaultValue={initialData?.depositPercentage ?? 30}
+                            required={!isFree}
+                        />
+                    </div>
+                </div>
+            )}
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                    <Label htmlFor="priceMYR">Price (MYR)</Label>
-                    <Input
-                        id="priceMYR"
-                        name="priceMYR"
-                        type="number"
-                        step="0.01"
-                        defaultValue={initialData?.priceMYR}
-                        placeholder="0.00"
-                        required
-                    />
-                </div>
-
-                <div className="space-y-2">
-                    <Label htmlFor="depositPercentage">Deposit Percentage (%)</Label>
-                    <Input
-                        id="depositPercentage"
-                        name="depositPercentage"
-                        type="number"
-                        min="0"
-                        max="100"
-                        defaultValue={initialData?.depositPercentage ?? 30}
-                        required
-                    />
-                </div>
-
                 <div className="space-y-2">
                     <Label htmlFor="durationMinutes">Duration (Minutes)</Label>
                     <Input
@@ -149,6 +168,6 @@ export function ProductForm({ initialData }: { initialData?: any }) {
                     {isLoading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product')}
                 </Button>
             </div>
-        </form>
+        </form >
     );
 }

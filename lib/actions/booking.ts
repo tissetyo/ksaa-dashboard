@@ -3,6 +3,7 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { stripe } from '@/lib/stripe';
+import { sendServiceBookingNotification, sendReferralServiceBookingNotification } from '@/lib/email';
 // Enum imports might fail if client not generated yet, using string literals in code where needed
 // import { AppointmentStatus, PaymentStatus } from '@prisma/client';
 import { revalidatePath } from 'next/cache';
@@ -46,7 +47,17 @@ export async function completeBooking(data: {
     if (!session?.user?.id) throw new Error('Unauthorized');
 
     const patient = await db.patient.findUnique({
-        where: { userId: session.user.id }
+        where: { userId: session.user.id },
+        include: {
+            user: { select: { email: true } },
+            referredByStaff: {
+                select: {
+                    id: true,
+                    fullName: true,
+                    email: true,
+                },
+            },
+        },
     });
 
     if (!patient) throw new Error('Patient profile not found');
@@ -106,6 +117,36 @@ export async function completeBooking(data: {
 
         return { appointment, payment };
     });
+
+    // Send email notifications
+    const appointmentDate = new Date(data.appointmentDate);
+    const formattedDate = appointmentDate.toLocaleDateString('en-MY', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+    });
+
+    // Send notification to admin
+    await sendServiceBookingNotification({
+        patientName: patient.fullName,
+        patientEmail: patient.user.email,
+        patientPhone: patient.phone,
+        serviceName: product.name,
+        appointmentDate: formattedDate,
+        appointmentTime: data.timeSlot,
+    });
+
+    // Send notification to referring staff if applicable
+    if (patient.referredByStaff) {
+        await sendReferralServiceBookingNotification({
+            staffName: patient.referredByStaff.fullName,
+            staffEmail: patient.referredByStaff.email,
+            patientName: patient.fullName,
+            serviceName: product.name,
+            appointmentDate: formattedDate,
+            appointmentTime: data.timeSlot,
+        });
+    }
 
     revalidatePath('/dashboard');
     revalidatePath('/appointments');

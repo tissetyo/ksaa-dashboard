@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { db } from '@/lib/db';
+import { sendReferralSignupNotification } from '@/lib/email';
 
 export async function POST(req: Request) {
     try {
@@ -14,10 +15,17 @@ export async function POST(req: Request) {
 
         // Validate referral code if provided
         let referredByStaffId = null;
+        let referringStaff = null;
         if (referralCode) {
             const staff = await db.staff.findUnique({
                 where: { staffCode: referralCode.toUpperCase() },
-                select: { id: true, isActive: true },
+                select: {
+                    id: true,
+                    isActive: true,
+                    fullName: true,
+                    email: true,
+                    staffCode: true,
+                },
             });
 
             if (!staff) {
@@ -29,6 +37,7 @@ export async function POST(req: Request) {
             }
 
             referredByStaffId = staff.id;
+            referringStaff = staff;
         }
 
         const normalizedEmail = email.toLowerCase();
@@ -59,6 +68,18 @@ export async function POST(req: Request) {
                 },
             },
         });
+
+        // Send email notification to staff if referred
+        if (referringStaff) {
+            await sendReferralSignupNotification({
+                staffName: referringStaff.fullName,
+                staffEmail: referringStaff.email,
+                staffCode: referringStaff.staffCode,
+                patientName: fullName,
+                patientEmail: normalizedEmail,
+                patientPhone: phone,
+            });
+        }
 
         return NextResponse.json({ message: 'User created' }, { status: 201 });
     } catch (error: any) {
