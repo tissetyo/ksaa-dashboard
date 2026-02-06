@@ -209,7 +209,6 @@ export const getAppointmentById = cache(async (appointmentId: string) => {
                 select: {
                     fullName: true,
                     phone: true,
-                    email: true,
                 },
             },
             product: {
