@@ -12,7 +12,8 @@ import {
     Calendar as CalendarIcon,
     Clock,
     CreditCard,
-    CheckCircle2
+    CheckCircle2,
+    Video
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
@@ -21,6 +22,7 @@ import { createBookingIntent, completeBooking } from '@/lib/actions/booking';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 import { PaymentForm } from './PaymentForm';
+import { ConsultationMethodSelector } from './ConsultationMethodSelector';
 import { toast } from 'sonner';
 
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
@@ -48,6 +50,15 @@ export function BookingFlow({ products }: { products: any[] }) {
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [clientSecret, setClientSecret] = useState<string | null>(null);
     const [bookingResult, setBookingResult] = useState<any>(null);
+    const [consultationData, setConsultationData] = useState<{
+        type: 'GOOGLE_MEET' | 'WHATSAPP_CALL';
+        phone?: string;
+        email?: string;
+    } | null>(null);
+
+    // Check if selected product is a free consultation
+    const isFreeConsultation = selectedProduct?.priceMYR === 0 &&
+        selectedProduct?.name?.toLowerCase().includes('consultation');
 
     // Load slots when date/product changes
     useEffect(() => {
@@ -95,6 +106,12 @@ export function BookingFlow({ products }: { products: any[] }) {
     const handleFreeBooking = async () => {
         if (!selectedProduct || !selectedDate || !selectedSlot) return;
 
+        // Validate consultation data for free consultations
+        if (isFreeConsultation && !consultationData) {
+            toast.error('Please select a consultation method');
+            return;
+        }
+
         try {
             const result = await completeBooking({
                 productId: selectedProduct.id,
@@ -103,6 +120,10 @@ export function BookingFlow({ products }: { products: any[] }) {
                 paymentAmount: 0,
                 paymentType: 'FULL',
                 stripePaymentIntentId: undefined,
+                // Include consultation data if this is a free consultation
+                consultationType: consultationData?.type,
+                consultationPhone: consultationData?.phone,
+                consultationEmail: consultationData?.email,
             });
 
             if (result.success) {
@@ -173,36 +194,53 @@ export function BookingFlow({ products }: { products: any[] }) {
                 );
             case 2:
                 return (
-                    <div className="flex flex-col md:flex-row gap-8">
-                        <div className="flex-1">
-                            <Calendar
-                                mode="single"
-                                selected={selectedDate}
-                                onSelect={setSelectedDate}
-                                disabled={(date) => date < new Date() || date.getDay() === 0} // Disable past and Sundays
-                                className="rounded-md border"
-                            />
-                        </div>
-                        <div className="flex-1 space-y-4">
-                            <h4 className="font-medium">Available Slots for {selectedDate ? format(selectedDate, 'PP') : ''}</h4>
-                            {isLoadingSlots ? (
-                                <p>Loading slots...</p>
-                            ) : availableSlots.length > 0 ? (
-                                <div className="grid grid-cols-3 gap-2">
-                                    {availableSlots.map((slot) => (
-                                        <Button
-                                            key={slot}
-                                            variant={selectedSlot === slot ? 'default' : 'outline'}
-                                            onClick={() => setSelectedSlot(slot)}
-                                            className="w-full"
-                                        >
-                                            {slot}
-                                        </Button>
-                                    ))}
+                    <div className="space-y-8">
+                        {/* Consultation Method Selection for Free Consultations */}
+                        {isFreeConsultation && (
+                            <div>
+                                <ConsultationMethodSelector
+                                    defaultEmail=""
+                                    defaultPhone=""
+                                    onMethodChange={setConsultationData}
+                                />
+                                <div className="mt-6 border-t pt-6">
+                                    <h4 className="font-medium text-lg mb-4">Select Date & Time</h4>
                                 </div>
-                            ) : (
-                                <p className="text-gray-500">No slots available for this date.</p>
-                            )}
+                            </div>
+                        )}
+
+                        {/* Date and Time Selection */}
+                        <div className="flex flex-col md:flex-row gap-8">
+                            <div className="flex-1">
+                                <Calendar
+                                    mode="single"
+                                    selected={selectedDate}
+                                    onSelect={setSelectedDate}
+                                    disabled={(date) => date < new Date() || date.getDay() === 0} // Disable past and Sundays
+                                    className="rounded-md border"
+                                />
+                            </div>
+                            <div className="flex-1 space-y-4">
+                                <h4 className="font-medium">Available Slots for {selectedDate ? format(selectedDate, 'PP') : ''}</h4>
+                                {isLoadingSlots ? (
+                                    <p>Loading slots...</p>
+                                ) : availableSlots.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {availableSlots.map((slot) => (
+                                            <Button
+                                                key={slot}
+                                                variant={selectedSlot === slot ? 'default' : 'outline'}
+                                                onClick={() => setSelectedSlot(slot)}
+                                                className="w-full"
+                                            >
+                                                {slot}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <p className="text-gray-500">No slots available for this date.</p>
+                                )}
+                            </div>
                         </div>
                     </div>
                 );
