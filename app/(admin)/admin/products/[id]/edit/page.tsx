@@ -1,5 +1,7 @@
 import { db } from '@/lib/db';
 import { notFound } from 'next/navigation';
+
+export const dynamic = 'force-dynamic';
 import { ProductForm } from '@/components/admin/ProductForm';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 

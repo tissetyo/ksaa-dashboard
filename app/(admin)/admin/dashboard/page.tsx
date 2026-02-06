@@ -1,5 +1,7 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Users,

@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { ScheduleBuilder } from '@/components/admin/ScheduleBuilder';
 import { DateOverrideForm } from '@/components/admin/DateOverrideForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+
+export const dynamic = 'force-dynamic';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
     Table,

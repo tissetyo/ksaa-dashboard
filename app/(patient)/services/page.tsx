@@ -1,6 +1,8 @@
 import { db } from '@/lib/db';
 import { ServiceCard } from '@/components/patient/ServiceCard';
 
+export const dynamic = 'force-dynamic';
+
 export default async function ServicesPage() {
     const products = await db.product.findMany({
         where: { isActive: true },

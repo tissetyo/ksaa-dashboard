@@ -2,6 +2,8 @@ import { db } from '@/lib/db';
 import { AppointmentTable } from '@/components/admin/AppointmentTable';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminAppointmentsPage() {
     const appointments = await db.appointment.findMany({
         include: {

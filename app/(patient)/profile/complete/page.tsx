@@ -1,5 +1,7 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
 import { ProfileForm } from '@/components/patient/ProfileForm';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
