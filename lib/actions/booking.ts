@@ -69,6 +69,13 @@ export async function completeBooking(data: {
     const paidAmount = data.paymentAmount;
     const balanceAmount = totalAmount - paidAmount;
 
+    // Determine payment status
+    const paymentStatus = totalAmount === 0
+        ? 'FULL_PAID'  // Free appointments are considered fully paid
+        : balanceAmount === 0
+            ? 'FULL_PAID'
+            : 'DEPOSIT_PAID';
+
     // Create Appointment and Payment record in a transaction
     const result = await db.$transaction(async (tx: any) => {
         const appointment = await tx.appointment.create({
@@ -78,6 +85,7 @@ export async function completeBooking(data: {
                 appointmentDate: new Date(data.appointmentDate),
                 timeSlot: data.timeSlot,
                 status: 'PENDING',
+                paymentStatus: paymentStatus,
                 totalAmountMYR: totalAmount,
                 paidAmountMYR: paidAmount,
                 balanceAmountMYR: balanceAmount,
