@@ -47,12 +47,11 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="salutation">Title</Label>
-                        <Select name="salutation" defaultValue={initialData?.salutation || ''}>
+                        <Select name="salutation" defaultValue={initialData?.salutation}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Select title" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">None</SelectItem>
                                 {Object.values(Salutation).map((sal) => (
                                     <SelectItem key={sal} value={sal}>
                                         {sal === 'MR' ? 'Mr.' :
