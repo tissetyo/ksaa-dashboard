@@ -42,6 +42,10 @@ export async function completeBooking(data: {
     paymentAmount: number;
     paymentType: 'FULL' | 'DEPOSIT';
     stripePaymentIntentId?: string;
+    // Consultation fields (optional)
+    consultationType?: 'GOOGLE_MEET' | 'WHATSAPP_CALL' | 'IN_PERSON';
+    consultationPhone?: string;
+    consultationEmail?: string;
 }) {
     const session = await auth();
     if (!session?.user?.id) throw new Error('Unauthorized');
@@ -89,6 +93,10 @@ export async function completeBooking(data: {
                 totalAmountMYR: totalAmount,
                 paidAmountMYR: paidAmount,
                 balanceAmountMYR: balanceAmount,
+                // Consultation fields
+                consultationType: data.consultationType,
+                consultationPhone: data.consultationPhone,
+                consultationEmail: data.consultationEmail,
             },
         });
 
