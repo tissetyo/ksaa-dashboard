@@ -137,25 +137,27 @@ export function ConsultationBookingClient({
 
             {/* Progress Steps */}
             <div className="mb-8">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-center relative">
                     {STEPS.map((step, index) => (
-                        <div key={step.id} className="flex items-center flex-1">
-                            <div className="flex flex-col items-center flex-1">
+                        <div key={step.id} className="flex items-center">
+                            <div className="flex flex-col items-center z-10">
                                 <div
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center ${currentStep >= step.id
+                                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${currentStep >= step.id
                                         ? 'bg-blue-600 text-white'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}
                                 >
-                                    <step.icon className="h-5 w-5" />
+                                    <step.icon className="h-6 w-6" />
                                 </div>
-                                <span className="text-xs mt-2 text-center">{step.name}</span>
+                                <span className="text-sm mt-2 text-center font-medium">{step.name}</span>
                             </div>
                             {index < STEPS.length - 1 && (
-                                <div
-                                    className={`h-1 flex-1 mx-2 ${currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
-                                        }`}
-                                />
+                                <div className="flex items-center" style={{ width: '200px', marginTop: '-24px' }}>
+                                    <div
+                                        className={`h-1 w-full transition-colors ${currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
+                                            }`}
+                                    />
+                                </div>
                             )}
                         </div>
                     ))}
@@ -262,6 +264,34 @@ export function ConsultationBookingClient({
                         <p className="text-gray-600 mb-6">
                             Your free consultation has been scheduled successfully.
                         </p>
+
+                        {/* Booking Summary */}
+                        <div className="bg-gray-50 p-6 rounded-lg mb-6 text-left">
+                            <h3 className="font-semibold text-gray-900 mb-4 text-center">Booking Summary</h3>
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Service:</span>
+                                    <span className="font-medium text-gray-900">{product.name}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Date:</span>
+                                    <span className="font-medium text-gray-900">
+                                        {selectedDate && format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                                    </span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Time:</span>
+                                    <span className="font-medium text-gray-900">{selectedSlot}</span>
+                                </div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-600">Method:</span>
+                                    <span className="font-medium text-gray-900">
+                                        {consultationData.type === 'GOOGLE_MEET' ? 'Google Meet' : 'WhatsApp Call'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="bg-blue-50 p-4 rounded-lg mb-6">
                             <p className="font-medium text-gray-900 mb-2">What's Next?</p>
                             {consultationData.type === 'GOOGLE_MEET' ? (

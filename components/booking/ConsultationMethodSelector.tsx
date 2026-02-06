@@ -51,20 +51,14 @@ export function ConsultationMethodSelector({
 
     return (
         <div className="space-y-6">
-            <div>
-                <h3 className="text-lg font-semibold mb-2">Choose Consultation Method</h3>
-                <p className="text-sm text-gray-600">
-                    Select how you'd like to have your free consultation
-                </p>
-            </div>
 
             <RadioGroup value={method} onValueChange={handleMethodChange}>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Google Meet Option */}
                     <Card
                         className={`cursor-pointer transition-all ${method === 'GOOGLE_MEET'
-                                ? 'ring-2 ring-blue-600 border-blue-600'
-                                : 'hover:border-gray-400'
+                            ? 'ring-2 ring-blue-600 border-blue-600'
+                            : 'hover:border-gray-400'
                             }`}
                         onClick={() => handleMethodChange('GOOGLE_MEET')}
                     >
@@ -92,8 +86,8 @@ export function ConsultationMethodSelector({
                     {/* WhatsApp Call Option */}
                     <Card
                         className={`cursor-pointer transition-all ${method === 'WHATSAPP_CALL'
-                                ? 'ring-2 ring-green-600 border-green-600'
-                                : 'hover:border-gray-400'
+                            ? 'ring-2 ring-green-600 border-green-600'
+                            : 'hover:border-gray-400'
                             }`}
                         onClick={() => handleMethodChange('WHATSAPP_CALL')}
                     >
