@@ -122,7 +122,7 @@ export default async function PatientDashboard() {
                             <CardHeader>
                                 <div className="flex items-start justify-between">
                                     <CardTitle className="text-lg">{service.name}</CardTitle>
-                                    {service.priceMYR === 0 && (
+                                    {(service.priceMYR ?? 0) === 0 && (
                                         <Badge className="bg-green-500 hover:bg-green-600">
                                             <Sparkles className="h-3 w-3 mr-1" />
                                             FREE
@@ -139,11 +139,11 @@ export default async function PatientDashboard() {
                                 <div className="space-y-4">
                                     <div>
                                         <p className="text-2xl font-bold text-blue-600">
-                                            {service.priceMYR === 0 ? 'FREE' : `RM ${service.priceMYR.toFixed(2)}`}
+                                            {(service.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(service.priceMYR ?? 0).toFixed(2)}`}
                                         </p>
-                                        {service.priceMYR > 0 && service.depositPercentage > 0 && (
+                                        {(service.priceMYR ?? 0) > 0 && (service.depositPercentage ?? 0) > 0 && (
                                             <p className="text-sm text-gray-500">
-                                                or RM {(service.priceMYR * (service.depositPercentage / 100)).toFixed(2)} deposit
+                                                or RM {((service.priceMYR ?? 0) * ((service.depositPercentage ?? 0) / 100)).toFixed(2)} deposit
                                             </p>
                                         )}
                                     </div>
