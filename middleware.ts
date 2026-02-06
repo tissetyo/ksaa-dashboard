@@ -10,9 +10,13 @@ export default auth((req) => {
 
     const isApiAuthRoute = nextUrl.pathname.startsWith('/api/auth');
     const isPublicRoute = ['/', '/login', '/signup', '/admin-login'].includes(nextUrl.pathname);
+    const isPublicApiRoute = ['/api/register', '/api/webhooks/stripe'].includes(nextUrl.pathname);
     const isAdminRoute = nextUrl.pathname.startsWith('/admin');
 
-    if (isApiAuthRoute) return NextResponse.next();
+    if (isApiAuthRoute || isPublicApiRoute) return NextResponse.next();
+
+    // Prevent middleware from redirecting internal API calls to the login page (GET/POST mismatch)
+    if (nextUrl.pathname.startsWith('/api')) return NextResponse.next();
 
     if (!isLoggedIn && !isPublicRoute) {
         return NextResponse.redirect(new URL('/login', nextUrl));
