@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,16 @@ export default function SignupPage() {
     const [referralCode, setReferralCode] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const searchParams = useSearchParams();
+
+    // Auto-fill referral code from URL parameter (from QR code)
+    useEffect(() => {
+        const refParam = searchParams.get('ref');
+        if (refParam) {
+            setReferralCode(refParam.toUpperCase());
+            toast.success('Referral code applied!');
+        }
+    }, [searchParams]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
