@@ -40,23 +40,23 @@ export default function AdminLoginPage() {
     };
 
     return (
-        <div className="flex items-center justify-center min-h-screen bg-navy-950 p-4">
-            <Card className="w-full max-w-md border-navy-800 bg-navy-900 text-white">
+        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 p-4">
+            <Card className="w-full max-w-md shadow-xl">
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl text-center font-bold text-blue-400">Staff Portal</CardTitle>
-                    <CardDescription className="text-center text-gray-400">
+                    <CardTitle className="text-2xl text-center font-bold text-blue-500">Staff Portal</CardTitle>
+                    <CardDescription className="text-center text-gray-600">
                         Secure access for KSAA staff and administrators
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4">
                         <div className="space-y-2">
-                            <Label htmlFor="email" className="text-gray-200">Admin Email</Label>
+                            <Label htmlFor="email" className="text-gray-700">Admin Email</Label>
                             <Input
                                 id="email"
                                 type="email"
                                 placeholder="admin@ksaa.com"
-                                className="bg-navy-800 border-navy-700 text-white placeholder:text-gray-400"
+                                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
@@ -64,12 +64,12 @@ export default function AdminLoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="password" className="text-gray-200">Password</Label>
+                            <Label htmlFor="password" className="text-gray-700">Password</Label>
                             <Input
                                 id="password"
                                 type="password"
                                 placeholder="Enter your password"
-                                className="bg-navy-800 border-navy-700 text-white placeholder:text-gray-400"
+                                className="bg-white border-gray-300 text-gray-900 placeholder:text-gray-400"
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
