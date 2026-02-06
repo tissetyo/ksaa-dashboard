@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Calendar, Package, User, ArrowRight, Sparkles } from 'lucide-react';
 import { db } from '@/lib/db';
+import { OnboardingTrigger } from '@/components/onboarding/OnboardingTrigger';
 
 export const dynamic = 'force-dynamic';
 
@@ -167,6 +168,9 @@ export default async function PatientDashboard() {
                     </Card>
                 )}
             </div>
+
+            {/* Onboarding Modal */}
+            <OnboardingTrigger />
         </div>
     );
 }

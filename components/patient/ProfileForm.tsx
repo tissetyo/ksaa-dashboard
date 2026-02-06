@@ -31,7 +31,13 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
         try {
             await updatePatientProfile(data);
             toast.success('Profile updated successfully');
-            router.push('/profile');
+
+            // If this is initial profile completion (no existing data), show onboarding
+            if (!initialData?.dateOfBirth) {
+                router.push('/dashboard?onboarding=true');
+            } else {
+                router.push('/profile');
+            }
         } catch (error) {
             toast.error('Failed to update profile');
             console.error(error);
