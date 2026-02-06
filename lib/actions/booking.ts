@@ -88,7 +88,7 @@ export async function completeBooking(data: {
             data: {
                 appointmentId: appointment.id,
                 amountMYR: paidAmount,
-                stripPaymentIntentId: data.stripePaymentIntentId,
+                stripePaymentIntentId: data.stripePaymentIntentId,
                 status: 'SUCCEEDED',
             },
         });
