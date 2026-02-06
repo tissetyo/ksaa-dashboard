@@ -53,10 +53,14 @@ export const getPatientAppointments = cache(async (patientId: string) => {
 });
 
 export const getPatientUpcomingAppointments = cache(async (patientId: string) => {
+    const now = new Date();
+    // Set to start of today to include all appointments today
+    const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
     return await db.appointment.findMany({
         where: {
             patientId,
-            appointmentDate: { gte: new Date() },
+            appointmentDate: { gte: startOfToday },
             status: { in: ['PENDING', 'CONFIRMED'] },
         },
         include: {

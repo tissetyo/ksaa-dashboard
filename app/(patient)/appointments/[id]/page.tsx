@@ -202,8 +202,10 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
                             <Button variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
                                 Cancel Appointment
                             </Button>
-                            <Button variant="outline">
-                                Reschedule
+                            <Button asChild variant="outline">
+                                <Link href={`/book?service=${appointment.productId}`}>
+                                    Reschedule
+                                </Link>
                             </Button>
                         </div>
                     </CardContent>

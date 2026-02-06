@@ -86,7 +86,8 @@ export async function completeBooking(data: {
             data: {
                 patientId: patient.id,
                 productId: data.productId,
-                appointmentDate: new Date(data.appointmentDate),
+                // Parse the date string and set to noon local time to avoid timezone issues
+                appointmentDate: new Date(data.appointmentDate.split('T')[0] + 'T12:00:00'),
                 timeSlot: data.timeSlot,
                 status: 'PENDING',
                 paymentStatus: paymentStatus,
