@@ -29,6 +29,9 @@ export default {
         },
     },
     session: { strategy: 'jwt' },
+    pages: {
+        signIn: '/login',
+    },
     secret: process.env.AUTH_SECRET,
     trustHost: true,
 } satisfies NextAuthConfig;
