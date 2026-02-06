@@ -24,15 +24,17 @@ export default auth((req) => {
 
     if (isLoggedIn && isPublicRoute) {
         // Redirect logged in users away from login/signup
-        // Default to dashboard based on role?
+        // Redirect based on role
         const role = req.auth?.user?.role;
-        if (role === 'SUPERADMIN') {
+        if (role === 'SUPERADMIN' || role === 'STAFF') {
             return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
         }
         return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
 
-    if (isLoggedIn && isAdminRoute && req.auth?.user?.role !== 'SUPERADMIN') {
+    // Allow SUPERADMIN and STAFF roles to access admin routes
+    const isAdminRole = req.auth?.user?.role === 'SUPERADMIN' || req.auth?.user?.role === 'STAFF';
+    if (isLoggedIn && isAdminRoute && !isAdminRole) {
         return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
 
