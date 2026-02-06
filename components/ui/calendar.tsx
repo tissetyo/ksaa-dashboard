@@ -194,7 +194,7 @@ function CalendarDayButton({
   }, [modifiers.focused])
 
   // Check if this day has availability
-  const hasAvailability = modifiers.available === true
+  const hasAvailability = !!modifiers.available
 
   return (
     <Button
@@ -220,7 +220,7 @@ function CalendarDayButton({
     >
       {children}
       {hasAvailability && (
-        <span className="w-1.5 h-1.5 bg-green-500 rounded-full mt-0.5" />
+        <span className="w-2 h-2 bg-green-500 rounded-full mt-1" />
       )}
     </Button>
   )
