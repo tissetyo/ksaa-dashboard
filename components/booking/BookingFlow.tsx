@@ -254,12 +254,9 @@ export function BookingFlow({ products }: { products: any[] }) {
                                     month={currentMonth}
                                     onMonthChange={setCurrentMonth}
                                     disabled={(date) => date < new Date() || date.getDay() === 0}
-                                    className="rounded-md border [&_.available]:relative [&_.available]:after:content-[''] [&_.available]:after:absolute [&_.available]:after:bottom-1 [&_.available]:after:left-1/2 [&_.available]:after:-translate-x-1/2 [&_.available]:after:w-1.5 [&_.available]:after:h-1.5 [&_.available]:after:bg-green-500 [&_.available]:after:rounded-full"
+                                    className="rounded-md border"
                                     modifiers={{
                                         available: availableDates.map(d => new Date(d + 'T12:00:00'))
-                                    }}
-                                    modifiersClassNames={{
-                                        available: 'available'
                                     }}
                                 />
                             </div>
