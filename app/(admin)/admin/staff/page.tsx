@@ -1,10 +1,11 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Plus, Users } from 'lucide-react';
+import { StaffCard } from '@/components/admin/StaffCard';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,46 +61,7 @@ export default async function StaffListPage() {
                     </Card>
                 ) : (
                     staff.map((member) => (
-                        <Card key={member.id}>
-                            <CardHeader>
-                                <div className="flex justify-between items-start">
-                                    <div>
-                                        <CardTitle className="flex items-center gap-2">
-                                            {member.fullName}
-                                            {!member.isActive && (
-                                                <span className="text-sm font-normal text-muted-foreground">(Inactive)</span>
-                                            )}
-                                        </CardTitle>
-                                        <p className="text-sm text-muted-foreground">{member.email}</p>
-                                    </div>
-                                    <Button variant="outline" size="sm" asChild>
-                                        <Link href={`/admin/staff/${member.id}/edit`}>Edit</Link>
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent>
-                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                    <div>
-                                        <p className="text-muted-foreground">Referral Code</p>
-                                        <p className="font-mono font-bold text-blue-600">{member.staffCode}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground">Phone</p>
-                                        <p>{member.phone || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground">Referrals</p>
-                                        <p className="font-semibold">{member._count.referredPatients}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground">Status</p>
-                                        <p className={member.isActive ? 'text-green-600' : 'text-red-600'}>
-                                            {member.isActive ? 'Active' : 'Inactive'}
-                                        </p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <StaffCard key={member.id} member={member} />
                     ))
                 )}
             </div>

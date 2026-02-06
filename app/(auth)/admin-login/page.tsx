@@ -77,8 +77,8 @@ export default function AdminLoginPage() {
                             />
                         </div>
                     </CardContent>
-                    <CardFooter>
-                        <Button className="w-full bg-blue-600 hover:bg-blue-700" type="submit" disabled={isLoading}>
+                    <CardFooter className="pt-6">
+                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white" type="submit" disabled={isLoading}>
                             {isLoading ? 'Verifying...' : 'Login to Dashboard'}
                         </Button>
                     </CardFooter>

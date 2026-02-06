@@ -14,7 +14,9 @@ import {
     Bell,
     LogOut,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    UserCog,
+    TrendingUp
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -28,6 +30,8 @@ export function AdminSidebar() {
         { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar },
         { name: 'Patients', href: '/admin/patients', icon: Users },
+        { name: 'Staff', href: '/admin/staff', icon: UserCog },
+        { name: 'Referrals', href: '/admin/referrals', icon: TrendingUp },
         { name: 'Products', href: '/admin/products', icon: Package },
         { name: 'Schedule', href: '/admin/schedule', icon: Clock },
         { name: 'Notifications', href: '/admin/notifications', icon: Bell },

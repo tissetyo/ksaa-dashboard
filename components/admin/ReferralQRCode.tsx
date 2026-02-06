@@ -1,0 +1,58 @@
+'use client';
+
+import { useEffect, useRef } from 'react';
+import QRCode from 'qrcode';
+import { Button } from '@/components/ui/button';
+import { Download } from 'lucide-react';
+
+interface ReferralQRCodeProps {
+    staffCode: string;
+    staffName: string;
+    size?: number;
+}
+
+export function ReferralQRCode({ staffCode, staffName, size = 200 }: ReferralQRCodeProps) {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        if (canvasRef.current) {
+            // Generate QR code with the referral code
+            QRCode.toCanvas(canvasRef.current, staffCode, {
+                width: size,
+                margin: 2,
+                color: {
+                    dark: '#1e3a8a', // Blue color
+                    light: '#ffffff',
+                },
+            });
+        }
+    }, [staffCode, size]);
+
+    const handleDownload = () => {
+        if (canvasRef.current) {
+            const url = canvasRef.current.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `${staffCode}-qr-code.png`;
+            link.href = url;
+            link.click();
+        }
+    };
+
+    return (
+        <div className="flex flex-col items-center gap-4 p-4 bg-muted rounded-lg">
+            <div className="text-center">
+                <p className="text-sm font-medium text-muted-foreground">Referral QR Code</p>
+                <p className="text-xs text-muted-foreground mt-1">Scan to auto-fill referral code</p>
+            </div>
+            <canvas ref={canvasRef} className="border-2 border-border rounded-lg" />
+            <div className="text-center">
+                <p className="font-mono font-bold text-lg text-blue-600">{staffCode}</p>
+                <p className="text-sm text-muted-foreground">{staffName}</p>
+            </div>
+            <Button onClick={handleDownload} variant="outline" size="sm">
+                <Download className="mr-2 h-4 w-4" />
+                Download QR Code
+            </Button>
+        </div>
+    );
+}
