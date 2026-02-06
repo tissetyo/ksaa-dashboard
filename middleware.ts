@@ -2,23 +2,7 @@ import NextAuth from 'next-auth';
 import authConfig from './lib/auth.config';
 import { NextResponse } from 'next/server';
 
-const { auth } = NextAuth({
-    ...authConfig,
-    callbacks: {
-        session({ session, token }) {
-            if (token.sub && session.user) {
-                session.user.id = token.sub;
-            }
-            if (token.role && session.user) {
-                session.user.role = token.role as "SUPERADMIN" | "PATIENT";
-            }
-            return session;
-        },
-        jwt({ token }) {
-            return token;
-        },
-    },
-});
+const { auth } = NextAuth(authConfig);
 
 export default auth((req) => {
     const { nextUrl } = req;

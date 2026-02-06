@@ -10,5 +10,20 @@ export default {
             },
         }),
     ],
+    callbacks: {
+        session({ session, token }) {
+            if (token.sub && session.user) {
+                session.user.id = token.sub;
+            }
+            if (token.role && session.user) {
+                session.user.role = token.role as any;
+            }
+            return session;
+        },
+        jwt({ token }) {
+            return token;
+        },
+    },
     session: { strategy: 'jwt' },
+    trustHost: true,
 } satisfies NextAuthConfig;

@@ -14,17 +14,7 @@ export const {
     adapter: PrismaAdapter(db),
     ...authConfig,
     callbacks: {
-        async session({ token, session }) {
-            if (token.sub && session.user) {
-                session.user.id = token.sub;
-            }
-
-            if (token.role && session.user) {
-                session.user.role = token.role as UserRole;
-            }
-
-            return session;
-        },
+        ...authConfig.callbacks,
         async jwt({ token }) {
             if (!token.sub) return token;
 
