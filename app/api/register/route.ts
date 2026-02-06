@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 
 export async function POST(req: Request) {
     try {
-        const { email, password, fullName, phone } = await req.json();
+        const { salutation, email, password, fullName, phone } = await req.json();
 
         console.log('[REGISTER_DEBUG] Attempting to register:', email);
 
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
                 role: 'PATIENT',
                 patient: {
                     create: {
+                        salutation: salutation || undefined,
                         fullName,
                         phone,
                     },

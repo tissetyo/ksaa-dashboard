@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { toast } from 'sonner';
 import { updatePatientProfile } from '@/lib/actions/patient';
-import { BloodType } from '@prisma/client';
+import { BloodType, Salutation } from '@prisma/client';
 
 export function ProfileForm({ initialData }: { initialData?: any }) {
     const [isLoading, setIsLoading] = useState(false);
@@ -45,6 +45,27 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
             <div className="space-y-4">
                 <h3 className="text-lg font-medium border-b pb-2">Personal Information</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="salutation">Title</Label>
+                        <Select name="salutation" defaultValue={initialData?.salutation || ''}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select title" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="">None</SelectItem>
+                                {Object.values(Salutation).map((sal) => (
+                                    <SelectItem key={sal} value={sal}>
+                                        {sal === 'MR' ? 'Mr.' :
+                                            sal === 'MRS' ? 'Mrs.' :
+                                                sal === 'MS' ? 'Ms.' :
+                                                    sal === 'DR' ? 'Dr.' :
+                                                        sal === 'PROF' ? 'Prof.' :
+                                                            sal}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="fullName">Full Name</Label>
                         <Input

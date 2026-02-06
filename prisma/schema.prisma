@@ -79,6 +79,16 @@ model VerificationToken {
 // PATIENT INFORMATION
 // ============================================================================
 
+enum Salutation {
+  MR
+  MRS
+  MS
+  DR
+  DATO
+  DATIN
+  PROF
+}
+
 enum BloodType {
   A_POSITIVE
   A_NEGATIVE
@@ -96,9 +106,10 @@ model Patient {
   userId String @unique
 
   // Personal Information
-  fullName String
-  phone    String
-  address  String?
+  salutation Salutation?
+  fullName   String
+  phone      String
+  address    String?
 
   // Physical Information
   age       Int?

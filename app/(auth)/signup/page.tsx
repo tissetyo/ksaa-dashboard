@@ -7,10 +7,12 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { toast } from 'sonner';
 
 export default function SignupPage() {
+    const [salutation, setSalutation] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,7 +34,7 @@ export default function SignupPage() {
             const response = await fetch('/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password, fullName, phone }),
+                body: JSON.stringify({ salutation, email, password, fullName, phone }),
             });
 
             if (response.ok) {
@@ -74,6 +76,23 @@ export default function SignupPage() {
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
                     <CardContent className="space-y-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="salutation">Title</Label>
+                            <Select value={salutation} onValueChange={setSalutation}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Select title" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="MR">Mr.</SelectItem>
+                                    <SelectItem value="MRS">Mrs.</SelectItem>
+                                    <SelectItem value="MS">Ms.</SelectItem>
+                                    <SelectItem value="DR">Dr.</SelectItem>
+                                    <SelectItem value="DATO">Dato</SelectItem>
+                                    <SelectItem value="DATIN">Datin</SelectItem>
+                                    <SelectItem value="PROF">Prof.</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="space-y-2">
                             <Label htmlFor="fullName">Full Name</Label>
                             <Input
