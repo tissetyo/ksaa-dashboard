@@ -49,7 +49,8 @@ export default function SignupPage() {
                     toast.error('Login failed after signup. Please log in manually.');
                     router.push('/login');
                 } else {
-                    router.push('/dashboard');
+                    toast.success('Welcome! Please complete your profile.');
+                    router.push('/profile/complete');
                 }
             } else {
                 const data = await response.json();

@@ -1,7 +1,6 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
-
-export const dynamic = 'force-dynamic';
+import { getAdminDashboardStats } from '@/lib/queries';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     Users,
@@ -14,32 +13,13 @@ import {
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 
-export default async function AdminDashboardPage() {
-    const [patientCount, appointmentCount, pendingAppointments, revenue, recentAppointments, dailyQuotas] = await Promise.all([
-        db.patient.count(),
-        db.appointment.count(),
-        db.appointment.count({ where: { status: 'PENDING' } }),
-        db.payment.aggregate({
-            _sum: { amountMYR: true },
-            where: { status: 'SUCCEEDED' }
-        }),
-        db.appointment.findMany({
-            take: 5,
-            orderBy: { createdAt: 'desc' },
-            include: { patient: true, product: true }
-        }),
-        db.dailyQuota.findMany({
-            where: {
-                bookingDate: {
-                    gte: new Date(new Date().setHours(0, 0, 0, 0))
-                }
-            },
-            take: 5,
-            include: { product: true }
-        })
-    ]);
+export const dynamic = 'force-dynamic';
 
-    const stats = [
+export default async function AdminDashboardPage() {
+    const stats = await getAdminDashboardStats();
+    const { patientCount, appointmentCount, pendingAppointments, revenue, recentAppointments, dailyQuotas } = stats;
+
+    const dashboardStats = [
         {
             title: 'Total Patients',
             value: patientCount.toString(),
@@ -82,7 +62,7 @@ export default async function AdminDashboardPage() {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {stats.map((stat) => (
+                {dashboardStats.map((stat) => (
                     <Card key={stat.title}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                             <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>

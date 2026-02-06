@@ -1,12 +1,12 @@
 import { auth } from '@/lib/auth';
-import { db } from '@/lib/db';
-
-export const dynamic = 'force-dynamic';
+import { getPatientByUserId, getPatientUpcomingAppointments } from '@/lib/queries';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { Calendar, Package, User, ArrowRight } from 'lucide-react';
+
+export const dynamic = 'force-dynamic';
 
 export default async function PatientDashboard() {
     const session = await auth();
@@ -15,32 +15,14 @@ export default async function PatientDashboard() {
         redirect('/login');
     }
 
-    const patient = await db.patient.findUnique({
-        where: { userId: session.user.id },
-        include: {
-            appointments: {
-                where: {
-                    appointmentDate: {
-                        gte: new Date(),
-                    },
-                    status: 'CONFIRMED',
-                },
-                include: {
-                    product: true,
-                },
-                orderBy: {
-                    appointmentDate: 'asc',
-                },
-                take: 1,
-            },
-        },
-    });
+    const patient = await getPatientByUserId(session.user.id);
 
     if (!patient) {
         redirect('/profile/complete');
     }
 
-    const nextAppointment = patient.appointments[0];
+    const upcomingAppointments = await getPatientUpcomingAppointments(patient.id);
+    const nextAppointment = upcomingAppointments[0];
 
     return (
         <div className="space-y-8">
