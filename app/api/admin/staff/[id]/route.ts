@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 
 export async function GET(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth();
@@ -13,8 +13,10 @@ export async function GET(
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
+        const { id } = await params;
+
         const staff = await db.staff.findUnique({
-            where: { id: params.id },
+            where: { id },
             include: {
                 user: {
                     select: {
@@ -47,7 +49,7 @@ export async function GET(
 
 export async function PUT(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
         const session = await auth();
@@ -56,10 +58,11 @@ export async function PUT(
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
+        const { id } = await params;
         const { fullName, email, phone, isActive } = await req.json();
 
         const staff = await db.staff.update({
-            where: { id: params.id },
+            where: { id },
             data: {
                 fullName,
                 email: email.toLowerCase(),
