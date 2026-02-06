@@ -1,12 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Calendar } from '@/components/ui/calendar';
 import { ConsultationMethodSelector } from '@/components/booking/ConsultationMethodSelector';
-import { checkAvailabilityAction } from '@/lib/actions/availability';
+import { checkAvailabilityAction, checkMonthAvailabilityAction } from '@/lib/actions/availability';
 import { completeBooking } from '@/lib/actions/booking';
 import { format } from 'date-fns';
 import { toast } from 'sonner';
@@ -42,6 +42,26 @@ export function ConsultationBookingClient({
     const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
     const [isLoadingSlots, setIsLoadingSlots] = useState(false);
     const [isBooking, setIsBooking] = useState(false);
+    const [availableDates, setAvailableDates] = useState<string[]>([]);
+    const [currentMonth, setCurrentMonth] = useState(new Date());
+
+    // Load availability for the current month when step 2 is visible
+    useEffect(() => {
+        if (currentStep === 2) {
+            loadMonthAvailability(currentMonth);
+        }
+    }, [currentStep, currentMonth]);
+
+    const loadMonthAvailability = async (month: Date) => {
+        const result = await checkMonthAvailabilityAction(
+            product.id,
+            month.getFullYear(),
+            month.getMonth()
+        );
+        if (result.success) {
+            setAvailableDates(result.availableDates || []);
+        }
+    };
 
     // Helper function to format date as YYYY-MM-DD without timezone conversion
     const formatDateOnly = (date: Date) => {
@@ -193,14 +213,28 @@ export function ConsultationBookingClient({
                     <Card>
                         <CardHeader>
                             <CardTitle>Select Date</CardTitle>
+                            <CardDescription>
+                                <span className="inline-flex items-center gap-1">
+                                    <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                    <span className="text-xs">Available slots</span>
+                                </span>
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Calendar
                                 mode="single"
                                 selected={selectedDate}
                                 onSelect={handleDateChange}
-                                disabled={(date) => date < new Date()}
-                                className="rounded-md border"
+                                month={currentMonth}
+                                onMonthChange={setCurrentMonth}
+                                disabled={(date) => date < new Date() || date.getDay() === 0}
+                                className="rounded-md border [&_.available]:relative [&_.available]:after:content-[''] [&_.available]:after:absolute [&_.available]:after:bottom-1 [&_.available]:after:left-1/2 [&_.available]:after:-translate-x-1/2 [&_.available]:after:w-1.5 [&_.available]:after:h-1.5 [&_.available]:after:bg-green-500 [&_.available]:after:rounded-full"
+                                modifiers={{
+                                    available: availableDates.map(d => new Date(d + 'T12:00:00'))
+                                }}
+                                modifiersClassNames={{
+                                    available: 'available'
+                                }}
                             />
                         </CardContent>
                     </Card>
