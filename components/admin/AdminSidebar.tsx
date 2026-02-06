@@ -65,7 +65,7 @@ export function AdminSidebar() {
                             "flex items-center px-4 py-3 rounded-lg transition-colors",
                             pathname === item.href
                                 ? "bg-blue-600 text-white"
-                                : "text-gray-400 hover:bg-navy-800 hover:text-white"
+                                : "text-gray-300 hover:bg-navy-800 hover:text-blue-400"
                         )}
                     >
                         <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />

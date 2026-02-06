@@ -16,8 +16,11 @@ export function ReferralQRCode({ staffCode, staffName, size = 200 }: ReferralQRC
 
     useEffect(() => {
         if (canvasRef.current) {
-            // Generate QR code with the referral code
-            QRCode.toCanvas(canvasRef.current, staffCode, {
+            // Create signup URL with pre-filled referral code
+            const signupUrl = `${window.location.origin}/signup?ref=${staffCode}`;
+
+            // Generate QR code with the signup URL
+            QRCode.toCanvas(canvasRef.current, signupUrl, {
                 width: size,
                 margin: 2,
                 color: {
