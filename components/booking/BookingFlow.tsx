@@ -69,9 +69,19 @@ export function BookingFlow({ products }: { products: any[] }) {
 
     const handleCreateIntent = async () => {
         if (!selectedProduct) return;
+
+        const price = selectedProduct.priceMYR ?? 0;
+        const depositPct = selectedProduct.depositPercentage ?? 0;
+
+        // If product is free, skip payment and go directly to confirmation
+        if (price === 0) {
+            await handleFreeBooking();
+            return;
+        }
+
         const amount = paymentType === 'FULL'
-            ? selectedProduct.priceMYR
-            : (selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100));
+            ? price
+            : (price * (depositPct / 100));
 
         try {
             const { clientSecret } = await createBookingIntent(selectedProduct.id, amount);
@@ -82,12 +92,37 @@ export function BookingFlow({ products }: { products: any[] }) {
         }
     };
 
+    const handleFreeBooking = async () => {
+        if (!selectedProduct || !selectedDate || !selectedSlot) return;
+
+        try {
+            const result = await completeBooking({
+                productId: selectedProduct.id,
+                appointmentDate: selectedDate.toISOString(),
+                timeSlot: selectedSlot,
+                paymentAmount: 0,
+                paymentType: 'FULL',
+                stripePaymentIntentId: undefined,
+            });
+
+            if (result.success) {
+                setBookingResult(result);
+                setCurrentStep(4);
+                toast.success('Free appointment booked successfully!');
+            }
+        } catch (error) {
+            toast.error('Booking failed. Please try again.');
+        }
+    };
+
     const handlePaymentSuccess = async (paymentIntentId: string) => {
         if (!selectedProduct || !selectedDate || !selectedSlot) return;
 
+        const price = selectedProduct.priceMYR ?? 0;
+        const depositPct = selectedProduct.depositPercentage ?? 0;
         const amount = paymentType === 'FULL'
-            ? selectedProduct.priceMYR
-            : (selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100));
+            ? price
+            : (price * (depositPct / 100));
 
         try {
             const result = await completeBooking({
@@ -126,7 +161,9 @@ export function BookingFlow({ products }: { products: any[] }) {
                                 <CardContent className="p-4 flex items-center justify-between">
                                     <div>
                                         <h3 className="font-bold">{p.name}</h3>
-                                        <p className="text-sm text-gray-500">RM {p.priceMYR.toFixed(2)}</p>
+                                        <p className="text-sm text-gray-500">
+                                            {(p.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(p.priceMYR ?? 0).toFixed(2)}`}
+                                        </p>
                                     </div>
                                     {selectedProduct?.id === p.id && <Check className="text-blue-600" />}
                                 </CardContent>
@@ -178,16 +215,16 @@ export function BookingFlow({ products }: { products: any[] }) {
                             <p className="text-sm">Date: {format(selectedDate!, 'PP')}</p>
                             <p className="text-sm">Time: {selectedSlot}</p>
                             <div className="mt-4 border-t pt-4">
-                                <p className="font-bold">Total: RM {selectedProduct.priceMYR.toFixed(2)}</p>
+                                <p className="font-bold">Total: {(selectedProduct.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(selectedProduct.priceMYR ?? 0).toFixed(2)}`}</p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            <h4 className="font-medium">Selected Payment: {paymentType === 'FULL' ? 'Full Payment' : `Deposit (${selectedProduct.depositPercentage}%)`}</h4>
+                            <h4 className="font-medium">Selected Payment: {paymentType === 'FULL' ? 'Full Payment' : `Deposit (${selectedProduct.depositPercentage ?? 0}%)`}</h4>
                             {clientSecret && (
                                 <Elements stripe={stripePromise} options={{ clientSecret }}>
                                     <PaymentForm
-                                        amount={paymentType === 'FULL' ? selectedProduct.priceMYR : (selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100))}
+                                        amount={paymentType === 'FULL' ? (selectedProduct.priceMYR ?? 0) : ((selectedProduct.priceMYR ?? 0) * ((selectedProduct.depositPercentage ?? 0) / 100))}
                                         onPaymentSuccess={handlePaymentSuccess}
                                     />
                                 </Elements>
@@ -266,26 +303,28 @@ export function BookingFlow({ products }: { products: any[] }) {
                             )}
                             {currentStep === 2 && (
                                 <div className="flex flex-col items-end gap-2">
-                                    <div className="flex gap-2">
-                                        <Button
-                                            variant={paymentType === 'DEPOSIT' ? 'default' : 'outline'}
-                                            onClick={() => setPaymentType('DEPOSIT')}
-                                        >
-                                            Pay Deposit (RM {(selectedProduct.priceMYR * (selectedProduct.depositPercentage / 100)).toFixed(2)})
-                                        </Button>
-                                        <Button
-                                            variant={paymentType === 'FULL' ? 'default' : 'outline'}
-                                            onClick={() => setPaymentType('FULL')}
-                                        >
-                                            Pay Full (RM {selectedProduct.priceMYR.toFixed(2)})
-                                        </Button>
-                                    </div>
+                                    {(selectedProduct.priceMYR ?? 0) > 0 && (
+                                        <div className="flex gap-2">
+                                            <Button
+                                                variant={paymentType === 'DEPOSIT' ? 'default' : 'outline'}
+                                                onClick={() => setPaymentType('DEPOSIT')}
+                                            >
+                                                Pay Deposit (RM {((selectedProduct.priceMYR ?? 0) * ((selectedProduct.depositPercentage ?? 0) / 100)).toFixed(2)})
+                                            </Button>
+                                            <Button
+                                                variant={paymentType === 'FULL' ? 'default' : 'outline'}
+                                                onClick={() => setPaymentType('FULL')}
+                                            >
+                                                Pay Full (RM {(selectedProduct.priceMYR ?? 0).toFixed(2)})
+                                            </Button>
+                                        </div>
+                                    )}
                                     <Button
                                         disabled={!selectedSlot}
                                         onClick={handleCreateIntent}
                                         className="w-full mt-2"
                                     >
-                                        Proceed to Payment
+                                        {(selectedProduct.priceMYR ?? 0) === 0 ? 'Confirm Booking' : 'Proceed to Payment'}
                                         <ChevronRight className="ml-2 h-4 w-4" />
                                     </Button>
                                 </div>

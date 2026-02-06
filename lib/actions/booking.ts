@@ -41,7 +41,7 @@ export async function completeBooking(data: {
     timeSlot: string;
     paymentAmount: number;
     paymentType: 'FULL' | 'DEPOSIT';
-    stripePaymentIntentId: string;
+    stripePaymentIntentId?: string;
 }) {
     const session = await auth();
     if (!session?.user?.id) throw new Error('Unauthorized');
