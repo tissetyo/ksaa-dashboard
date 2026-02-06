@@ -8,7 +8,7 @@ export async function getClients(filters?: {
     status?: string;
 }) {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!session?.user?.id || session.user.role !== 'SUPERADMIN') {
         throw new Error('Unauthorized');
     }
 
@@ -40,7 +40,7 @@ export async function getClients(filters?: {
 
 export async function getClientById(patientId: string) {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!session?.user?.id || session.user.role !== 'SUPERADMIN') {
         throw new Error('Unauthorized');
     }
 
@@ -71,7 +71,7 @@ export async function getClientById(patientId: string) {
 
 export async function updateClientNotes(patientId: string, notes: string) {
     const session = await auth();
-    if (!session?.user?.id || session.user.role !== 'ADMIN') {
+    if (!session?.user?.id || session.user.role !== 'SUPERADMIN') {
         throw new Error('Unauthorized');
     }
 
