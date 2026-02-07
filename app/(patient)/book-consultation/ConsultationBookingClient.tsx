@@ -163,7 +163,7 @@ export function ConsultationBookingClient({
                             <div className="flex flex-col items-center z-10">
                                 <div
                                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors ${currentStep >= step.id
-                                        ? 'bg-blue-600 text-white'
+                                        ? 'bg-[#0F665C] text-white'
                                         : 'bg-gray-200 text-gray-600'
                                         }`}
                                 >
@@ -174,7 +174,7 @@ export function ConsultationBookingClient({
                             {index < STEPS.length - 1 && (
                                 <div className="flex items-center" style={{ width: '200px', marginTop: '-24px' }}>
                                     <div
-                                        className={`h-1 w-full transition-colors ${currentStep > step.id ? 'bg-blue-600' : 'bg-gray-200'
+                                        className={`h-1 w-full transition-colors ${currentStep > step.id ? 'bg-[#0F665C]' : 'bg-gray-200'
                                             }`}
                                     />
                                 </div>
@@ -323,7 +323,7 @@ export function ConsultationBookingClient({
                             </div>
                         </div>
 
-                        <div className="bg-blue-50 p-4 rounded-lg mb-6">
+                        <div className="bg-[#0F665C]/10 p-4 rounded-lg mb-6">
                             <p className="font-medium text-gray-900 mb-2">What's Next?</p>
                             {consultationData.type === 'GOOGLE_MEET' ? (
                                 <p className="text-sm text-gray-700">

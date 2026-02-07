@@ -97,7 +97,7 @@ export default async function ReferralsPage() {
                                 <div>
                                     <CardTitle>{staff.fullName}</CardTitle>
                                     <CardDescription>
-                                        Code: <span className="font-mono font-bold text-blue-600">{staff.staffCode}</span>
+                                        Code: <span className="font-mono font-bold text-[#0F665C]">{staff.staffCode}</span>
                                     </CardDescription>
                                 </div>
                                 <div className="text-right">

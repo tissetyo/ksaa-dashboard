@@ -23,7 +23,7 @@ export default async function CompleteProfilePage() {
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="text-center space-y-2">
-                <h1 className="text-3xl font-bold text-blue-600">Complete Your Profile</h1>
+                <h1 className="text-3xl font-bold text-[#0F665C]">Complete Your Profile</h1>
                 <p className="text-gray-600">Please provide your medical details to help us serve you better.</p>
             </div>
             <Card>

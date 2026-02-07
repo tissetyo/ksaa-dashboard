@@ -9,7 +9,7 @@ export function ServiceCard({ product }: { product: any }) {
     return (
         <Card className="hover:shadow-lg transition-shadow flex flex-col h-full">
             <CardHeader>
-                <CardTitle className="text-blue-600">{product.name}</CardTitle>
+                <CardTitle className="text-[#0F665C]">{product.name}</CardTitle>
             </CardHeader>
             <CardContent className="flex-1 flex flex-col">
                 <p className="text-gray-600 text-sm mb-4 line-clamp-3">
@@ -26,7 +26,7 @@ export function ServiceCard({ product }: { product: any }) {
                         RM {product.priceMYR.toFixed(2)}
                     </div>
                     {product.depositPercentage > 0 && (
-                        <p className="text-xs text-blue-600 font-medium">
+                        <p className="text-xs text-[#0F665C] font-medium">
                             Deposit option available ({product.depositPercentage}%)
                         </p>
                     )}

@@ -79,7 +79,7 @@ export function ConfirmAppointmentModal({
             <DialogContent className="sm:max-w-[550px]">
                 <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
-                        <CheckCircle className="h-5 w-5 text-blue-600" />
+                        <CheckCircle className="h-5 w-5 text-[#0F665C]" />
                         Confirm Appointment
                     </DialogTitle>
                     <DialogDescription>
@@ -153,7 +153,7 @@ export function ConfirmAppointmentModal({
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
-                                                <Video className="mr-2 h-4 w-4 text-blue-600" />
+                                                <Video className="mr-2 h-4 w-4 text-[#0F665C]" />
                                                 Start Google Meet
                                                 <ExternalLink className="ml-2 h-3 w-3" />
                                             </a>
@@ -185,7 +185,7 @@ export function ConfirmAppointmentModal({
                     <Button
                         onClick={handleConfirm}
                         disabled={isLoading}
-                        className="bg-blue-600 hover:bg-blue-700"
+                        className="bg-[#0F665C] hover:bg-[#0a4f47]"
                     >
                         {isLoading ? 'Confirming...' : 'Confirm Appointment'}
                     </Button>

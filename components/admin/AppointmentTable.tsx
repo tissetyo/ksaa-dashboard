@@ -73,7 +73,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps) {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'PENDING': return <Badge variant="secondary">Pending</Badge>;
-            case 'CONFIRMED': return <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100 border-none">Confirmed</Badge>;
+            case 'CONFIRMED': return <Badge className="bg-[#0F665C]/20 text-blue-700 hover:bg-[#0F665C]/20 border-none">Confirmed</Badge>;
             case 'COMPLETED': return <Badge className="bg-green-100 text-green-700 hover:bg-green-100 border-none">Completed</Badge>;
             case 'CANCELLED': return <Badge variant="destructive">Cancelled</Badge>;
             default: return <Badge>{status}</Badge>;
@@ -141,7 +141,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps) {
                                                 <DropdownMenuSeparator />
                                                 {apt.status === 'PENDING' && (
                                                     <DropdownMenuItem onClick={() => handleConfirmClick(apt)}>
-                                                        <CheckCircle className="mr-2 h-4 w-4 text-blue-600" />
+                                                        <CheckCircle className="mr-2 h-4 w-4 text-[#0F665C]" />
                                                         Confirm Slot
                                                     </DropdownMenuItem>
                                                 )}

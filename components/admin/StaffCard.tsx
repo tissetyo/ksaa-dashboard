@@ -63,7 +63,7 @@ export function StaffCard({ member }: { member: StaffMember }) {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                     <div>
                         <p className="text-muted-foreground">Referral Code</p>
-                        <p className="font-mono font-bold text-blue-600">{member.staffCode}</p>
+                        <p className="font-mono font-bold text-[#0F665C]">{member.staffCode}</p>
                     </div>
                     <div>
                         <p className="text-muted-foreground">Phone</p>

@@ -44,10 +44,10 @@ export default async function PatientDashboard() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {/* Quick Stats / Next Appointment */}
-                <Card className="md:col-span-2 border-blue-100 bg-blue-50/50">
+                <Card className="md:col-span-2 border-blue-100 bg-[#0F665C]/10/50">
                     <CardHeader>
                         <CardTitle className="text-lg font-semibold flex items-center">
-                            <Calendar className="mr-2 h-5 w-5 text-blue-600" />
+                            <Calendar className="mr-2 h-5 w-5 text-[#0F665C]" />
                             Next Appointment
                         </CardTitle>
                     </CardHeader>
@@ -64,7 +64,7 @@ export default async function PatientDashboard() {
                                             day: 'numeric',
                                         })}
                                     </p>
-                                    <p className="text-blue-600 font-medium">{nextAppointment.timeSlot}</p>
+                                    <p className="text-[#0F665C] font-medium">{nextAppointment.timeSlot}</p>
                                 </div>
                                 <Button asChild>
                                     <Link href={`/appointments/${nextAppointment.id}`}>
@@ -87,7 +87,7 @@ export default async function PatientDashboard() {
                         <Link href="/appointments" className="block p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <Calendar className="h-6 w-6 text-blue-600 mr-3" />
+                                    <Calendar className="h-6 w-6 text-[#0F665C] mr-3" />
                                     <span className="font-medium">My Appointments</span>
                                 </div>
                                 <ArrowRight className="h-5 w-5 text-gray-400" />
@@ -98,7 +98,7 @@ export default async function PatientDashboard() {
                         <Link href="/profile" className="block p-6">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center">
-                                    <User className="h-6 w-6 text-blue-600 mr-3" />
+                                    <User className="h-6 w-6 text-[#0F665C] mr-3" />
                                     <span className="font-medium">My Profile</span>
                                 </div>
                                 <ArrowRight className="h-5 w-5 text-gray-400" />
@@ -139,7 +139,7 @@ export default async function PatientDashboard() {
                             <CardContent>
                                 <div className="space-y-4">
                                     <div>
-                                        <p className="text-2xl font-bold text-blue-600">
+                                        <p className="text-2xl font-bold text-[#0F665C]">
                                             {(service.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(service.priceMYR ?? 0).toFixed(2)}`}
                                         </p>
                                         {(service.priceMYR ?? 0) > 0 && (service.depositPercentage ?? 0) > 0 && (

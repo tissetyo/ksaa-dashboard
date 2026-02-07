@@ -125,9 +125,9 @@ export function StaffForm({ initialData }: { initialData?: any }) {
                 </div>
 
                 {initialData?.staffCode && (
-                    <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                    <div className="p-4 bg-[#0F665C]/10 dark:bg-blue-950 rounded-lg">
                         <p className="text-sm font-medium">Referral Code</p>
-                        <p className="text-2xl font-mono font-bold text-blue-600">{initialData.staffCode}</p>
+                        <p className="text-2xl font-mono font-bold text-[#0F665C]">{initialData.staffCode}</p>
                     </div>
                 )}
             </div>

@@ -49,7 +49,7 @@ export function ReferralQRCode({ staffCode, staffName, size = 200 }: ReferralQRC
             </div>
             <canvas ref={canvasRef} className="border-2 border-border rounded-lg" />
             <div className="text-center">
-                <p className="font-mono font-bold text-lg text-blue-600">{staffCode}</p>
+                <p className="font-mono font-bold text-lg text-[#0F665C]">{staffCode}</p>
                 <p className="text-sm text-muted-foreground">{staffName}</p>
             </div>
             <Button onClick={handleDownload} variant="outline" size="sm">

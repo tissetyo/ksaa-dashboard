@@ -57,7 +57,7 @@ export function ConsultationMethodSelector({
                     {/* Google Meet Option */}
                     <Card
                         className={`cursor-pointer transition-all ${method === 'GOOGLE_MEET'
-                            ? 'ring-2 ring-blue-600 border-blue-600'
+                            ? 'ring-2 ring-[#0F665C] border-[#0F665C]'
                             : 'hover:border-gray-400'
                             }`}
                         onClick={() => handleMethodChange('GOOGLE_MEET')}
@@ -67,7 +67,7 @@ export function ConsultationMethodSelector({
                                 <RadioGroupItem value="GOOGLE_MEET" id="google-meet" />
                                 <div className="flex-1">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <Video className="h-5 w-5 text-blue-600" />
+                                        <Video className="h-5 w-5 text-[#0F665C]" />
                                         <Label
                                             htmlFor="google-meet"
                                             className="text-base font-semibold cursor-pointer"
@@ -115,12 +115,12 @@ export function ConsultationMethodSelector({
             </RadioGroup>
 
             {/* Contact Information */}
-            <Card className="bg-blue-50 border-blue-200">
+            <Card className="bg-[#0F665C]/10 border-blue-200">
                 <CardContent className="p-6">
                     {method === 'GOOGLE_MEET' ? (
                         <div className="space-y-3">
                             <div className="flex items-start gap-2">
-                                <AlertCircle className="h-5 w-5 text-blue-600 mt-0.5" />
+                                <AlertCircle className="h-5 w-5 text-[#0F665C] mt-0.5" />
                                 <div className="flex-1">
                                     <Label htmlFor="email" className="text-sm font-medium">
                                         Confirm Your Email

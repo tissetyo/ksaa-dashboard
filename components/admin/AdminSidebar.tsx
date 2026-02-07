@@ -62,7 +62,7 @@ export function AdminSidebar() {
             <div className="p-6 flex items-center justify-between border-b border-gray-200">
                 {!isCollapsed && (
                     <div>
-                        <h1 className="text-xl font-bold text-blue-600">KSAA Admin</h1>
+                        <h1 className="text-xl font-bold text-[#0F665C]">KSAA Admin</h1>
                         {userRole === 'STAFF' && (
                             <span className="text-xs text-gray-500">Staff Portal</span>
                         )}
@@ -86,8 +86,8 @@ export function AdminSidebar() {
                         className={cn(
                             "flex items-center px-4 py-3 rounded-lg transition-all duration-150",
                             pathname === item.href
-                                ? "bg-blue-600 text-white"
-                                : "text-gray-700 hover:bg-gray-100 hover:text-blue-600"
+                                ? "bg-[#0F665C] text-white"
+                                : "text-gray-700 hover:bg-gray-100 hover:text-[#0F665C]"
                         )}
                     >
                         <item.icon className={cn("h-5 w-5", !isCollapsed && "mr-3")} />

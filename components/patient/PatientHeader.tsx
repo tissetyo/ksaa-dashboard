@@ -40,7 +40,7 @@ export function PatientHeader() {
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center">
-                        <Link href="/" className="text-xl font-bold text-blue-600">
+                        <Link href="/" className="text-xl font-bold text-[#0F665C]">
                             KSAA STEMCARE
                         </Link>
                     </div>
@@ -50,7 +50,7 @@ export function PatientHeader() {
                             <Link
                                 key={item.href}
                                 href={item.href}
-                                className={`text-sm font-medium transition-colors hover:text-blue-600 ${pathname === item.href ? 'text-blue-600' : 'text-gray-700'
+                                className={`text-sm font-medium transition-colors hover:text-[#0F665C] ${pathname === item.href ? 'text-[#0F665C]' : 'text-gray-700'
                                     }`}
                             >
                                 {item.name}
@@ -107,7 +107,7 @@ export function PatientHeader() {
                         <Link
                             key={item.href}
                             href={item.href}
-                            className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${pathname === item.href ? 'bg-blue-50 text-blue-600' : 'text-gray-700 hover:bg-gray-50'
+                            className={`flex items-center px-3 py-2 rounded-md text-base font-medium ${pathname === item.href ? 'bg-[#0F665C]/10 text-[#0F665C]' : 'text-gray-700 hover:bg-gray-50'
                                 }`}
                             onClick={() => setIsMobileMenuOpen(false)}
                         >

@@ -25,8 +25,8 @@ export default async function AdminDashboardPage() {
             value: patientCount.toString(),
             icon: Users,
             description: 'Registered patients',
-            color: 'text-blue-600',
-            bg: 'bg-blue-100',
+            color: 'text-[#0F665C]',
+            bg: 'bg-[#0F665C]/20',
         },
         {
             title: 'Total Appointments',
@@ -121,7 +121,7 @@ export default async function AdminDashboardPage() {
                                         </div>
                                         <div className="w-full bg-gray-200 rounded-full h-2">
                                             <div
-                                                className="bg-blue-600 h-2 rounded-full transition-all"
+                                                className="bg-[#0F665C] h-2 rounded-full transition-all"
                                                 style={{ width: `${Math.min((quota.bookedCount / quota.maxQuota) * 100, 100)}%` }}
                                             />
                                         </div>

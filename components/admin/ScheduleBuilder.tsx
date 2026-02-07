@@ -66,7 +66,7 @@ export function ScheduleBuilder({ initialSlots }: { initialSlots: any[] }) {
                                                 disabled={loading === key}
                                                 className={cn(
                                                     "h-5 w-5",
-                                                    active ? "border-blue-600 bg-blue-600" : ""
+                                                    active ? "border-[#0F665C] bg-[#0F665C]" : ""
                                                 )}
                                             />
                                         </div>

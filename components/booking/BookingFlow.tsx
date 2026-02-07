@@ -204,7 +204,7 @@ export function BookingFlow({ products }: { products: any[] }) {
                                 key={p.id}
                                 className={cn(
                                     "cursor-pointer transition-all hover:border-blue-500",
-                                    selectedProduct?.id === p.id ? "border-2 border-blue-500 bg-blue-50" : ""
+                                    selectedProduct?.id === p.id ? "border-2 border-blue-500 bg-[#0F665C]/10" : ""
                                 )}
                                 onClick={() => setSelectedProduct(p)}
                             >
@@ -215,7 +215,7 @@ export function BookingFlow({ products }: { products: any[] }) {
                                             {(p.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(p.priceMYR ?? 0).toFixed(2)}`}
                                         </p>
                                     </div>
-                                    {selectedProduct?.id === p.id && <Check className="text-blue-600" />}
+                                    {selectedProduct?.id === p.id && <Check className="text-[#0F665C]" />}
                                 </CardContent>
                             </Card>
                         ))}
@@ -337,13 +337,13 @@ export function BookingFlow({ products }: { products: any[] }) {
                         <div key={step.id} className="flex flex-col items-center z-10">
                             <div className={cn(
                                 "w-10 h-10 rounded-full flex items-center justify-center border-2 mb-2 bg-white transition-colors",
-                                currentStep >= step.id ? "border-blue-600 text-blue-600" : "border-gray-300 text-gray-300"
+                                currentStep >= step.id ? "border-[#0F665C] text-[#0F665C]" : "border-gray-300 text-gray-300"
                             )}>
                                 <step.icon className="h-5 w-5" />
                             </div>
                             <span className={cn(
                                 "text-xs font-medium",
-                                currentStep >= step.id ? "text-blue-600" : "text-gray-500"
+                                currentStep >= step.id ? "text-[#0F665C]" : "text-gray-500"
                             )}>
                                 {step.name}
                             </span>
@@ -352,7 +352,7 @@ export function BookingFlow({ products }: { products: any[] }) {
                     {/* Progress bar line */}
                     <div className="absolute top-5 left-0 w-full h-0.5 bg-gray-200 -z-0" />
                     <div
-                        className="absolute top-5 left-0 h-0.5 bg-blue-600 transition-all duration-300 -z-0"
+                        className="absolute top-5 left-0 h-0.5 bg-[#0F665C] transition-all duration-300 -z-0"
                         style={{ width: `${((currentStep - 1) / (STEPS.length - 1)) * 100}%` }}
                     />
                 </div>

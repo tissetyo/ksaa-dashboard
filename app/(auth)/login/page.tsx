@@ -44,7 +44,7 @@ export default function LoginPage() {
         <div className="flex items-center justify-center min-h-screen bg-gray-50 p-4">
             <Card className="w-full max-w-md">
                 <CardHeader className="space-y-1">
-                    <CardTitle className="text-2xl text-center font-bold text-blue-600">Patient Login</CardTitle>
+                    <CardTitle className="text-2xl text-center font-bold text-[#0F665C]">Patient Login</CardTitle>
                     <CardDescription className="text-center">
                         Enter your credentials to access your portal
                     </CardDescription>
@@ -68,7 +68,7 @@ export default function LoginPage() {
                                 <Label htmlFor="password">Password</Label>
                                 <Link
                                     href="/forgot-password"
-                                    className="text-sm text-blue-600 hover:underline"
+                                    className="text-sm text-[#0F665C] hover:underline"
                                 >
                                     Forgot password?
                                 </Link>
@@ -89,7 +89,7 @@ export default function LoginPage() {
                         </Button>
                         <div className="text-center text-sm text-gray-500">
                             Don&apos;t have an account?{' '}
-                            <Link href="/signup" className="text-blue-600 hover:underline">
+                            <Link href="/signup" className="text-[#0F665C] hover:underline">
                                 Register here
                             </Link>
                         </div>

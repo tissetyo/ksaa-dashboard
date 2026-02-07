@@ -44,7 +44,7 @@ export function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
                         <div className="py-6">
                             <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-lg mb-6">
                                 <div className="flex items-start gap-4">
-                                    <Video className="h-8 w-8 text-blue-600 flex-shrink-0 mt-1" />
+                                    <Video className="h-8 w-8 text-[#0F665C] flex-shrink-0 mt-1" />
                                     <div>
                                         <h3 className="font-semibold text-lg mb-2">
                                             Free 30-Minute Consultation

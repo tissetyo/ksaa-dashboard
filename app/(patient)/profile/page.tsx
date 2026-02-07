@@ -37,7 +37,7 @@ export default async function ProfilePage() {
                 <Card className="md:col-span-2">
                     <CardHeader>
                         <CardTitle className="text-xl flex items-center">
-                            <User className="mr-2 h-5 w-5 text-blue-600" />
+                            <User className="mr-2 h-5 w-5 text-[#0F665C]" />
                             Personal Information
                         </CardTitle>
                     </CardHeader>
@@ -71,7 +71,7 @@ export default async function ProfilePage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-xl flex items-center">
-                            <Activity className="mr-2 h-5 w-5 text-blue-600" />
+                            <Activity className="mr-2 h-5 w-5 text-[#0F665C]" />
                             Physical Stats
                         </CardTitle>
                     </CardHeader>
@@ -111,7 +111,7 @@ export default async function ProfilePage() {
                 <Card className="md:col-span-2">
                     <CardHeader>
                         <CardTitle className="text-xl flex items-center">
-                            <Calendar className="mr-2 h-5 w-5 text-blue-600" />
+                            <Calendar className="mr-2 h-5 w-5 text-[#0F665C]" />
                             Medical History
                         </CardTitle>
                     </CardHeader>

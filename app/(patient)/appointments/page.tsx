@@ -62,10 +62,10 @@ export default async function PatientAppointmentsPage() {
                     appointments.map((apt) => (
                         <Card key={apt.id} className="overflow-hidden hover:shadow-md transition-shadow">
                             <div className="flex flex-col md:flex-row">
-                                <div className="bg-blue-600 text-white p-6 flex flex-col justify-center items-center min-w-[150px]">
+                                <div className="bg-[#0F665C] text-white p-6 flex flex-col justify-center items-center min-w-[150px]">
                                     <span className="text-3xl font-bold">{format(new Date(apt.appointmentDate), 'dd')}</span>
                                     <span className="text-sm font-medium uppercase">{format(new Date(apt.appointmentDate), 'MMMM')}</span>
-                                    <span className="mt-2 font-mono text-sm bg-blue-700/50 px-2 py-0.5 rounded">{apt.timeSlot}</span>
+                                    <span className="mt-2 font-mono text-sm bg-[#0a4f47]/50 px-2 py-0.5 rounded">{apt.timeSlot}</span>
                                 </div>
                                 <div className="flex-1 p-6 flex flex-col md:flex-row justify-between gap-6">
                                     <div className="space-y-2">
@@ -76,7 +76,7 @@ export default async function PatientAppointmentsPage() {
                                             Duration: {apt.product.durationMinutes} mins
                                         </div>
                                         {apt.status === 'CONFIRMED' && (
-                                            <div className="flex items-center text-sm text-blue-600 font-medium pt-2">
+                                            <div className="flex items-center text-sm text-[#0F665C] font-medium pt-2">
                                                 <MapPin className="w-4 h-4 mr-1 ml-[-2px]" />
                                                 KSAA Center, Kuala Lumpur
                                             </div>
@@ -90,7 +90,7 @@ export default async function PatientAppointmentsPage() {
                                                 {apt.balanceAmountMYR > 0 ? `Paid: RM ${apt.paidAmountMYR.toFixed(2)}` : `Full: RM ${apt.totalAmountMYR.toFixed(2)}`}
                                             </p>
                                             {apt.balanceAmountMYR > 0 && (
-                                                <p className="text-xs text-blue-600 italic">Balance RM {apt.balanceAmountMYR.toFixed(2)} due at clinic</p>
+                                                <p className="text-xs text-[#0F665C] italic">Balance RM {apt.balanceAmountMYR.toFixed(2)} due at clinic</p>
                                             )}
                                         </div>
 

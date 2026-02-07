@@ -50,7 +50,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
 
     const statusColors: Record<string, string> = {
         PENDING: 'bg-yellow-100 text-yellow-800',
-        CONFIRMED: 'bg-blue-100 text-blue-800',
+        CONFIRMED: 'bg-[#0F665C]/20 text-blue-800',
         COMPLETED: 'bg-green-100 text-green-800',
         CANCELLED: 'bg-red-100 text-red-800',
         NO_SHOW: 'bg-gray-100 text-gray-800',
@@ -58,7 +58,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
 
     const paymentStatusColors: Record<string, string> = {
         UNPAID: 'bg-red-100 text-red-800',
-        DEPOSIT_PAID: 'bg-blue-100 text-blue-800',
+        DEPOSIT_PAID: 'bg-[#0F665C]/20 text-blue-800',
         FULL_PAID: 'bg-green-100 text-green-800',
         REFUNDED: 'bg-purple-100 text-purple-800',
     };
@@ -99,13 +99,13 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
                     <CardContent className="space-y-6">
                         {/* Date & Time */}
                         <div className="flex items-start gap-4">
-                            <Calendar className="h-5 w-5 text-blue-600 mt-1" />
+                            <Calendar className="h-5 w-5 text-[#0F665C] mt-1" />
                             <div>
                                 <p className="font-medium text-gray-900">Date & Time</p>
                                 <p className="text-gray-600">
                                     {format(new Date(appointment.appointmentDate), 'EEEE, MMMM d, yyyy')}
                                 </p>
-                                <p className="text-blue-600 font-medium flex items-center gap-2 mt-1">
+                                <p className="text-[#0F665C] font-medium flex items-center gap-2 mt-1">
                                     <Clock className="h-4 w-4" />
                                     {appointment.timeSlot}
                                 </p>
@@ -114,7 +114,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
 
                         {/* Location */}
                         <div className="flex items-start gap-4">
-                            <MapPin className="h-5 w-5 text-blue-600 mt-1" />
+                            <MapPin className="h-5 w-5 text-[#0F665C] mt-1" />
                             <div>
                                 <p className="font-medium text-gray-900">Location</p>
                                 <p className="text-gray-600">KSAA STEMCARE Clinic</p>

@@ -106,9 +106,9 @@ export function CompleteAppointmentModal({
                     </div>
 
                     {/* Service Details */}
-                    <div className="bg-blue-50 rounded-lg p-4">
+                    <div className="bg-[#0F665C]/10 rounded-lg p-4">
                         <div className="flex items-center gap-3 mb-2">
-                            <Calendar className="h-4 w-4 text-blue-600" />
+                            <Calendar className="h-4 w-4 text-[#0F665C]" />
                             <span className="font-medium text-blue-900">{product?.name}</span>
                         </div>
                         <div className="flex items-center gap-3 text-blue-700 text-sm">
