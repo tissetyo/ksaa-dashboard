@@ -19,6 +19,11 @@ export default auth((req) => {
         route => nextUrl.pathname === route || nextUrl.pathname.startsWith(route + '/')
     );
 
+    // SUPERADMIN-only admin routes (STAFF cannot access these)
+    const isSuperadminOnlyRoute = ['/admin/staff', '/admin/referrals', '/admin/products', '/admin/payments', '/admin/settings'].some(
+        route => nextUrl.pathname === route || nextUrl.pathname.startsWith(route + '/')
+    );
+
     if (isApiAuthRoute || isPublicApiRoute) return NextResponse.next();
 
     // Prevent middleware from redirecting internal API calls to the login page (GET/POST mismatch)
@@ -39,6 +44,11 @@ export default auth((req) => {
 
     // STAFF can only access admin routes, not patient routes
     if (isLoggedIn && role === 'STAFF' && isPatientRoute) {
+        return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+    }
+
+    // STAFF cannot access SUPERADMIN-only routes
+    if (isLoggedIn && role === 'STAFF' && isSuperadminOnlyRoute) {
         return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
     }
 

@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { signOut } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import {
     LayoutDashboard,
     Users,
@@ -22,22 +22,37 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
+type NavItem = {
+    name: string;
+    href: string;
+    icon: any;
+    roles: ('SUPERADMIN' | 'STAFF')[];
+};
+
 export function AdminSidebar() {
     const pathname = usePathname();
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const { data: session } = useSession();
+    const userRole = session?.user?.role as 'SUPERADMIN' | 'STAFF' | undefined;
 
-    const navigation = [
-        { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-        { name: 'Appointments', href: '/admin/appointments', icon: Calendar },
-        { name: 'Patients', href: '/admin/patients', icon: Users },
-        { name: 'Staff', href: '/admin/staff', icon: UserCog },
-        { name: 'Referrals', href: '/admin/referrals', icon: TrendingUp },
-        { name: 'Products', href: '/admin/products', icon: Package },
-        { name: 'Schedule', href: '/admin/schedule', icon: Clock },
-        { name: 'Notifications', href: '/admin/notifications', icon: Bell },
-        { name: 'Payments', href: '/admin/payments', icon: CreditCard },
-        { name: 'Settings', href: '/admin/settings', icon: Settings },
+    // Define navigation with role-based access
+    const navigation: NavItem[] = [
+        { name: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard, roles: ['SUPERADMIN', 'STAFF'] },
+        { name: 'Appointments', href: '/admin/appointments', icon: Calendar, roles: ['SUPERADMIN', 'STAFF'] },
+        { name: 'Patients', href: '/admin/patients', icon: Users, roles: ['SUPERADMIN', 'STAFF'] },
+        { name: 'Schedule', href: '/admin/schedule', icon: Clock, roles: ['SUPERADMIN', 'STAFF'] },
+        { name: 'Staff', href: '/admin/staff', icon: UserCog, roles: ['SUPERADMIN'] },
+        { name: 'Referrals', href: '/admin/referrals', icon: TrendingUp, roles: ['SUPERADMIN'] },
+        { name: 'Products', href: '/admin/products', icon: Package, roles: ['SUPERADMIN'] },
+        { name: 'Notifications', href: '/admin/notifications', icon: Bell, roles: ['SUPERADMIN', 'STAFF'] },
+        { name: 'Payments', href: '/admin/payments', icon: CreditCard, roles: ['SUPERADMIN'] },
+        { name: 'Settings', href: '/admin/settings', icon: Settings, roles: ['SUPERADMIN'] },
     ];
+
+    // Filter navigation based on user role
+    const filteredNavigation = navigation.filter(
+        item => userRole && item.roles.includes(userRole)
+    );
 
     return (
         <div className={cn(
@@ -45,7 +60,14 @@ export function AdminSidebar() {
             isCollapsed ? "w-20" : "w-64"
         )}>
             <div className="p-6 flex items-center justify-between border-b border-gray-200">
-                {!isCollapsed && <h1 className="text-xl font-bold text-blue-600">KSAA Admin</h1>}
+                {!isCollapsed && (
+                    <div>
+                        <h1 className="text-xl font-bold text-blue-600">KSAA Admin</h1>
+                        {userRole === 'STAFF' && (
+                            <span className="text-xs text-gray-500">Staff Portal</span>
+                        )}
+                    </div>
+                )}
                 <Button
                     variant="ghost"
                     size="icon"
@@ -57,7 +79,7 @@ export function AdminSidebar() {
             </div>
 
             <nav className="flex-1 px-4 space-y-2 mt-4">
-                {navigation.map((item) => (
+                {filteredNavigation.map((item) => (
                     <Link
                         key={item.href}
                         href={item.href}
