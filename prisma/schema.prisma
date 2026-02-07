@@ -277,6 +277,11 @@ model Appointment {
   updatedAt   DateTime  @updatedAt
   cancelledAt DateTime?
 
+  // Cancellation and Completion Details
+  cancellationReason String?  @db.Text // Reason for cancellation
+  treatmentReport    String?  @db.Text // Staff report after completion
+  completedAt        DateTime?          // When appointment was completed
+
   // Relations
   patient        Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
   product        Product         @relation(fields: [productId], references: [id])
