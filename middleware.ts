@@ -7,11 +7,17 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
     const { nextUrl } = req;
     const isLoggedIn = !!req.auth;
+    const role = req.auth?.user?.role;
 
     const isApiAuthRoute = nextUrl.pathname.startsWith('/api/auth');
     const isPublicRoute = ['/', '/login', '/signup', '/admin-login'].includes(nextUrl.pathname);
     const isPublicApiRoute = ['/api/register', '/api/webhooks/stripe'].includes(nextUrl.pathname);
     const isAdminRoute = nextUrl.pathname.startsWith('/admin');
+
+    // Patient routes: dashboard, appointments, book, book-consultation, profile, services
+    const isPatientRoute = ['/dashboard', '/appointments', '/book', '/book-consultation', '/profile', '/services'].some(
+        route => nextUrl.pathname === route || nextUrl.pathname.startsWith(route + '/')
+    );
 
     if (isApiAuthRoute || isPublicApiRoute) return NextResponse.next();
 
@@ -25,15 +31,19 @@ export default auth((req) => {
     if (isLoggedIn && isPublicRoute) {
         // Redirect logged in users away from login/signup
         // Redirect based on role
-        const role = req.auth?.user?.role;
         if (role === 'SUPERADMIN' || role === 'STAFF') {
             return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
         }
         return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
 
-    // Allow SUPERADMIN and STAFF roles to access admin routes
-    const isAdminRole = req.auth?.user?.role === 'SUPERADMIN' || req.auth?.user?.role === 'STAFF';
+    // STAFF can only access admin routes, not patient routes
+    if (isLoggedIn && role === 'STAFF' && isPatientRoute) {
+        return NextResponse.redirect(new URL('/admin/dashboard', nextUrl));
+    }
+
+    // Only SUPERADMIN and STAFF can access admin routes
+    const isAdminRole = role === 'SUPERADMIN' || role === 'STAFF';
     if (isLoggedIn && isAdminRoute && !isAdminRole) {
         return NextResponse.redirect(new URL('/dashboard', nextUrl));
     }
