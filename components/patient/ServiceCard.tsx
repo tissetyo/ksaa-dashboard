@@ -17,20 +17,25 @@ export function ServiceCard({ product }: { product: any }) {
                 </p>
 
                 <div className="space-y-2 mb-6 mt-auto">
-                    <div className="flex items-center text-sm text-gray-500">
-                        <Clock className="h-4 w-4 mr-2" />
-                        {product.durationMinutes} minutes
-                    </div>
+                    {product.durationMinutes && (
+                        <div className="flex items-center text-sm text-gray-500">
+                            <Clock className="h-4 w-4 mr-2" />
+                            {product.durationMinutes} minutes
+                        </div>
+                    )}
                     <div className="flex items-center text-sm font-semibold text-gray-900">
                         <CreditCard className="h-4 w-4 mr-2" />
-                        RM {product.priceMYR.toFixed(2)}
+                        {product.priceMYR != null && product.priceMYR > 0
+                            ? `RM ${product.priceMYR.toFixed(2)}`
+                            : 'FREE'}
                     </div>
-                    {product.depositPercentage > 0 && (
+                    {product.depositPercentage != null && product.depositPercentage > 0 && (
                         <p className="text-xs text-[#0F665C] font-medium">
                             Deposit option available ({product.depositPercentage}%)
                         </p>
                     )}
                 </div>
+
 
                 <Button asChild className="w-full">
                     <Link href={`/book?service=${product.id}`}>
