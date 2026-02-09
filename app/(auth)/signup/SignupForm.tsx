@@ -82,7 +82,7 @@ function SignupForm() {
                 <CardHeader className="space-y-1">
                     <CardTitle className="text-2xl text-center font-bold text-[#0F665C]">Create Account</CardTitle>
                     <CardDescription className="text-center">
-                        Register to book appointments and manage your health
+                        Register to claim your free 5 million stemcells and book appointments based on your health needs
                     </CardDescription>
                 </CardHeader>
                 <form onSubmit={handleSubmit}>
