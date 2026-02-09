@@ -41,6 +41,26 @@ export function ReferralQRCode({ staffCode, staffName, size = 200 }: ReferralQRC
         }
     };
 
+    const handleHighResDownload = async () => {
+        try {
+            const signupUrl = `${window.location.origin}/signup?ref=${staffCode}`;
+            const highResUrl = await QRCode.toDataURL(signupUrl, {
+                width: 2500,
+                margin: 2,
+                color: {
+                    dark: '#1e3a8a',
+                    light: '#ffffff',
+                },
+            });
+            const link = document.createElement('a');
+            link.download = `${staffCode}-highres-qr.png`;
+            link.href = highResUrl;
+            link.click();
+        } catch (error) {
+            console.error('Failed to generate high-res QR', error);
+        }
+    };
+
     return (
         <div className="flex flex-col items-center gap-4 p-4 bg-muted rounded-lg">
             <div className="text-center">
@@ -52,10 +72,16 @@ export function ReferralQRCode({ staffCode, staffName, size = 200 }: ReferralQRC
                 <p className="font-mono font-bold text-lg text-[#0F665C]">{staffCode}</p>
                 <p className="text-sm text-muted-foreground">{staffName}</p>
             </div>
-            <Button onClick={handleDownload} variant="outline" size="sm">
-                <Download className="mr-2 h-4 w-4" />
-                Download QR Code
-            </Button>
+            <div className="flex flex-col gap-2 w-full">
+                <Button onClick={handleDownload} variant="outline" size="sm" className="w-full">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download Standard
+                </Button>
+                <Button onClick={handleHighResDownload} size="sm" className="w-full">
+                    <Download className="mr-2 h-4 w-4" />
+                    Download High Res (2500px)
+                </Button>
+            </div>
         </div>
     );
 }

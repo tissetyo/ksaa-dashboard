@@ -1,6 +1,12 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const resendApiKey = process.env.RESEND_API_KEY;
+
+if (!resendApiKey && process.env.NODE_ENV === 'production') {
+    console.warn('RESEND_API_KEY is missing in production build');
+}
+
+const resend = new Resend(resendApiKey || 're_123456789');
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@yourdomain.com';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'admin@ksaa.com';

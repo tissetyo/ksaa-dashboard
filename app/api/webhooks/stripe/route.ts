@@ -1,16 +1,26 @@
 import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
-import { stripe } from '@/lib/stripe';
+import Stripe from 'stripe';
 import { db } from '@/lib/db';
+
+const stripe = process.env.STRIPE_SECRET_KEY
+    ? new Stripe(process.env.STRIPE_SECRET_KEY, {
+        apiVersion: '2025-01-27.acacia' as any,
+    })
+    : null;
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
 
 export async function POST(req: Request) {
+    if (!stripe) {
+        return NextResponse.json({ message: 'Stripe is not configured' }, { status: 500 });
+    }
+
     const body = await req.text();
     const head = await headers();
     const signature = head.get('stripe-signature')!;
 
-    let event;
+    let event: Stripe.Event;
 
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
@@ -20,12 +30,9 @@ export async function POST(req: Request) {
 
     // Handle successful payment
     if (event.type === 'payment_intent.succeeded') {
-        const paymentIntent = event.data.object;
+        const paymentIntent = event.data.object as Stripe.PaymentIntent;
         const { userId, productId } = paymentIntent.metadata;
 
-        // We can use webhooks to confirm payments or sync state
-        // In our current flow, 'completeBooking' handles the DB update after client-side success.
-        // However, in a production app, the webhook should be the source of truth.
         console.log(`Payment Intent ${paymentIntent.id} succeeded for user ${userId}`);
 
         // Update Payment record if it exists

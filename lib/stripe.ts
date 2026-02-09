@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 const secretKey = process.env.STRIPE_SECRET_KEY || '';
 
 if (!secretKey && process.env.NODE_ENV === 'production') {
-    throw new Error('STRIPE_SECRET_KEY is missing in production');
+    console.warn('STRIPE_SECRET_KEY is missing in production build');
 }
 
 export const stripe = new Stripe(secretKey, {
