@@ -97,7 +97,7 @@ export default async function HomePage({
                   <ChevronRight className="ml-2 w-4 h-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#0F665C]">
+              <Button asChild variant="outline" size="lg" className="bg-[#0F665C] border-white text-white hover:bg-white hover:text-[#0F665C]">
                 <Link href="https://ksaastemcare.com" target="_blank">
                   Learn More
                 </Link>
@@ -275,7 +275,7 @@ export default async function HomePage({
                 <ChevronRight className="ml-2 w-4 h-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#0F665C]">
+            <Button asChild variant="outline" size="lg" className="bg-[#0F665C] border-white text-white hover:bg-white hover:text-[#0F665C]">
               <Link href={loginUrl}>
                 I Have an Account
               </Link>
