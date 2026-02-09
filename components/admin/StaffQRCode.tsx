@@ -47,6 +47,29 @@ export function StaffQRCode({ staffCode, staffName }: StaffQRCodeProps) {
         document.body.removeChild(link);
     };
 
+    const downloadHighResQR = async () => {
+        try {
+            const referralLink = `${window.location.origin}/register?ref=${staffCode}`;
+            const highResUrl = await QRCode.toDataURL(referralLink, {
+                width: 2500,
+                margin: 2,
+                color: {
+                    dark: '#0F665C',
+                    light: '#FFFFFF',
+                },
+            });
+
+            const link = document.createElement('a');
+            link.href = highResUrl;
+            link.download = `referral-qr-${staffCode}-highres.png`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (err) {
+            console.error('Failed to generate high res QR', err);
+        }
+    };
+
     return (
         <Card className="flex flex-col items-center p-6 space-y-4">
             <CardHeader className="text-center p-0">
@@ -67,10 +90,16 @@ export function StaffQRCode({ staffCode, staffName }: StaffQRCodeProps) {
                     <p className="text-2xl font-mono font-bold text-[#0F665C] tracking-wider">{staffCode}</p>
                 </div>
 
-                <Button onClick={downloadQR} className="w-full">
-                    <Download className="mr-2 h-4 w-4" />
-                    Download QR Code
-                </Button>
+                <div className="w-full space-y-2">
+                    <Button onClick={downloadQR} className="w-full" variant="outline">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download Standard (400px)
+                    </Button>
+                    <Button onClick={downloadHighResQR} className="w-full">
+                        <Download className="mr-2 h-4 w-4" />
+                        Download High Res (2500px)
+                    </Button>
+                </div>
             </CardContent>
         </Card>
     );
