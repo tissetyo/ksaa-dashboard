@@ -99,7 +99,7 @@ export async function prefetchAdminData(): Promise<AdminPrefetchedData | null> {
                 product: { select: { id: true, name: true, priceMYR: true, durationMinutes: true } }
             },
             orderBy: { appointmentDate: 'desc' },
-            take: 200 // Limit to recent 200
+            take: 30 // Reduced from 200 for faster loading
         }),
         // Patients
         db.patient.findMany({
@@ -114,7 +114,7 @@ export async function prefetchAdminData(): Promise<AdminPrefetchedData | null> {
                 _count: { select: { appointments: true } }
             },
             orderBy: { createdAt: 'desc' },
-            take: 200
+            take: 30 // Reduced from 200 for faster loading
         }),
         // Staff
         db.staff.findMany({
@@ -139,7 +139,7 @@ export async function prefetchAdminData(): Promise<AdminPrefetchedData | null> {
                 }
             },
             orderBy: { createdAt: 'desc' },
-            take: 100
+            take: 20 // Reduced from 100 for faster loading
         }),
         // Schedule
         db.availabilitySlot.findMany({

@@ -81,6 +81,7 @@ export async function prefetchUserData(): Promise<PrefetchedData | null> {
                 },
             },
             orderBy: { appointmentDate: 'desc' },
+            take: 20, // Limit for faster loading
         }),
         db.appointment.findMany({
             where: {
