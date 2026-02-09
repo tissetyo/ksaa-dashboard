@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getServices } from '@/lib/actions/services';
 
 export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
@@ -21,6 +22,8 @@ export default async function EditProfilePage() {
         redirect('/profile/complete');
     }
 
+    const services = await getServices();
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <h1 className="text-3xl font-bold">Edit Profile</h1>
@@ -29,7 +32,7 @@ export default async function EditProfilePage() {
                     <CardTitle>Update Your Information</CardTitle>
                 </CardHeader>
                 <CardContent>
-                    <ProfileForm initialData={patient} />
+                    <ProfileForm initialData={patient} services={services} />
                 </CardContent>
             </Card>
         </div>

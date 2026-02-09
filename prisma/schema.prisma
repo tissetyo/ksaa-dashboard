@@ -122,6 +122,12 @@ model Patient {
   // Emergency Contact
   emergencyContactName  String?
   emergencyContactPhone String?
+  
+  // New Fields
+  icNumber                 String?
+  interestedService        String?
+  stemCellInterestQuantity String?
+  medicalHistory           String? @db.Text
 
   // Medical Information
   medicalAllergies   String? @db.Text

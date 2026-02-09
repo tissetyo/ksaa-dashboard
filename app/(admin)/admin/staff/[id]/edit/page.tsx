@@ -6,7 +6,8 @@ import { StaffForm } from '@/components/admin/StaffForm';
 
 export const dynamic = 'force-dynamic';
 
-export default async function EditStaffPage({ params }: { params: { id: string } }) {
+export default async function EditStaffPage({ params }: { params: Promise<{ id: string }> }) {
+    const { id } = await params;
     const session = await auth();
 
     if (!session || session.user.role !== 'SUPERADMIN') {
@@ -14,7 +15,7 @@ export default async function EditStaffPage({ params }: { params: { id: string }
     }
 
     const staff = await db.staff.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
             user: {
                 select: {

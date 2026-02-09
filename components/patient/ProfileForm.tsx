@@ -17,9 +17,15 @@ import { toast } from 'sonner';
 import { updatePatientProfile } from '@/lib/actions/patient';
 import { BloodType, Salutation } from '@prisma/client';
 
-export function ProfileForm({ initialData }: { initialData?: any }) {
+interface ProfileFormProps {
+    initialData?: any;
+    services?: { id: string; name: string }[];
+}
+
+export function ProfileForm({ initialData, services = [] }: ProfileFormProps) {
     const [isLoading, setIsLoading] = useState(false);
     const router = useRouter();
+    const [selectedService, setSelectedService] = useState(initialData?.interestedService || '');
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
@@ -33,7 +39,7 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
             toast.success('Profile updated successfully');
 
             // If this is initial profile completion (no existing data), show onboarding
-            if (!initialData?.dateOfBirth) {
+            if (!initialData?.dateOfBirth && !initialData?.fullName) {
                 router.push('/dashboard?onboarding=true');
             } else {
                 router.push('/profile');
@@ -81,6 +87,15 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
                         />
                     </div>
                     <div className="space-y-2">
+                        <Label htmlFor="icNumber">IC / Passport Number</Label>
+                        <Input
+                            id="icNumber"
+                            name="icNumber"
+                            defaultValue={initialData?.icNumber}
+                            placeholder="e.g. 900101-14-1234"
+                        />
+                    </div>
+                    <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
                         <Input
                             id="phone"
@@ -121,6 +136,40 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
                         name="address"
                         defaultValue={initialData?.address}
                     />
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-lg font-medium border-b pb-2">Treatment Interest</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="interestedService">Interested Service</Label>
+                        <Select
+                            name="interestedService"
+                            defaultValue={initialData?.interestedService}
+                            onValueChange={setSelectedService}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select a service" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {services.map((service) => (
+                                    <SelectItem key={service.id} value={service.name}>
+                                        {service.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="stemCellInterestQuantity">Quantity (if applicable)</Label>
+                        <Input
+                            id="stemCellInterestQuantity"
+                            name="stemCellInterestQuantity"
+                            defaultValue={initialData?.stemCellInterestQuantity}
+                            placeholder="e.g. 1 vial, 2 sessions"
+                        />
+                    </div>
                 </div>
             </div>
 
@@ -175,6 +224,15 @@ export function ProfileForm({ initialData }: { initialData?: any }) {
             <div className="space-y-4">
                 <h3 className="text-lg font-medium border-b pb-2">Medical History</h3>
                 <div className="space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="medicalHistory">Medical History</Label>
+                        <Textarea
+                            id="medicalHistory"
+                            name="medicalHistory"
+                            defaultValue={initialData?.medicalHistory}
+                            placeholder="List any past medical conditions or surgeries..."
+                        />
+                    </div>
                     <div className="space-y-2">
                         <Label htmlFor="medicalAllergies">Medical Allergies</Label>
                         <Textarea

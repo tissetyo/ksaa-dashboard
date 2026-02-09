@@ -14,7 +14,9 @@ export default async function AdminDashboardPage() {
     // Verify admin role
     const user = await db.user.findUnique({
         where: { id: session.user.id },
-        select: { role: true }
+        include: {
+            staff: true
+        }
     });
 
     if (!user || !['SUPERADMIN', 'STAFF'].includes(user.role)) {
@@ -22,5 +24,5 @@ export default async function AdminDashboardPage() {
     }
 
     // All data comes from AdminDataProvider in layout
-    return <AdminDashboardClient />;
+    return <AdminDashboardClient staffCode={user.staff?.staffCode} staffName={user.staff?.fullName} />;
 }

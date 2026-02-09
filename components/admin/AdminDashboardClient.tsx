@@ -5,7 +5,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Users, Calendar, CheckCircle, Clock, XCircle, DollarSign } from 'lucide-react';
 
-export function AdminDashboardClient() {
+import { StaffQRCode } from './StaffQRCode';
+
+interface AdminDashboardClientProps {
+    staffCode?: string;
+    staffName?: string;
+}
+
+export function AdminDashboardClient({ staffCode, staffName }: AdminDashboardClientProps) {
     const { data, isLoading } = useAdminData();
 
     if (isLoading || !data) {
@@ -67,10 +74,33 @@ export function AdminDashboardClient() {
 
     return (
         <div className="space-y-6">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600">Overview of your KSAA clinic operations</p>
+            <div className="flex justify-between items-start">
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+                    <p className="text-gray-600">Overview of your KSAA clinic operations</p>
+                </div>
             </div>
+
+            {staffCode && staffName && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="md:col-span-1">
+                        <StaffQRCode staffCode={staffCode} staffName={staffName} />
+                    </div>
+                    {/* Revenue Snapshot for Staff */}
+                    <Card className="bg-gradient-to-r from-[#0F665C] to-[#0a4f47] text-white">
+                        <CardHeader className="pb-2">
+                            <CardTitle className="text-sm font-medium opacity-90 flex items-center gap-2">
+                                <DollarSign className="h-4 w-4" />
+                                Your Impact (Total Revenue)
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <p className="text-3xl font-bold">RM {stats.totalRevenue.toFixed(2)}</p>
+                            <p className="text-sm opacity-80 mt-1">Keep up the good work!</p>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">

@@ -39,6 +39,10 @@ export async function updatePatientProfile(data: any) {
         currentMedications,
         previousTreatments,
         additionalNotes,
+        // New fields
+        icNumber,
+        interestedService,
+        stemCellInterestQuantity,
     } = data;
 
     const patient = await db.patient.upsert({
@@ -50,29 +54,37 @@ export async function updatePatientProfile(data: any) {
             age: age ? parseInt(age) : null,
             heightCm: heightCm ? parseFloat(heightCm) : null,
             weightKg: weightKg ? parseFloat(weightKg) : null,
-            bloodType,
+            bloodType: bloodType || 'UNKNOWN',
             emergencyContactName,
             emergencyContactPhone,
             medicalAllergies,
             currentMedications,
             previousTreatments,
             additionalNotes,
+            // New fields
+            icNumber,
+            interestedService,
+            stemCellInterestQuantity,
         },
         create: {
             userId: session.user.id,
-            fullName: fullName || 'Unknown', // Fallback if missing
+            fullName: fullName || 'Unknown',
             phone: phone || '',
             address,
             age: age ? parseInt(age) : null,
             heightCm: heightCm ? parseFloat(heightCm) : null,
             weightKg: weightKg ? parseFloat(weightKg) : null,
-            bloodType,
+            bloodType: bloodType || 'UNKNOWN',
             emergencyContactName,
             emergencyContactPhone,
             medicalAllergies,
             currentMedications,
             previousTreatments,
             additionalNotes,
+            // New fields
+            icNumber,
+            interestedService,
+            stemCellInterestQuantity,
         },
     });
 

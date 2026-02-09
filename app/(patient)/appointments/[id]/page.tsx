@@ -7,6 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Calendar, Clock, MapPin, CreditCard, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
+import { CancelAppointmentButton } from '@/components/patient/CancelAppointmentButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -199,9 +200,11 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
                 <Card>
                     <CardContent className="pt-6">
                         <div className="flex gap-4 justify-end">
-                            <Button variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
-                                Cancel Appointment
-                            </Button>
+                            <CancelAppointmentButton
+                                appointmentId={appointment.id}
+                                variant="outline"
+                                className="text-red-600 border-red-600 hover:bg-red-50"
+                            />
                             <Button asChild variant="outline">
                                 <Link href={`/book?service=${appointment.productId}`}>
                                     Reschedule

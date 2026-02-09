@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
+import { getServices } from '@/lib/actions/services';
 
 export const dynamic = 'force-dynamic';
 import { redirect } from 'next/navigation';
@@ -20,6 +21,8 @@ export default async function CompleteProfilePage() {
     // If already has physical data or medical data, maybe just redirect?
     // But for simple flow, we let them complete it.
 
+    const services = await getServices();
+
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="text-center space-y-2">
@@ -34,7 +37,7 @@ export default async function CompleteProfilePage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <ProfileForm initialData={patient} />
+                    <ProfileForm initialData={patient} services={services} />
                 </CardContent>
             </Card>
         </div>

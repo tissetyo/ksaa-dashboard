@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Calendar, Clock, MapPin, Package, MoreVertical } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
+import { CancelAppointmentButton } from '@/components/patient/CancelAppointmentButton';
 
 export default async function PatientAppointmentsPage() {
     const session = await auth();
@@ -99,9 +100,12 @@ export default async function PatientAppointmentsPage() {
                                                 <Link href={`/appointments/${apt.id}`}>Details</Link>
                                             </Button>
                                             {apt.status === 'PENDING' && (
-                                                <Button variant="ghost" size="sm" className="text-red-600 hover:text-red-700 hover:bg-red-50">
-                                                    Cancel
-                                                </Button>
+                                                <CancelAppointmentButton
+                                                    appointmentId={apt.id}
+                                                    variant="ghost"
+                                                    size="sm"
+                                                    className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                />
                                             )}
                                         </div>
                                     </div>
