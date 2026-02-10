@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { Calendar, Clock, MapPin, CreditCard, ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { CancelAppointmentButton } from '@/components/patient/CancelAppointmentButton';
+import { ReviewForm } from '@/components/reviews/ReviewForm';
+import { Star } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -36,7 +38,9 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
             },
             payments: {
                 orderBy: { createdAt: 'desc' }
-            }
+            },
+            reviewToken: true,
+            review: true
         }
     });
 
@@ -48,6 +52,10 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
     if (appointment.patient.userId !== session.user.id) {
         notFound();
     }
+
+    const { reviewToken, review } = appointment;
+    const showReviewForm = appointment.status === 'COMPLETED' && reviewToken && !reviewToken.isUsed && !review;
+    const showReview = !!review;
 
     const statusColors: Record<string, string> = {
         PENDING: 'bg-yellow-100 text-yellow-800',
@@ -196,6 +204,7 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
             </div>
 
             {/* Actions */}
+            {/* Actions */}
             {appointment.status === 'PENDING' && (
                 <Card>
                     <CardContent className="pt-6">
@@ -211,6 +220,50 @@ export default async function AppointmentDetailPage({ params }: AppointmentDetai
                                 </Link>
                             </Button>
                         </div>
+                    </CardContent>
+                </Card>
+            )}
+
+            {/* Review Section */}
+            {showReviewForm && reviewToken && (
+                <div className="mt-8">
+                    <h2 className="text-xl font-semibold mb-4 text-[#0F665C]">Rate Your Experience</h2>
+                    <ReviewForm
+                        token={reviewToken.token}
+                        initialData={{
+                            serviceName: appointment.product.name,
+                            patientName: appointment.patient.fullName,
+                            appointmentDate: appointment.appointmentDate
+                        }}
+                        user={{
+                            name: appointment.patient.fullName,
+                            email: appointment.patient.user.email
+                        }}
+                    />
+                </div>
+            )}
+
+            {showReview && review && (
+                <Card className="mt-8 bg-green-50/50 border-green-100">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-green-800">
+                            <CheckCircle2 className="h-5 w-5" />
+                            Your Review
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center gap-1 text-yellow-500 mb-2">
+                            {Array.from({ length: 5 }).map((_, i) => (
+                                <Star
+                                    key={i}
+                                    className={`h-5 w-5 ${i < review.rating ? 'fill-current' : 'text-gray-300'}`}
+                                />
+                            ))}
+                        </div>
+                        <p className="text-gray-700 italic">"{review.comment}"</p>
+                        <p className="text-sm text-gray-500 mt-2">
+                            Submitted on {format(new Date(review.createdAt), 'MMMM d, yyyy')}
+                        </p>
                     </CardContent>
                 </Card>
             )}

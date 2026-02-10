@@ -21,7 +21,8 @@ import {
     Calendar,
     Clock,
     FileText,
-    CheckCircle2
+    CheckCircle2,
+    Copy
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { completeAppointment } from '@/lib/actions/admin-appointment';
@@ -42,10 +43,21 @@ export function CompleteAppointmentModal({
 }: CompleteAppointmentModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [treatmentReport, setTreatmentReport] = useState('');
+    const [successData, setSuccessData] = useState<{ token: string } | null>(null);
 
-    if (!appointment) return null;
+    const handleSuccessClose = () => {
+        setSuccessData(null);
+        onOpenChange(false);
+        onSuccess();
+    };
 
-    const { patient, product } = appointment;
+    const copyLink = () => {
+        if (successData?.token) {
+            const link = `${window.location.origin}/review?token=${successData.token}`;
+            navigator.clipboard.writeText(link);
+            toast.success('Review link copied!');
+        }
+    };
 
     const handleComplete = async () => {
         if (!treatmentReport.trim()) {
@@ -57,9 +69,17 @@ export function CompleteAppointmentModal({
         try {
             const result = await completeAppointment(appointment.id, treatmentReport);
             if (result.success) {
-                toast.success('Appointment marked as complete. Report sent to patient.');
-                onSuccess();
-                onOpenChange(false);
+                // Determine if we have a token (we should)
+                // The server action returns { success: true, reviewToken: string }
+                const token = (result as any).reviewToken;
+
+                if (token) {
+                    setSuccessData({ token });
+                } else {
+                    toast.success('Appointment marked as complete.');
+                    onSuccess();
+                    onOpenChange(false);
+                }
                 setTreatmentReport('');
             } else {
                 toast.error(result.error || 'Failed to complete appointment');
@@ -70,6 +90,49 @@ export function CompleteAppointmentModal({
             setIsLoading(false);
         }
     };
+
+    if (successData) {
+        return (
+            <Dialog open={open} onOpenChange={(open) => !open && handleSuccessClose()}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex flex-col items-center gap-2 text-center">
+                            <CheckCircle2 className="h-12 w-12 text-green-600" />
+                            <span>Appointment Completed!</span>
+                        </DialogTitle>
+                        <DialogDescription className="text-center pt-2">
+                            The appointment has been marked as complete and the treatment report has been sent.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="bg-muted p-4 rounded-lg space-y-3 my-2">
+                        <Label>Review Link for Patient</Label>
+                        <div className="flex gap-2">
+                            <div className="flex-1 bg-background border rounded px-3 py-2 text-sm text-muted-foreground truncate">
+                                {`${typeof window !== 'undefined' ? window.location.origin : ''}/review?token=${successData.token}`}
+                            </div>
+                            <Button size="icon" variant="outline" onClick={copyLink}>
+                                <Copy className="h-4 w-4" />
+                            </Button>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Share this link with the patient to collect their feedback.
+                        </p>
+                    </div>
+
+                    <DialogFooter className="sm:justify-center">
+                        <Button onClick={handleSuccessClose} className="w-full sm:w-auto">
+                            Done
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        );
+    }
+
+    if (!appointment) return null;
+
+    const { patient, product } = appointment;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>

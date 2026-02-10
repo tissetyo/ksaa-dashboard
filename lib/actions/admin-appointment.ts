@@ -76,13 +76,13 @@ export async function completeAppointment(appointmentId: string, treatmentReport
         });
 
         // Automatically generate review token
-        await generateReviewToken(appointmentId);
+        const { token } = await generateReviewToken(appointmentId);
 
         revalidatePath('/admin/appointments');
         revalidatePath('/dashboard');
         revalidatePath('/appointments');
 
-        return { success: true };
+        return { success: true, reviewToken: token };
     } catch (error) {
         console.error('Error completing appointment:', error);
         return { success: false, error: 'Failed to complete appointment' };

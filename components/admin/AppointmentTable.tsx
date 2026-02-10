@@ -23,6 +23,7 @@ import { MoreHorizontal, Clock, CheckCircle, XCircle, History } from 'lucide-rea
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { useAdminData } from '@/components/providers/AdminDataProvider';
 
 // Import modals
 import { ConfirmAppointmentModal } from './ConfirmAppointmentModal';
@@ -36,6 +37,7 @@ interface AppointmentTableProps {
 
 export function AppointmentTable({ appointments }: AppointmentTableProps) {
     const router = useRouter();
+    const { refresh } = useAdminData();
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
 
     // Modal states
@@ -69,6 +71,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps) {
 
     const handleSuccess = () => {
         router.refresh();
+        refresh(); // Refresh client-side cache
     };
 
     const getStatusBadge = (status: string) => {

@@ -8,10 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 export default async function EditProductPage({
     params
 }: {
-    params: { id: string }
+    params: Promise<{ id: string }>
 }) {
+    const { id } = await params;
+
     const product = await db.product.findUnique({
-        where: { id: params.id },
+        where: { id },
     });
 
     if (!product) {
