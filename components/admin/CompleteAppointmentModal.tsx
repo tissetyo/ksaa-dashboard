@@ -116,7 +116,7 @@ export function CompleteAppointmentModal({
                     <div className="bg-muted p-4 rounded-lg space-y-3 my-2">
                         <Label>Review Link for Patient</Label>
                         <div className="flex gap-2">
-                            <div className="flex-1 bg-background border rounded px-3 py-2 text-sm text-muted-foreground truncate">
+                            <div className="flex-1 min-w-0 bg-background border rounded px-3 py-2 text-sm text-muted-foreground truncate">
                                 {`${typeof window !== 'undefined' ? window.location.origin : ''}/review?token=${successData.token}`}
                             </div>
                             <Button size="icon" variant="outline" onClick={copyLink}>
