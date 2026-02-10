@@ -96,7 +96,8 @@ export async function prefetchAdminData(): Promise<AdminPrefetchedData | null> {
         db.appointment.findMany({
             include: {
                 patient: { select: { id: true, fullName: true, phone: true, userId: true } },
-                product: { select: { id: true, name: true, priceMYR: true, durationMinutes: true } }
+                product: { select: { id: true, name: true, priceMYR: true, durationMinutes: true } },
+                reviewToken: { select: { token: true, isUsed: true } }
             },
             orderBy: { appointmentDate: 'desc' },
             take: 30 // Reduced from 200 for faster loading

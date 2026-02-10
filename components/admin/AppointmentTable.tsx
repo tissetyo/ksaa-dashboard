@@ -22,6 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, Clock, CheckCircle, XCircle, History } from 'lucide-react';
 import { format } from 'date-fns';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 
 // Import modals
 import { ConfirmAppointmentModal } from './ConfirmAppointmentModal';
@@ -162,6 +163,23 @@ export function AppointmentTable({ appointments }: AppointmentTableProps) {
                                                     <History className="mr-2 h-4 w-4" />
                                                     View Patient History
                                                 </DropdownMenuItem>
+                                                {apt.status === 'COMPLETED' && (
+                                                    <>
+                                                        <DropdownMenuSeparator />
+                                                        <DropdownMenuItem onClick={() => {
+                                                            if (apt.reviewToken?.token) {
+                                                                const link = `${window.location.origin}/review?token=${apt.reviewToken.token}`;
+                                                                navigator.clipboard.writeText(link);
+                                                                toast.success('Review link copied to clipboard!');
+                                                            } else {
+                                                                toast.error('No review link available. Please complete appointment first.');
+                                                            }
+                                                        }}>
+                                                            <CheckCircle className="mr-2 h-4 w-4 text-purple-600" />
+                                                            Copy Review Link
+                                                        </DropdownMenuItem>
+                                                    </>
+                                                )}
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>

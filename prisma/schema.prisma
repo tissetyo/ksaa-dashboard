@@ -150,6 +150,8 @@ model Patient {
   @@index([userId])
   @@index([fullName])
   @@index([phone])
+  
+  reviews Review[]
 }
 
 // Staff Members with Referral Codes
@@ -173,6 +175,7 @@ model Staff {
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   referredPatients Patient[] @relation("StaffReferrals")
 
+  reviews Review[]
   @@index([staffCode])
   @@index([email])
 }
@@ -207,6 +210,8 @@ model Product {
 
   @@index([isActive])
   @@index([name])
+
+  reviews Review[]
 }
 
 // ============================================================================
@@ -299,6 +304,10 @@ model Appointment {
   @@index([appointmentDate])
   @@index([status])
   @@index([paymentStatus])
+
+  // Reviews
+  review      Review?
+  reviewToken ReviewToken?
 }
 
 // ============================================================================
@@ -434,4 +443,64 @@ model RefundRequest {
   @@index([appointmentId])
   @@index([patientId])
   @@index([status])
+}
+// ============================================================================
+// REVIEW SYSTEM
+// ============================================================================
+
+model Review {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Review content
+  rating  Int    // 1-5 stars
+  comment String @db.Text
+
+  // Relations
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  staffId String?
+  staff   Staff?  @relation(fields: [staffId], references: [id])
+
+  // For non-logged-in reviewers
+  reviewerName  String?
+  reviewerEmail String?
+
+  // Token reference
+  tokenId String      @unique
+  token   ReviewToken @relation(fields: [tokenId], references: [id])
+
+  // Moderation
+  isApproved Boolean @default(false)
+  isPublic   Boolean @default(true)
+
+  @@index([isApproved, isPublic])
+  @@index([productId])
+  @@index([staffId])
+}
+
+model ReviewToken {
+  id        String   @id @default(cuid())
+  token     String   @unique @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 30 days validity
+
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  productId String
+  staffId   String?
+
+  isUsed Boolean @default(false)
+  review Review?
+
+  @@index([token])
 }

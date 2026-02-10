@@ -3,6 +3,7 @@
 import { auth } from '@/lib/auth';
 import { db } from '@/lib/db';
 import { revalidatePath } from 'next/cache';
+import { generateReviewToken } from '@/lib/actions/review';
 
 async function isAdminOrStaff() {
     const session = await auth();
@@ -73,6 +74,9 @@ export async function completeAppointment(appointmentId: string, treatmentReport
                 completedAt: new Date(),
             },
         });
+
+        // Automatically generate review token
+        await generateReviewToken(appointmentId);
 
         revalidatePath('/admin/appointments');
         revalidatePath('/dashboard');
