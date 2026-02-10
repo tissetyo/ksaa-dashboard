@@ -33,16 +33,19 @@ interface CompleteAppointmentModalProps {
     onOpenChange: (open: boolean) => void;
     appointment: any;
     onSuccess: () => void;
+    staffMembers?: any[];
 }
 
 export function CompleteAppointmentModal({
     open,
     onOpenChange,
     appointment,
-    onSuccess
+    onSuccess,
+    staffMembers = []
 }: CompleteAppointmentModalProps) {
     const [isLoading, setIsLoading] = useState(false);
     const [treatmentReport, setTreatmentReport] = useState('');
+    const [selectedStaffId, setSelectedStaffId] = useState('');
     const [successData, setSuccessData] = useState<{ token: string } | null>(null);
 
     const handleSuccessClose = () => {
@@ -65,9 +68,14 @@ export function CompleteAppointmentModal({
             return;
         }
 
+        if (!selectedStaffId) {
+            toast.error('Please select an attending staff member');
+            return;
+        }
+
         setIsLoading(true);
         try {
-            const result = await completeAppointment(appointment.id, treatmentReport);
+            const result = await completeAppointment(appointment.id, treatmentReport, selectedStaffId);
             if (result.success) {
                 // Determine if we have a token (we should)
                 // The server action returns { success: true, reviewToken: string }
@@ -202,6 +210,27 @@ export function CompleteAppointmentModal({
                             This report will be sent to the patient's dashboard for their records.
                         </p>
                     </div>
+
+                    {/* Staff Selection */}
+                    <div>
+                        <Label htmlFor="staff" className="flex items-center gap-2 mb-3">
+                            <User className="h-4 w-4" />
+                            Attending Staff <span className="text-red-500">*</span>
+                        </Label>
+                        <select
+                            id="staff"
+                            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                            value={selectedStaffId}
+                            onChange={(e) => setSelectedStaffId(e.target.value)}
+                        >
+                            <option value="">Select Staff Member</option>
+                            {staffMembers.map((staff: any) => (
+                                <option key={staff.id} value={staff.id}>
+                                    {staff.fullName} ({staff.staffCode})
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 <DialogFooter>
@@ -210,7 +239,7 @@ export function CompleteAppointmentModal({
                     </Button>
                     <Button
                         onClick={handleComplete}
-                        disabled={isLoading || !treatmentReport.trim()}
+                        disabled={isLoading || !treatmentReport.trim() || !selectedStaffId}
                         className="bg-green-600 hover:bg-green-700"
                     >
                         {isLoading ? 'Completing...' : 'Complete & Send Report'}

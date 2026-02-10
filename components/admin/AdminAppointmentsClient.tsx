@@ -5,7 +5,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AppointmentTable } from '@/components/admin/AppointmentTable';
 
-export function AdminAppointmentsClient() {
+export function AdminAppointmentsClient({ staffMembers = [] }: { staffMembers?: any[] }) {
     const { data, isLoading } = useAdminData();
 
     if (isLoading || !data) {
@@ -48,15 +48,15 @@ export function AdminAppointmentsClient() {
                 </TabsList>
 
                 <TabsContent value="pending" className="mt-4">
-                    <AppointmentTable appointments={pendingAppointments} />
+                    <AppointmentTable appointments={pendingAppointments} staffMembers={staffMembers} />
                 </TabsContent>
 
                 <TabsContent value="upcoming" className="mt-4">
-                    <AppointmentTable appointments={upcomingAppointments} />
+                    <AppointmentTable appointments={upcomingAppointments} staffMembers={staffMembers} />
                 </TabsContent>
 
                 <TabsContent value="history" className="mt-4">
-                    <AppointmentTable appointments={historicalAppointments} />
+                    <AppointmentTable appointments={historicalAppointments} staffMembers={staffMembers} />
                 </TabsContent>
             </Tabs>
         </div>

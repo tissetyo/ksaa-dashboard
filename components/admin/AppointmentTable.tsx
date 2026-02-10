@@ -33,9 +33,10 @@ import { PatientHistoryModal } from './PatientHistoryModal';
 
 interface AppointmentTableProps {
     appointments: any[];
+    staffMembers?: any[];
 }
 
-export function AppointmentTable({ appointments }: AppointmentTableProps) {
+export function AppointmentTable({ appointments, staffMembers = [] }: AppointmentTableProps) {
     const router = useRouter();
     const { refresh } = useAdminData();
     const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
@@ -207,6 +208,7 @@ export function AppointmentTable({ appointments }: AppointmentTableProps) {
                 onOpenChange={setCompleteModalOpen}
                 appointment={selectedAppointment}
                 onSuccess={handleSuccess}
+                staffMembers={staffMembers}
             />
 
             {/* Cancel Appointment Modal */}

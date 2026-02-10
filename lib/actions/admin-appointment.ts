@@ -62,7 +62,7 @@ export async function confirmAppointment(appointmentId: string) {
 }
 
 // Complete appointment with treatment report
-export async function completeAppointment(appointmentId: string, treatmentReport: string) {
+export async function completeAppointment(appointmentId: string, treatmentReport: string, staffId?: string) {
     await isAdminOrStaff();
 
     try {
@@ -72,11 +72,12 @@ export async function completeAppointment(appointmentId: string, treatmentReport
                 status: 'COMPLETED',
                 treatmentReport,
                 completedAt: new Date(),
+                staffId: staffId || undefined // Associate staff if provided
             },
         });
 
         // Automatically generate review token
-        const { token } = await generateReviewToken(appointmentId);
+        const { token } = await generateReviewToken(appointmentId, staffId);
 
         revalidatePath('/admin/appointments');
         revalidatePath('/dashboard');

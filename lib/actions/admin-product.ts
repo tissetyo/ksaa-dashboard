@@ -15,12 +15,13 @@ async function isAdmin() {
 export async function createProduct(data: any) {
     await isAdmin();
 
-    const { name, description, priceMYR, depositPercentage, durationMinutes, quotaPerDay } = data;
+    const { name, description, imageUrl, priceMYR, depositPercentage, durationMinutes, quotaPerDay } = data;
 
     const product = await db.product.create({
         data: {
             name,
             description,
+            imageUrl,
             priceMYR: parseFloat(priceMYR),
             depositPercentage: parseInt(depositPercentage),
             durationMinutes: parseInt(durationMinutes),
@@ -36,13 +37,14 @@ export async function createProduct(data: any) {
 export async function updateProduct(id: string, data: any) {
     await isAdmin();
 
-    const { name, description, priceMYR, depositPercentage, durationMinutes, quotaPerDay, isActive } = data;
+    const { name, description, imageUrl, priceMYR, depositPercentage, durationMinutes, quotaPerDay, isActive } = data;
 
     const product = await db.product.update({
         where: { id },
         data: {
             name,
             description,
+            imageUrl,
             priceMYR: parseFloat(priceMYR),
             depositPercentage: parseInt(depositPercentage),
             durationMinutes: parseInt(durationMinutes),

@@ -208,18 +208,26 @@ export function BookingFlow({ products }: { products: any[] }) {
                                 )}
                                 onClick={() => setSelectedProduct(p)}
                             >
-                                <CardContent className="p-4 flex items-center justify-between">
-                                    <div>
-                                        <h3 className="font-bold">{p.name}</h3>
-                                        <p className="text-sm text-gray-500">
-                                            {(p.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(p.priceMYR ?? 0).toFixed(2)}`}
-                                        </p>
+                                <CardContent className="p-4">
+                                    {p.imageUrl && (
+                                        <div className="w-full h-32 mb-4 rounded-md overflow-hidden bg-gray-100 flex items-center justify-center">
+                                            <img src={p.imageUrl} alt={p.name} className="w-full h-full object-cover" />
+                                        </div>
+                                    )}
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h3 className="font-bold">{p.name}</h3>
+                                            <p className="text-sm text-gray-500">
+                                                {(p.priceMYR ?? 0) === 0 ? 'FREE' : `RM ${(p.priceMYR ?? 0).toFixed(2)}`}
+                                            </p>
+                                        </div>
+                                        {selectedProduct?.id === p.id && <Check className="text-[#0F665C]" />}
                                     </div>
-                                    {selectedProduct?.id === p.id && <Check className="text-[#0F665C]" />}
                                 </CardContent>
-                            </Card>
-                        ))}
-                    </div>
+                            </Card >
+                        ))
+                        }
+                    </div >
                 );
             case 2:
                 return (

@@ -21,6 +21,14 @@ export default async function AdminAppointmentsPage() {
         redirect('/admin-login');
     }
 
-    // All data comes from AdminDataProvider in layout
-    return <AdminAppointmentsClient />;
+    // Fetch active staff members for dropdowns
+    const staffMembers = await db.staff.findMany({
+        where: { isActive: true },
+        select: { id: true, fullName: true, staffCode: true },
+        orderBy: { fullName: 'asc' }
+    });
+
+    // All data comes from AdminDataProvider in layout, but we pass staff list as prop to client component
+    // We need to update AdminAppointmentsClient to accept staffMembers
+    return <AdminAppointmentsClient staffMembers={staffMembers} />;
 }

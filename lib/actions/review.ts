@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
 
 // Generate a review token for an appointment
-export async function generateReviewToken(appointmentId: string) {
+export async function generateReviewToken(appointmentId: string, staffId?: string) {
     const session = await auth();
     // Allow admins and staff to generate tokens
     if (!session || (session.user.role !== 'SUPERADMIN' && session.user.role !== 'STAFF')) {
@@ -51,18 +51,11 @@ export async function generateReviewToken(appointmentId: string) {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 30);
 
-    // Get staff ID from appointment if possible (via some logic) 
-    // For now we don't strictly link staffId in token creation unless we fetch it from appointment history or assignment
-    // But our appointment model doesn't explicitly link staff, it links product.
-    // However, the `completeAppointment` action sets `treatmentReport`.
-    // We'll rely on the reviewer to confirm staff, or passing staffId if we had it.
-    // In our schema, Appointment doesn't have staffId direct relation, but Patient has referredByStaffId.
-    // We'll let the frontend handle staff selection pre-fill based on context if available, or just leave it open.
-
     const reviewToken = await db.reviewToken.create({
         data: {
             appointmentId,
             productId: appointment.productId,
+            staffId: staffId || appointment.staffId, // Use passed staffId or existing one on appointment
             expiresAt,
         }
     });

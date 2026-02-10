@@ -73,6 +73,16 @@ export function ProductForm({ initialData }: { initialData?: any }) {
                 />
             </div>
 
+            <div className="space-y-2">
+                <Label htmlFor="imageUrl">Banner Image URL</Label>
+                <Input
+                    id="imageUrl"
+                    name="imageUrl"
+                    defaultValue={initialData?.imageUrl}
+                    placeholder="https://example.com/image.jpg"
+                />
+            </div>
+
             <div className="flex items-center space-x-2 p-4 bg-muted rounded-lg">
                 <Switch
                     id="isFree"
