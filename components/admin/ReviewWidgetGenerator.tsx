@@ -7,7 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Check } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Copy, Check, Eye, Code } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface ReviewWidgetGeneratorProps {
@@ -24,9 +25,34 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
     const [generatedCode, setGeneratedCode] = useState('');
     const [copied, setCopied] = useState(false);
 
+    // Preview State
+    const [previewReviews, setPreviewReviews] = useState<any[]>([]);
+    const [isLoadingPreview, setIsLoadingPreview] = useState(false);
+
     useEffect(() => {
         generateCode();
+        fetchPreview();
     }, [limit, staffId, productId, heading, theme]);
+
+    const fetchPreview = async () => {
+        setIsLoadingPreview(true);
+        try {
+            const params = new URLSearchParams();
+            if (limit) params.append('limit', limit);
+            if (staffId && staffId !== 'all') params.append('staffId', staffId);
+            if (productId && productId !== 'all') params.append('productId', productId);
+
+            const response = await fetch(`/api/public/reviews?${params.toString()}`);
+            if (response.ok) {
+                const data = await response.json();
+                setPreviewReviews(data);
+            }
+        } catch (error) {
+            console.error('Failed to load preview:', error);
+        } finally {
+            setIsLoadingPreview(false);
+        }
+    };
 
     const generateCode = () => {
         const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://ksaa-dashboard.vercel.app';
@@ -40,9 +66,6 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
 
         const fetchUrl = `${apiUrl}?${params.toString()}`;
 
-        // Simple star SVG for minimal external dependencies
-        const starFull = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="#f59e0b" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
-        const starHalf = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="url(#half)" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><defs><linearGradient id="half"><stop offset="50%" stop-color="#f59e0b"/><stop offset="50%" stop-color="white"/></linearGradient></defs><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>`;
         // Using simple text stars for maximum compatibility and minimal size in the snippet
         const starChar = '★';
         const emptyStarChar = '☆';
@@ -120,6 +143,14 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         setTimeout(() => setCopied(false), 2000);
     };
 
+    // Preview Styles based on Theme
+    const previewStyles = {
+        bg: theme === 'dark' ? '#1f2937' : '#ffffff',
+        text: theme === 'dark' ? '#f9fafb' : '#111827',
+        border: theme === 'dark' ? '#374151' : '#e5e7eb',
+        meta: theme === 'dark' ? '#9ca3af' : '#6b7280'
+    };
+
     return (
         <Card className="w-full">
             <CardHeader>
@@ -129,105 +160,179 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     {/* Configuration Options */}
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label>Heading Text (Optional)</Label>
-                            <Input
-                                value={heading}
-                                onChange={(e) => setHeading(e.target.value)}
-                                placeholder="Patient Reviews"
-                            />
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-6">
+                        <div className="space-y-4">
+                            <h3 className="font-medium">Configuration</h3>
                             <div className="space-y-2">
-                                <Label>Number of Reviews</Label>
-                                <Select value={limit} onValueChange={setLimit}>
+                                <Label>Heading Text (Optional)</Label>
+                                <Input
+                                    value={heading}
+                                    onChange={(e) => setHeading(e.target.value)}
+                                    placeholder="Patient Reviews"
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label>Number of Reviews</Label>
+                                    <Select value={limit} onValueChange={setLimit}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="3">3</SelectItem>
+                                            <SelectItem value="5">5</SelectItem>
+                                            <SelectItem value="10">10</SelectItem>
+                                            <SelectItem value="20">20</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label>Theme</Label>
+                                    <Select value={theme} onValueChange={setTheme}>
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="light">Light</SelectItem>
+                                            <SelectItem value="dark">Dark</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                <Label>Filter by Staff (Optional)</Label>
+                                <Select value={staffId} onValueChange={setStaffId}>
                                     <SelectTrigger>
-                                        <SelectValue />
+                                        <SelectValue placeholder="All Staff" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="3">3</SelectItem>
-                                        <SelectItem value="5">5</SelectItem>
-                                        <SelectItem value="10">10</SelectItem>
-                                        <SelectItem value="20">20</SelectItem>
+                                        <SelectItem value="all">All Staff</SelectItem>
+                                        {staffMembers.map((staff) => (
+                                            <SelectItem key={staff.id} value={staff.id}>
+                                                {staff.fullName}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
 
                             <div className="space-y-2">
-                                <Label>Theme</Label>
-                                <Select value={theme} onValueChange={setTheme}>
+                                <Label>Filter by Service (Optional)</Label>
+                                <Select value={productId} onValueChange={setProductId}>
                                     <SelectTrigger>
-                                        <SelectValue />
+                                        <SelectValue placeholder="All Services" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="light">Light</SelectItem>
-                                        <SelectItem value="dark">Dark</SelectItem>
+                                        <SelectItem value="all">All Services</SelectItem>
+                                        {products.map((product) => (
+                                            <SelectItem key={product.id} value={product.id}>
+                                                {product.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Filter by Staff (Optional)</Label>
-                            <Select value={staffId} onValueChange={setStaffId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Staff" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Staff</SelectItem>
-                                    {staffMembers.map((staff) => (
-                                        <SelectItem key={staff.id} value={staff.id}>
-                                            {staff.fullName}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <Label>Filter by Service (Optional)</Label>
-                            <Select value={productId} onValueChange={setProductId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="All Services" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Services</SelectItem>
-                                    {products.map((product) => (
-                                        <SelectItem key={product.id} value={product.id}>
-                                            {product.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
                         </div>
                     </div>
 
-                    {/* Code Output */}
-                    <div className="space-y-2">
-                        <div className="flex justify-between items-center">
-                            <Label>Generated Code</Label>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleCopy}
-                                className="flex items-center gap-2 h-8"
-                            >
-                                {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
-                                {copied ? 'Copied' : 'Copy Code'}
-                            </Button>
-                        </div>
-                        <Textarea
-                            value={generatedCode}
-                            readOnly
-                            className="font-mono text-xs h-[300px] bg-slate-950 text-slate-50 resize-none p-4"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Copy and paste this code into a "Custom HTML" block in WordPress or any other website builder.
-                        </p>
+                    {/* Preview & Code Output */}
+                    <div className="space-y-4">
+                        <Tabs defaultValue="preview" className="w-full">
+                            <TabsList className="w-full grid grid-cols-2">
+                                <TabsTrigger value="preview" className="flex items-center gap-2">
+                                    <Eye className="h-4 w-4" />
+                                    Live Preview
+                                </TabsTrigger>
+                                <TabsTrigger value="code" className="flex items-center gap-2">
+                                    <Code className="h-4 w-4" />
+                                    Get Code
+                                </TabsTrigger>
+                            </TabsList>
+
+                            <TabsContent value="preview" className="mt-4 border rounded-lg p-4 bg-gray-50/50 min-h-[350px]">
+                                {isLoadingPreview ? (
+                                    <div className="flex items-center justify-center h-48 text-muted-foreground">
+                                        Loading preview...
+                                    </div>
+                                ) : (
+                                    <div style={{ fontFamily: 'system-ui, -apple-system, sans-serif', maxWidth: '100%' }}>
+                                        {heading && (
+                                            <h3 style={{ textAlign: 'center', marginBottom: '20px', fontWeight: 600 }}>
+                                                {heading}
+                                            </h3>
+                                        )}
+
+                                        {previewReviews.length === 0 ? (
+                                            <p style={{ textAlign: 'center', color: '#666', padding: '20px', background: '#f9fafb', borderRadius: '8px' }}>
+                                                No reviews available based on current filters.
+                                            </p>
+                                        ) : (
+                                            <div className="space-y-4">
+                                                {previewReviews.map((review: any) => (
+                                                    <div
+                                                        key={review.id}
+                                                        style={{
+                                                            border: `1px solid ${previewStyles.border}`,
+                                                            padding: '16px',
+                                                            borderRadius: '8px',
+                                                            background: previewStyles.bg,
+                                                            color: previewStyles.text,
+                                                            boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)'
+                                                        }}
+                                                    >
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                                                            <div style={{ color: '#f59e0b', fontSize: '18px', letterSpacing: '2px' }}>
+                                                                {'★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating))}
+                                                            </div>
+                                                            <div style={{ fontSize: '12px', color: previewStyles.meta }}>
+                                                                {new Date(review.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                                                            </div>
+                                                        </div>
+                                                        <p style={{ margin: '0 0 12px 0', lineHeight: 1.6, fontSize: '14px' }}>
+                                                            {review.comment}
+                                                        </p>
+                                                        <div style={{ fontSize: '13px', color: previewStyles.meta, fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                                            <span style={{ fontWeight: 500 }}>{review.reviewerName || 'Anonymous'}</span>
+                                                            {review.serviceName && <span style={{ opacity: 0.7 }}>• {review.serviceName}</span>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </TabsContent>
+
+                            <TabsContent value="code" className="mt-4">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-center">
+                                        <Label>Generated Code</Label>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={handleCopy}
+                                            className="flex items-center gap-2 h-8"
+                                        >
+                                            {copied ? <Check className="h-4 w-4 text-green-600" /> : <Copy className="h-4 w-4" />}
+                                            {copied ? 'Copied' : 'Copy Code'}
+                                        </Button>
+                                    </div>
+                                    <Textarea
+                                        value={generatedCode}
+                                        readOnly
+                                        className="font-mono text-xs h-[350px] bg-slate-950 text-slate-50 resize-none p-4"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Copy and paste this code into a "Custom HTML" block in WordPress or any other website builder.
+                                    </p>
+                                </div>
+                            </TabsContent>
+                        </Tabs>
                     </div>
                 </div>
             </CardContent>
