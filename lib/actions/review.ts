@@ -78,6 +78,11 @@ export async function getReviewByToken(token: string) {
                         }
                     }
                 }
+            },
+            review: {
+                select: {
+                    createdAt: true
+                }
             }
         }
     });
@@ -89,9 +94,11 @@ export async function getReviewByToken(token: string) {
     if (reviewToken.isUsed) {
         // Check if it was used very recently (e.g., within last 5 minutes)
         // This likely means the user just submitted it and the page refreshed
-        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
-        if (reviewToken.updatedAt > fiveMinutesAgo) {
-            return { error: 'ReviewSubmitted', recent: true };
+        if (reviewToken.review) {
+            const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+            if (reviewToken.review.createdAt > fiveMinutesAgo) {
+                return { error: 'ReviewSubmitted', recent: true };
+            }
         }
         return { error: 'This review link has already been used' };
     }
