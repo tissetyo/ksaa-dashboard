@@ -222,6 +222,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
              `;
         }
 
+        const allLabel = allReviewsLabel || 'All Reviews';
         const css = baseCss + themeCss;
 
         const code = `
