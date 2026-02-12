@@ -15,7 +15,19 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { toast } from 'sonner';
-import { createProduct, updateProduct } from '@/lib/actions/admin-product';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { createProduct, updateProduct, deleteProduct } from '@/lib/actions/admin-product';
+import { Trash2 } from 'lucide-react';
 
 export function ProductForm({ initialData }: { initialData?: any }) {
     const [isLoading, setIsLoading] = useState(false);
@@ -24,6 +36,7 @@ export function ProductForm({ initialData }: { initialData?: any }) {
     const isEditing = !!initialData;
 
     const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+        // ... (keep existing handleSubmit logic)
         e.preventDefault();
         setIsLoading(true);
 
@@ -48,8 +61,24 @@ export function ProductForm({ initialData }: { initialData?: any }) {
         }
     };
 
+    const handleDelete = async () => {
+        if (!initialData?.id) return;
+        setIsLoading(true);
+        try {
+            await deleteProduct(initialData.id);
+            toast.success('Product deleted successfully');
+            router.push('/admin/products');
+            router.refresh();
+        } catch (error) {
+            toast.error('Failed to delete product');
+            console.error(error);
+            setIsLoading(false);
+        }
+    };
+
     return (
         <form onSubmit={handleSubmit} className="space-y-6 max-w-2xl">
+            {/* ... (keep existing form fields) ... */}
             <div className="space-y-2">
                 <Label htmlFor="name">Product/Service Name</Label>
                 <Input
@@ -165,18 +194,54 @@ export function ProductForm({ initialData }: { initialData?: any }) {
                 )}
             </div>
 
-            <div className="flex justify-end gap-4 pt-4">
-                <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => router.back()}
-                    disabled={isLoading}
-                >
-                    Cancel
-                </Button>
-                <Button type="submit" disabled={isLoading}>
-                    {isLoading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product')}
-                </Button>
+            <div className="flex justify-between items-center pt-4 border-t mt-8">
+                {isEditing ? (
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button
+                                type="button"
+                                variant="destructive"
+                                disabled={isLoading}
+                                className="gap-2"
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Delete Product
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action cannot be undone. This will permanently delete the product
+                                    "{initialData.name}". If the product has any existing appointments,
+                                    it will be deactivated instead of deleted to preserve history.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
+                                    Continue
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                ) : (
+                    <div></div> // Spacer for layout if not editing
+                )}
+
+                <div className="flex gap-4">
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => router.back()}
+                        disabled={isLoading}
+                    >
+                        Cancel
+                    </Button>
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product')}
+                    </Button>
+                </div>
             </div>
         </form >
     );
