@@ -73,195 +73,241 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         const starChar = '★';
         const emptyStarChar = '☆';
 
-        // PREMIUM WIDGET CSS & HTML
-        const minifiedCss = `
+        // COMMON CSS
+        const baseCss = `
           #ksaa-reviews-widget { font-family: 'Inter', system-ui, -apple-system, sans-serif; max-width: 1200px; margin: 40px auto; padding: 0 20px; }
           #ksaa-reviews-header { text-align: center; margin-bottom: 40px; }
-          #ksaa-reviews-header h3 { font-size: 28px; font-weight: 700; color: #1f2937; margin: 0 0 10px 0; }
-          #ksaa-reviews-tabs { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 30px; }
-          .ksaa-tab {
-            padding: 10px 20px; border: 1px solid #047857; color: #047857; background: white;
-            border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 14px; transition: all 0.2s;
-            display: flex; align-items: center; gap: 6px;
+          #ksaa-reviews-tabs { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; margin-bottom: 40px; }
+          
+          /* Common Tab Styles */
+          .ksaa-tab { 
+            padding: 10px 24px; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 15px; 
+            transition: all 0.2s; display: flex; align-items: center; gap: 8px; border: 2px solid transparent;
           }
-          .ksaa-tab:hover, .ksaa-tab.active { background: #047857; color: white; }
-          .ksaa-tab-icon { font-size: 16px; }
-
-          #ksaa-reviews-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;
-            /* For carousel effect on mobile */
-            @media (max-width: 768px) {
-                display: flex; overflow-x: auto; padding-bottom: 20px; scroll-snap-type: x mandatory;
-            }
-          }
-
-          .ksaa-review-card {
-            background-color: #064e3b; /* Dark Green */
-            color: white;
-            border-radius: 12px;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
-            scroll-snap-align: start;
-            min-width: 280px; /* For mobile scroll */
-          }
-          .ksaa-review-card:hover { transform: translateY(-5px); }
-
-          .ksaa-card-header {
-            background-color: #047857; /* Slightly lighter green */
-            padding: 20px;
-            text-align: center;
-            font-weight: 600;
-            font-size: 16px;
-            min-height: 80px;
-            display: flex; align-items: center; justify-content: center;
-          }
-
-          .ksaa-card-body {
-            padding: 20px;
-            text-align: center;
-            flex-grow: 1;
-            display: flex; flex-direction: column; align-items: center;
-          }
-
-          .ksaa-avatar {
-            width: 80px; height: 80px; border-radius: 50%; object-fit: cover;
-            border: 4px solid white; margin-top: -60px; margin-bottom: 15px;
-            background-color: #e5e7eb;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 32px; color: #064e3b; font-weight: bold;
-          }
-
-          .ksaa-reviewer-name { font-size: 18px; font-weight: 700; margin-bottom: 8px; }
-          .ksaa-stars { color: #f59e0b; font-size: 18px; margin-bottom: 15px; letter-spacing: 2px; }
-          .ksaa-comment {
-            font-size: 14px; line-height: 1.6; font-style: italic; opacity: 0.9;
-            display: -webkit-box; -webkit-line-clamp: 6; -webkit-box-orient: vertical; overflow: hidden;
-          }
+          
+          /* Loading State */
+          .ksaa-loading { text-align: center; color: #666; padding: 40px; width: 100%; }
         `;
 
-        // Standard logic for 'light'/'dark' themes
-        // ... (keep logic if needed, but 'premium' is requested)
+        let themeCss = '';
+        // We will inject a 'theme' class into the container to scope styles if needed, 
+        // but for now we'll just swap the CSS.
+
+        // --- OPTION 1: MODERN TEAL (Requested Style) ---
+        if (theme === 'modern-teal') {
+            themeCss = `
+              /* Brand Colors */
+              :root { --ksaa-teal: #0e5c58; --ksaa-orange: #f97316; }
+              
+              /* Tabs */
+              .ksaa-tab { background: white; color: var(--ksaa-teal); border-color: var(--ksaa-teal); }
+              .ksaa-tab:hover, .ksaa-tab.active { background: var(--ksaa-teal); color: white; }
+              
+              /* Grid / Carousel */
+              #ksaa-reviews-grid { 
+                display: flex; 
+                overflow-x: auto; 
+                gap: 24px; 
+                padding-bottom: 30px; 
+                scroll-snap-type: x mandatory; 
+                scrollbar-width: thin;
+              }
+              #ksaa-reviews-grid::-webkit-scrollbar { height: 8px; }
+              #ksaa-reviews-grid::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+              
+              /* Cards */
+              .ksaa-review-card {
+                flex: 0 0 300px; /* Fixed width for carousel */
+                scroll-snap-align: center;
+                background-color: var(--ksaa-teal);
+                color: white;
+                border-radius: 0; /* Square/Rectangular look like photo */
+                overflow: hidden;
+                display: flex;
+                flex-direction: column;
+                text-align: center;
+                position: relative;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+                border-bottom: 6px solid var(--ksaa-orange); /* Bottom orange accent */
+              }
+              
+              .ksaa-card-top-icon {
+                font-size: 24px; color: white; margin-top: 20px;
+              }
+              
+              .ksaa-card-service {
+                 font-size: 18px; font-weight: 500; margin: 10px 20px;
+                 padding-bottom: 20px;
+                 border-bottom: 1px solid rgba(255,255,255,0.2);
+                 position: relative;
+              }
+              /* Curved line effect simulation */
+              .ksaa-card-service::after {
+                 content: ''; position: absolute; bottom: -2px; left: 50%; transform: translateX(-50%);
+                 width: 60px; height: 4px; background: var(--ksaa-orange); border-radius: 2px;
+              }
+              
+              .ksaa-card-body { padding: 30px 20px; display: flex; flex-direction: column; align-items: center; }
+              
+              .ksaa-reviewer-name { font-size: 22px; font-weight: 700; margin-bottom: 10px; font-family: 'Georgia', serif; }
+              .ksaa-stars { color: #fbbf24; font-size: 16px; letter-spacing: 3px; margin-bottom: 20px; }
+              .ksaa-comment { 
+                font-size: 15px; line-height: 1.6; opacity: 0.9; font-weight: 300;
+                display: -webkit-box; -webkit-line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden;
+              }
+              
+              @media (max-width: 640px) {
+                 .ksaa-review-card { flex: 0 0 85%; } 
+              }
+            `;
+        }
+        // --- OPTION 2: CLASSIC GOLD (Previous) ---
+        else if (theme === 'classic-gold') {
+            themeCss = `
+               /* Tabs */
+               .ksaa-tab { background: #064e3b; color: white; border: 1px solid #064e3b; opacity: 0.8; }
+               .ksaa-tab:hover, .ksaa-tab.active { opacity: 1; border-color: #fbbf24; color: #fbbf24; }
+               
+               #ksaa-reviews-grid { 
+                 display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px;
+               }
+               .ksaa-review-card {
+                 background: #022c22; color: white; border: 1px solid #064e3b; border-radius: 12px; padding: 24px;
+               }
+               .ksaa-card-service { text-transform: uppercase; letter-spacing: 1px; color: #fbbf24; font-size: 12px; margin-bottom: 16px; font-weight: 700;}
+               .ksaa-reviewer-name { font-size: 18px; font-weight: 600; color: white; }
+               .ksaa-stars { color: #fbbf24; margin: 8px 0; }
+               .ksaa-comment { color: #d1fae5; font-size: 14px; font-style: italic; }
+             `;
+        }
+        // --- OPTION 3: MINIMAL LIST ---
+        else { // minimal-light
+            themeCss = `
+               .ksaa-tab { background: white; color: #333; border: 1px solid #ddd; }
+               .ksaa-tab:hover, .ksaa-tab.active { background: #f3f4f6; border-color: #999; }
+               
+               #ksaa-reviews-grid { display: grid; gap: 16px; }
+               .ksaa-review-card {
+                  display: grid; grid-template-columns: 150px 1fr; gap: 20px;
+                  background: white; border: 1px solid #eaeaea; border-radius: 8px; padding: 20px;
+                  align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+               }
+               .ksaa-card-left { text-align: center; border-right: 1px solid #eee; padding-right: 20px; }
+               .ksaa-reviewer-name { font-weight: 700; color: #111; }
+               .ksaa-card-service { font-size: 12px; color: #666; margin-top: 4px; }
+               .ksaa-stars { color: #f97316; margin-top: 8px; }
+               .ksaa-comment { font-size: 15px; color: #444; line-height: 1.5; }
+               
+               @media (max-width: 600px) {
+                  .ksaa-review-card { grid-template-columns: 1fr; text-align: center; }
+                  .ksaa-card-left { border-right: none; border-bottom: 1px solid #eee; padding-right: 0; padding-bottom: 15px; margin-bottom: 15px; }
+               }
+             `;
+        }
+
+        const css = baseCss + themeCss;
 
         const code = `
 <!-- KSAA Reviews Widget -->
-<style>${minifiedCss}</style>
-<div id="ksaa-reviews-widget">
+<style>${css.replace(/\s+/g, ' ')}</style>
+<div id="ksaa-reviews-widget" class="${theme}">
   <div id="ksaa-reviews-header">
-     ${heading ? `<h3>${heading}</h3>` : ''}
+     ${heading ? `<h3 style="font-size: 24px; font-weight: 700; color: ${theme === 'modern-teal' ? '#0e5c58' : '#111'};">${heading}</h3>` : ''}
      <p style="color: #666;">Select review type and condition to find targeted feedback!</p>
   </div>
-
-  <div id="ksaa-reviews-tabs">
-    <!-- Tabs injected by JS -->
-    <div class="ksaa-tab active" data-filter="all">All Reviews</div>
-  </div>
-
-  <div id="ksaa-reviews-grid">
-    <div style="text-align: center; color: #666; padding: 40px; width: 100%;">Loading reviews...</div>
-  </div>
+  
+  <div id="ksaa-reviews-tabs"></div>
+  <div id="ksaa-reviews-grid"><div class="ksaa-loading">Loading reviews...</div></div>
 </div>
 
 <script>
 (function() {
-  function initKsaaWidget() {
-    const container = document.getElementById('ksaa-reviews-widget');
-    if (!container) return; // Silent fail if not present
-    if (container.dataset.loaded) return;
-    container.dataset.loaded = 'true';
+  const THEME = '${theme}';
+  const star = '${starChar}';
+  const empty = '${emptyStarChar}';
 
-    const grid = document.getElementById('ksaa-reviews-grid');
-    const tabsContainer = document.getElementById('ksaa-reviews-tabs');
-    let allReviews = [];
+  function init() {
+    const root = document.getElementById('ksaa-reviews-widget');
+    if (!root || root.dataset.loaded) return;
+    root.dataset.loaded = 'true';
+    
+    const ui = {
+        grid: document.getElementById('ksaa-reviews-grid'),
+        tabs: document.getElementById('ksaa-reviews-tabs')
+    };
 
     fetch('${fetchUrl}')
-        .then(res => res.json())
-        .then(reviews => {
-            if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
-                grid.innerHTML = '<p style="text-align: center; padding: 20px;">No reviews available.</p>';
-                return;
-            }
-
-            allReviews = reviews;
-
-            // 1. Generate Tabs (Unique Service Names)
-            const services = [...new Set(reviews.map(r => r.serviceName).filter(Boolean))];
-
-            // Clear existing tabs (keep "All")
-            tabsContainer.innerHTML = '<div class="ksaa-tab active" data-filter="all">All Reviews <span style="font-size:12px">+</span></div>';
-
-            services.forEach(service => {
-                const tab = document.createElement('div');
-                tab.className = 'ksaa-tab';
-                tab.dataset.filter = service;
-                tab.innerHTML = \`\${service} <span style="font-size:12px">+</span>\`;
-                tab.onclick = () => filterReviews(service);
-                tabsContainer.appendChild(tab);
-            });
-
-            // Add click for "All"
-            tabsContainer.querySelector('[data-filter="all"]').onclick = () => filterReviews('all');
-
-            // 2. Initial Render
-            renderReviews(allReviews);
+        .then(r => r.json())
+        .then(data => {
+            if(!data || !data.length) { ui.grid.innerHTML = '<p class="ksaa-loading">No reviews available.</p>'; return; }
+            
+            // Render Tabs
+            const services = [...new Set(data.map(i => i.serviceName).filter(Boolean))];
+            ui.tabs.innerHTML = \`<div class="ksaa-tab active" onclick="filter('all')">All Reviews</div>\` + 
+                services.map(s => \`<div class="ksaa-tab" onclick="filter('\${s}')">\${s}</div>\`).join('');
+                
+            window.ksaaReviews = data; // Store globally for filter
+            render(data);
         })
         .catch(err => {
             console.error('KSAA Widget Error:', err);
-            grid.innerHTML = '<p style="color: red; text-align: center;">Unable to load reviews.</p>';
+            ui.grid.innerHTML = '<p class="ksaa-loading" style="color: red;">Unable to load reviews.</p>';
         });
 
-    function filterReviews(filter) {
-        // Update Active Tab
-        document.querySelectorAll('.ksaa-tab').forEach(t => t.classList.remove('active'));
-        document.querySelector(\`[data-filter="\${filter}"]\`).classList.add('active');
+    window.filter = function(cat) {
+        document.querySelectorAll('.ksaa-tab').forEach(t => t.classList.toggle('active', t.dataset.filter === cat));
+        const filtered = cat === 'all' ? window.ksaaReviews : window.ksaaReviews.filter(r => r.serviceName === cat);
+        render(filtered);
+    };
 
-        // Filter Data
-        const filtered = filter === 'all'
-            ? allReviews
-            : allReviews.filter(r => r.serviceName === filter);
+    function render(list) {
+        if(!list.length) { ui.grid.innerHTML = '<p class="ksaa-loading">No reviews found for this category.</p>'; return; }
+        
+        ui.grid.innerHTML = list.map(r => {
+            const stars = star.repeat(Math.round(r.rating)) + empty.repeat(5 - Math.round(r.rating));
+            
+            // --- TEMPLATE: MODERN TEAL ---
+            if (THEME === 'modern-teal') {
+                return \`
+                <div class="ksaa-review-card">
+                   <div class="ksaa-card-top-icon">✦</div>
+                   <div class="ksaa-card-service">\${r.serviceName || 'Review'}</div>
+                   <div class="ksaa-card-body">
+                      <!-- Removed Avatar as requested -->
+                      <div class="ksaa-reviewer-name">\${r.reviewerName || 'Anonymous'}</div>
+                      <div class="ksaa-stars">\${stars}</div>
+                      <div class="ksaa-comment">"\${r.comment}"</div>
+                   </div>
+                </div>\`;
+            }
+            
+            // --- TEMPLATE: CLASSIC GOLD ---
+            if (THEME === 'classic-gold') {
+                return \`
+                <div class="ksaa-review-card">
+                    <div class="ksaa-card-service">\${r.serviceName || 'General'}</div>
+                    <div class="ksaa-reviewer-name">\${r.reviewerName || 'Anonymous'}</div>
+                    <div class="ksaa-stars">\${stars}</div>
+                    <div class="ksaa-comment">\${r.comment}</div>
+                </div>\`;
+            }
 
-        renderReviews(filtered);
-    }
-
-    function renderReviews(reviews) {
-        if (reviews.length === 0) {
-            grid.innerHTML = '<p style="text-align: center; width: 100%; padding: 40px; color: #666;">No reviews found for this category.</p>';
-            return;
-        }
-
-        const html = reviews.map(review => {
-            const stars = '${starChar}'.repeat(Math.round(review.rating)) + '${emptyStarChar}'.repeat(5 - Math.round(review.rating));
-
-            // Generate initials for avatar
-            const initials = (review.reviewerName || 'A').split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase();
-
+            // --- TEMPLATE: MINIMAL ---
             return \`
             <div class="ksaa-review-card">
-                <div class="ksaa-card-header">
-                    \${review.serviceName || 'General Review'}
-                </div>
-                <div class="ksaa-card-body">
-                    <div class="ksaa-avatar">\${initials}</div>
-                    <div class="ksaa-reviewer-name">\${review.reviewerName || 'Anonymous'}</div>
+                <div class="ksaa-card-left">
+                    <div class="ksaa-reviewer-name">\${r.reviewerName || 'Anonymous'}</div>
+                    <div class="ksaa-card-service">\${r.serviceName || 'Review'}</div>
                     <div class="ksaa-stars">\${stars}</div>
-                    <div class="ksaa-comment">"\${review.comment}"</div>
                 </div>
-            </div>
-            \`;
+                <div class="ksaa-comment">\${r.comment}</div>
+            </div>\`;
         }).join('');
-
-        grid.innerHTML = html;
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initKsaaWidget);
-  } else {
-    initKsaaWidget();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
 })();
 </script>
 <!-- End KSAA Reviews Widget -->
@@ -277,13 +323,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         setTimeout(() => setCopied(false), 2000);
     };
 
-    // Preview Styles based on Theme
-    const previewStyles = {
-        bg: theme === 'dark' ? '#1f2937' : '#ffffff',
-        text: theme === 'dark' ? '#f9fafb' : '#111827',
-        border: theme === 'dark' ? '#374151' : '#e5e7eb',
-        meta: theme === 'dark' ? '#9ca3af' : '#6b7280'
-    };
+
 
     return (
         <Card className="w-full">
@@ -398,7 +438,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                                     <div style={{ fontFamily: 'Inter, system-ui, sans-serif', maxWidth: '100%' }}>
                                         {heading && (
                                             <div style={{ textAlign: 'center', marginBottom: '40px' }}>
-                                                <h3 style={{ fontSize: '28px', fontWeight: 700, color: '#1f2937', margin: '0 0 10px 0' }}>
+                                                <h3 style={{ fontSize: '24px', fontWeight: 700, color: theme === 'modern-teal' ? '#f97316' : '#111', margin: '0 0 10px 0' }}>
                                                     {heading}
                                                 </h3>
                                                 <p style={{ color: '#666' }}>Select review type and condition to find targeted feedback!</p>
@@ -406,80 +446,81 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                                         )}
 
                                         {/* Mock Tabs for Preview */}
-                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '30px' }}>
-                                            <div style={{ padding: '10px 20px', backgroundColor: '#047857', color: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                All Reviews <span style={{ fontSize: '12px' }}>+</span>
+                                        <div style={{ display: 'flex', justifyContent: 'center', gap: '15px', flexWrap: 'wrap', marginBottom: '30px' }}>
+                                            <div style={{ padding: '10px 24px', backgroundColor: theme === 'modern-teal' ? '#0e5c58' : (theme === 'classic-gold' ? '#064e3b' : '#eee'), color: theme === 'minimal-list' ? '#333' : 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '15px' }}>
+                                                All Reviews
                                             </div>
                                             {/* Show first few service names as inactive tabs */}
-                                            {[...new Set(previewReviews.map(r => r.serviceName).filter(Boolean))].slice(0, 3).map((service: any) => (
-                                                <div key={service} style={{ padding: '10px 20px', border: '1px solid #047857', color: '#047857', backgroundColor: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '14px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                                    {service} <span style={{ fontSize: '12px' }}>+</span>
+                                            {[...new Set(previewReviews.map(r => r.serviceName).filter(Boolean))].slice(0, 2).map((service: any) => (
+                                                <div key={service} style={{ padding: '10px 24px', border: theme === 'minimal-list' ? '1px solid #ddd' : 'none', color: theme === 'modern-teal' ? '#0e5c58' : (theme === 'classic-gold' ? '#064e3b' : '#666'), backgroundColor: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '15px' }}>
+                                                    {service}
                                                 </div>
                                             ))}
                                         </div>
 
                                         {previewReviews.length === 0 ? (
-                                            <p style={{ textAlign: 'center', color: '#666', padding: '20px', background: '#f9fafb', borderRadius: '8px' }}>
-                                                No reviews available based on current filters.
-                                            </p>
+                                            <p style={{ textAlign: 'center', color: '#666', padding: '20px' }}>No reviews available.</p>
                                         ) : (
                                             <div style={{
-                                                display: 'grid',
-                                                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                                                gap: '24px'
+                                                display: theme === 'minimal-list' ? 'grid' : 'flex',
+                                                flexDirection: theme === 'minimal-list' ? 'column' : 'row',
+                                                overflowX: theme === 'minimal-list' ? 'visible' : 'auto',
+                                                gap: '24px',
+                                                paddingBottom: '20px'
                                             }}>
                                                 {previewReviews.map((review: any) => (
-                                                    <div
-                                                        key={review.id}
-                                                        style={{
-                                                            backgroundColor: '#064e3b',
-                                                            color: 'white',
-                                                            borderRadius: '12px',
-                                                            overflow: 'hidden',
-                                                            display: 'flex',
-                                                            flexDirection: 'column',
-                                                            boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
-                                                        }}
-                                                    >
-                                                        <div style={{
-                                                            backgroundColor: '#047857',
-                                                            padding: '20px',
-                                                            textAlign: 'center',
-                                                            fontWeight: 600,
-                                                            fontSize: '16px',
-                                                            minHeight: '80px',
-                                                            display: 'flex', alignItems: 'center', justifyContent: 'center'
-                                                        }}>
-                                                            {review.serviceName || 'General Review'}
-                                                        </div>
-                                                        <div style={{
-                                                            padding: '20px',
-                                                            textAlign: 'center',
-                                                            flexGrow: 1,
-                                                            display: 'flex', flexDirection: 'column', alignItems: 'center'
-                                                        }}>
-                                                            <div style={{
-                                                                width: '80px', height: '80px', borderRadius: '50%', objectFit: 'cover',
-                                                                border: '4px solid white', marginTop: '-60px', marginBottom: '15px',
-                                                                backgroundColor: '#e5e7eb',
-                                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                fontSize: '32px', color: '#064e3b', fontWeight: 'bold'
-                                                            }}>
-                                                                {(review.reviewerName || 'A').split(' ').map((n: any) => n[0]).join('').substring(0, 2).toUpperCase()}
-                                                            </div>
-                                                            <div style={{ fontSize: '18px', fontWeight: 700, marginBottom: '8px' }}>
-                                                                {review.reviewerName || 'Anonymous'}
-                                                            </div>
-                                                            <div style={{ color: '#f59e0b', fontSize: '18px', marginBottom: '15px', letterSpacing: '2px' }}>
-                                                                {'★'.repeat(Math.round(review.rating)) + '☆'.repeat(5 - Math.round(review.rating))}
-                                                            </div>
-                                                            <div style={{
-                                                                fontSize: '14px', lineHeight: 1.6, fontStyle: 'italic', opacity: 0.9,
-                                                                display: '-webkit-box', WebkitLineClamp: 6, WebkitBoxOrient: 'vertical', overflow: 'hidden'
-                                                            }}>
-                                                                "{review.comment}"
-                                                            </div>
-                                                        </div>
+                                                    <div key={review.id} style={{
+                                                        // Styles based on Theme
+                                                        ...(theme === 'modern-teal' ? {
+                                                            minWidth: '280px', flex: '0 0 280px',
+                                                            backgroundColor: '#0e5c58', color: 'white',
+                                                            borderBottom: '6px solid #f97316',
+                                                            textAlign: 'center', display: 'flex', flexDirection: 'column'
+                                                        } : theme === 'classic-gold' ? {
+                                                            minWidth: '280px', flex: '0 0 280px',
+                                                            backgroundColor: '#022c22', color: 'white',
+                                                            border: '1px solid #064e3b', borderRadius: '12px', padding: '24px'
+                                                        } : {
+                                                            display: 'grid', gridTemplateColumns: '120px 1fr', gap: '20px',
+                                                            background: 'white', border: '1px solid #eaeaea', borderRadius: '8px', padding: '20px', alignItems: 'center'
+                                                        })
+                                                    }}>
+
+                                                        {theme === 'modern-teal' && (
+                                                            <>
+                                                                <div style={{ fontSize: '24px', color: 'white', marginTop: '20px' }}>✦</div>
+                                                                <div style={{ fontSize: '18px', fontWeight: 500, margin: '10px 20px', paddingBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.2)', position: 'relative' }}>
+                                                                    {review.serviceName || 'Review'}
+                                                                    <div style={{ position: 'absolute', bottom: '-2px', left: '50%', transform: 'translateX(-50%)', width: '60px', height: '4px', background: '#f97316', borderRadius: '2px' }} />
+                                                                </div>
+                                                                <div style={{ padding: '30px 20px' }}>
+                                                                    <div style={{ fontSize: '22px', fontWeight: 700, marginBottom: '10px', fontFamily: 'Georgia, serif' }}>{review.reviewerName || 'Anonymous'}</div>
+                                                                    <div style={{ color: '#fbbf24', fontSize: '16px', letterSpacing: '3px', marginBottom: '20px' }}>{'★'.repeat(Math.round(review.rating))}</div>
+                                                                    <div style={{ opacity: 0.9, lineHeight: 1.6, fontSize: '14px' }}>"{review.comment}"</div>
+                                                                </div>
+                                                            </>
+                                                        )}
+
+                                                        {theme === 'classic-gold' && (
+                                                            <>
+                                                                <div style={{ textTransform: 'uppercase', letterSpacing: '1px', color: '#fbbf24', fontSize: '12px', marginBottom: '16px', fontWeight: 700 }}>{review.serviceName || 'General'}</div>
+                                                                <div style={{ fontSize: '18px', fontWeight: 600 }}>{review.reviewerName}</div>
+                                                                <div style={{ color: '#fbbf24', margin: '8px 0' }}>{'★'.repeat(Math.round(review.rating))}</div>
+                                                                <div style={{ color: '#d1fae5', fontSize: '14px', fontStyle: 'italic' }}>"{review.comment}"</div>
+                                                            </>
+                                                        )}
+
+                                                        {theme === 'minimal-list' && (
+                                                            <>
+                                                                <div style={{ textAlign: 'center', borderRight: '1px solid #eee', paddingRight: '20px' }}>
+                                                                    <div style={{ fontWeight: 700, color: '#111' }}>{review.reviewerName}</div>
+                                                                    <div style={{ fontSize: '12px', color: '#666', marginTop: '4px' }}>{review.serviceName}</div>
+                                                                    <div style={{ color: '#f97316', marginTop: '8px' }}>{'★'.repeat(Math.round(review.rating))}</div>
+                                                                </div>
+                                                                <div style={{ fontSize: '15px', color: '#444', lineHeight: 1.5 }}>"{review.comment}"</div>
+                                                            </>
+                                                        )}
+
                                                     </div>
                                                 ))}
                                             </div>
