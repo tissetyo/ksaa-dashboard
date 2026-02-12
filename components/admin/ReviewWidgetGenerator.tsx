@@ -241,12 +241,22 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         .then(data => {
             if(!data || !data.length) { ui.grid.innerHTML = '<p class="ksaa-loading">No reviews available.</p>'; return; }
             
+            // Determine Tabs
+            let tabs = [];
+            if (FILTERS) {
+                // Use manual configuration
+                tabs = FILTERS;
+            } else {
+                // Auto-generate from data
+                const services = [...new Set(data.map(i => i.serviceName).filter(Boolean))];
+                tabs = services.map(s => ({ key: s, label: s }));
+            }
+            
             // Render Tabs
-            const services = [...new Set(data.map(i => i.serviceName).filter(Boolean))];
             ui.tabs.innerHTML = \`<div class="ksaa-tab active" onclick="filter('all')">All Reviews</div>\` + 
-                services.map(s => \`<div class="ksaa-tab" onclick="filter('\${s}')">\${s}</div>\`).join('');
+                tabs.map(t => \`<div class="ksaa-tab" onclick="filter('\${t.key}')">\${t.label}</div>\`).join('');
                 
-            window.ksaaReviews = data; // Store globally for filter
+            window.ksaaReviews = data; // Store globally
             render(data);
         })
         .catch(err => {
@@ -412,6 +422,61 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                                     </SelectContent>
                                 </Select>
                             </div>
+                            <div className="space-y-4 border-t pt-4">
+                                <Label>Tab Filters</Label>
+                                <div className="flex gap-4">
+                                    <Button
+                                        variant={filterMode === 'auto' ? 'default' : 'outline'}
+                                        onClick={() => setFilterMode('auto')}
+                                        className="w-full"
+                                    >
+                                        Auto (All Services)
+                                    </Button>
+                                    <Button
+                                        variant={filterMode === 'manual' ? 'default' : 'outline'}
+                                        onClick={() => setFilterMode('manual')}
+                                        className="w-full"
+                                    >
+                                        Manual (Custom)
+                                    </Button>
+                                </div>
+
+                                {filterMode === 'manual' && (
+                                    <div className="space-y-3 mt-4 border rounded-md p-4 bg-muted/20 max-h-[300px] overflow-y-auto">
+                                        <div className="text-xs text-muted-foreground mb-2 flex justify-between px-2">
+                                            <span>Show?</span>
+                                            <span className="flex-1 ml-4">Display Label (Rename)</span>
+                                        </div>
+                                        {customFilters.map((filter, idx) => (
+                                            <div key={filter.id} className="flex items-center gap-3">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={filter.active}
+                                                    onChange={(e) => {
+                                                        const newFilters = [...customFilters];
+                                                        newFilters[idx].active = e.target.checked;
+                                                        setCustomFilters(newFilters);
+                                                    }}
+                                                    className="h-4 w-4"
+                                                />
+                                                <Input
+                                                    value={filter.label}
+                                                    onChange={(e) => {
+                                                        const newFilters = [...customFilters];
+                                                        newFilters[idx].label = e.target.value;
+                                                        setCustomFilters(newFilters);
+                                                    }}
+                                                    placeholder={filter.original}
+                                                    className="flex-1 h-8 text-sm"
+                                                />
+                                                <span className="text-xs text-muted-foreground w-20 truncate" title={filter.original}>
+                                                    ({filter.original})
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
 
@@ -450,10 +515,14 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                                             <div style={{ padding: '10px 24px', backgroundColor: theme === 'modern-teal' ? '#0e5c58' : (theme === 'classic-gold' ? '#064e3b' : '#eee'), color: theme === 'minimal-list' ? '#333' : 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '15px' }}>
                                                 All Reviews
                                             </div>
-                                            {/* Show first few service names as inactive tabs */}
-                                            {[...new Set(previewReviews.map(r => r.serviceName).filter(Boolean))].slice(0, 2).map((service: any) => (
-                                                <div key={service} style={{ padding: '10px 24px', border: theme === 'minimal-list' ? '1px solid #ddd' : 'none', color: theme === 'modern-teal' ? '#0e5c58' : (theme === 'classic-gold' ? '#064e3b' : '#666'), backgroundColor: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '15px' }}>
-                                                    {service}
+
+                                            {/* Dynamic Tabs */}
+                                            {(filterMode === 'manual'
+                                                ? customFilters.filter(f => f.active).map(f => ({ key: f.original, label: f.label }))
+                                                : [...new Set(previewReviews.map(r => r.serviceName).filter(Boolean))].slice(0, 3).map(s => ({ key: s, label: s }))
+                                            ).map((tab: any) => (
+                                                <div key={tab.key} style={{ padding: '10px 24px', border: theme === 'minimal-list' ? '1px solid #ddd' : 'none', color: theme === 'modern-teal' ? '#0e5c58' : (theme === 'classic-gold' ? '#064e3b' : '#666'), backgroundColor: 'white', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '15px' }}>
+                                                    {tab.label}
                                                 </div>
                                             ))}
                                         </div>
