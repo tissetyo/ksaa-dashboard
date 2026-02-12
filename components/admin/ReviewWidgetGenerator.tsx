@@ -208,7 +208,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         const css = baseCss + themeCss;
 
         const code = `
-<!-- KSAA Reviews Widget -->
+<!-- KSAA Reviews Widget v2.0 (Premium) -->
 <style>${css.replace(/\s+/g, ' ')}</style>
 <div id="ksaa-reviews-widget" class="${theme}">
   <div id="ksaa-reviews-header">
