@@ -27,6 +27,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
 
     // Filter State
     const [filterMode, setFilterMode] = useState<'auto' | 'manual'>('auto');
+    const [allReviewsLabel, setAllReviewsLabel] = useState('All Reviews');
     const [customFilters, setCustomFilters] = useState<{ id: string; original: string; label: string; active: boolean }[]>([]);
 
     // Initialize custom filters from products
@@ -48,7 +49,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
     useEffect(() => {
         generateCode();
         fetchPreview();
-    }, [limit, staffId, productId, heading, theme, filterMode, customFilters]);
+    }, [limit, staffId, productId, heading, theme, filterMode, customFilters, allReviewsLabel]);
 
     const fetchPreview = async () => {
         setIsLoadingPreview(true);
@@ -224,7 +225,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         const css = baseCss + themeCss;
 
         const code = `
-<!-- KSAA Reviews Widget v2.0 (Premium) -->
+<!-- KSAA Reviews Widget v2.2 (Refined Labels) -->
 <style>${css.replace(/\s+/g, ' ')}</style>
 <div id="ksaa-reviews-widget" class="${theme}">
   <div id="ksaa-reviews-header">
@@ -241,6 +242,14 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
   const THEME = '${theme}';
   const star = '${starChar}';
   const empty = '${emptyStarChar}';
+  const FILTERS = ${filtersConfig};
+  const ALL_LABEL = '${allLabel}';
+
+  // Create lookup map for service labels
+  const LABEL_MAP = {};
+  if (FILTERS) {
+      FILTERS.forEach(f => LABEL_MAP[f.key] = f.label);
+  }
 
   function init() {
     const root = document.getElementById('ksaa-reviews-widget');
@@ -260,7 +269,6 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
             // Determine Tabs
             let tabs = [];
             if (FILTERS) {
-                // Use manual configuration
                 tabs = FILTERS;
             } else {
                 // Auto-generate from data
@@ -269,7 +277,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
             }
             
             // Render Tabs
-            ui.tabs.innerHTML = \`<div class="ksaa-tab active" onclick="filter('all')">All Reviews</div>\` + 
+            ui.tabs.innerHTML = \`<div class="ksaa-tab active" onclick="filter('all')">\${ALL_LABEL}</div>\` + 
                 tabs.map(t => \`<div class="ksaa-tab" onclick="filter('\${t.key}')">\${t.label}</div>\`).join('');
                 
             window.ksaaReviews = data; // Store globally
@@ -291,13 +299,14 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
         
         ui.grid.innerHTML = list.map(r => {
             const stars = star.repeat(Math.round(r.rating)) + empty.repeat(5 - Math.round(r.rating));
+            const displayService = LABEL_MAP[r.serviceName] || r.serviceName || 'Review';
             
             // --- TEMPLATE: MODERN TEAL ---
             if (THEME === 'modern-teal') {
                 return \`
                 <div class="ksaa-review-card">
                    <div class="ksaa-card-top-icon">✦</div>
-                   <div class="ksaa-card-service">\${r.serviceName || 'Review'}</div>
+                   <div class="ksaa-card-service">\${displayService}</div>
                    <div class="ksaa-card-body">
                       <!-- Removed Avatar as requested -->
                       <div class="ksaa-reviewer-name">\${r.reviewerName || 'Anonymous'}</div>
@@ -311,7 +320,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
             if (THEME === 'classic-gold') {
                 return \`
                 <div class="ksaa-review-card">
-                    <div class="ksaa-card-service">\${r.serviceName || 'General'}</div>
+                    <div class="ksaa-card-service">\${displayService}</div>
                     <div class="ksaa-reviewer-name">\${r.reviewerName || 'Anonymous'}</div>
                     <div class="ksaa-stars">\${stars}</div>
                     <div class="ksaa-comment">\${r.comment}</div>
@@ -323,7 +332,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
             <div class="ksaa-review-card">
                 <div class="ksaa-card-left">
                     <div class="ksaa-reviewer-name">\${r.reviewerName || 'Anonymous'}</div>
-                    <div class="ksaa-card-service">\${r.serviceName || 'Review'}</div>
+                    <div class="ksaa-card-service">\${displayService}</div>
                     <div class="ksaa-stars">\${stars}</div>
                 </div>
                 <div class="ksaa-comment">\${r.comment}</div>
@@ -463,6 +472,21 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                                             <span>Show?</span>
                                             <span className="flex-1 ml-4">Display Label (Rename)</span>
                                         </div>
+
+                                        {/* "All" Label Customization */}
+                                        <div className="flex items-center gap-3 bg-white p-2 border-b">
+                                            <div className="h-4 w-4 bg-gray-200 rounded-sm" title="Always visible" />
+                                            <Input
+                                                value={allReviewsLabel}
+                                                onChange={(e) => setAllReviewsLabel(e.target.value)}
+                                                placeholder="All Reviews"
+                                                className="flex-1 h-8 text-sm"
+                                            />
+                                            <span className="text-xs text-muted-foreground w-20 truncate">
+                                                (Default)
+                                            </span>
+                                        </div>
+
                                         {customFilters.map((filter, idx) => (
                                             <div key={filter.id} className="flex items-center gap-3">
                                                 <input
