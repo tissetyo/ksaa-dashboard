@@ -25,6 +25,22 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
     const [generatedCode, setGeneratedCode] = useState('');
     const [copied, setCopied] = useState(false);
 
+    // Filter State
+    const [filterMode, setFilterMode] = useState<'auto' | 'manual'>('auto');
+    const [customFilters, setCustomFilters] = useState<{ id: string; original: string; label: string; active: boolean }[]>([]);
+
+    // Initialize custom filters from products
+    useEffect(() => {
+        if (products.length > 0 && customFilters.length === 0) {
+            setCustomFilters(products.map(p => ({
+                id: p.id,
+                original: p.name,
+                label: p.name, // Default to original name
+                active: true
+            })));
+        }
+    }, [products]);
+
     // Preview State
     const [previewReviews, setPreviewReviews] = useState<any[]>([]);
     const [isLoadingPreview, setIsLoadingPreview] = useState(false);
@@ -32,7 +48,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
     useEffect(() => {
         generateCode();
         fetchPreview();
-    }, [limit, staffId, productId, heading, theme]);
+    }, [limit, staffId, productId, heading, theme, filterMode, customFilters]);
 
     const fetchPreview = async () => {
         setIsLoadingPreview(true);
