@@ -86,6 +86,14 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
 
         const fetchUrl = `${apiUrl}?${params.toString()}`;
 
+        // Prepare Custom Filters for injection
+        const activeFilters = customFilters.filter(f => f.active).map(f => ({
+            key: f.original,
+            label: f.label
+        }));
+
+        const filtersConfig = filterMode === 'manual' ? JSON.stringify(activeFilters) : 'null';
+
         // Simple star SVG for minimal external dependencies
         const starChar = '★';
         const emptyStarChar = '☆';
