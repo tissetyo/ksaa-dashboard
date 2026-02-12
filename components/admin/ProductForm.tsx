@@ -31,6 +31,7 @@ import { Trash2 } from 'lucide-react';
 
 export function ProductForm({ initialData }: { initialData?: any }) {
     const [isLoading, setIsLoading] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
     const [isFree, setIsFree] = useState(initialData?.isFree ?? false);
     const router = useRouter();
     const isEditing = !!initialData;
@@ -56,23 +57,22 @@ export function ProductForm({ initialData }: { initialData?: any }) {
         } catch (error) {
             toast.error(isEditing ? 'Failed to update product' : 'Failed to create product');
             console.error(error);
-        } finally {
             setIsLoading(false);
         }
     };
 
     const handleDelete = async () => {
         if (!initialData?.id) return;
-        setIsLoading(true);
+        setIsDeleting(true);
         try {
             await deleteProduct(initialData.id);
             toast.success('Product deleted successfully');
+            // Navigate away immediately
             router.push('/admin/products');
-            router.refresh();
         } catch (error) {
             toast.error('Failed to delete product');
             console.error(error);
-            setIsLoading(false);
+            setIsDeleting(false);
         }
     };
 
@@ -201,11 +201,17 @@ export function ProductForm({ initialData }: { initialData?: any }) {
                             <Button
                                 type="button"
                                 variant="destructive"
-                                disabled={isLoading}
+                                disabled={isLoading || isDeleting}
                                 className="gap-2"
                             >
-                                <Trash2 className="h-4 w-4" />
-                                Delete Product
+                                {isDeleting ? (
+                                    <>Deleting...</>
+                                ) : (
+                                    <>
+                                        <Trash2 className="h-4 w-4" />
+                                        Delete Product
+                                    </>
+                                )}
                             </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
@@ -234,11 +240,11 @@ export function ProductForm({ initialData }: { initialData?: any }) {
                         type="button"
                         variant="outline"
                         onClick={() => router.back()}
-                        disabled={isLoading}
+                        disabled={isLoading || isDeleting}
                     >
                         Cancel
                     </Button>
-                    <Button type="submit" disabled={isLoading}>
+                    <Button type="submit" disabled={isLoading || isDeleting}>
                         {isLoading ? 'Saving...' : (isEditing ? 'Update Product' : 'Create Product')}
                     </Button>
                 </div>
