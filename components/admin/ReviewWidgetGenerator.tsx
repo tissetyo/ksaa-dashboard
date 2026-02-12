@@ -81,53 +81,67 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
 
 <script>
 (function() {
-  const container = document.getElementById('ksaa-reviews-container');
-  
-  if (!container) return;
-
-  fetch('${fetchUrl}')
-    .then(response => {
-      if (!response.ok) throw new Error('Network response was not ok');
-      return response.json();
-    })
-    .then(reviews => {
-      if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
-        container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px; background: #f9fafb; border-radius: 8px;">No reviews available yet.</p>';
+  function initKsaaWidget() {
+    const container = document.getElementById('ksaa-reviews-container');
+    if (!container) {
+        console.warn('KSAA Widget: Container not found');
         return;
-      }
-      
-      const theme = {
-        bg: '${theme === 'dark' ? '#1f2937' : '#ffffff'}',
-        text: '${theme === 'dark' ? '#f9fafb' : '#111827'}',
-        border: '${theme === 'dark' ? '#374151' : '#e5e7eb'}',
-        meta: '${theme === 'dark' ? '#9ca3af' : '#6b7280'}'
-      };
+    }
 
-      const html = reviews.map(review => {
-        const stars = '${starChar}'.repeat(Math.round(review.rating)) + '${emptyStarChar}'.repeat(5 - Math.round(review.rating));
-        const date = new Date(review.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+    // Avoid double-loading
+    if (container.dataset.loaded) return;
+    container.dataset.loaded = 'true';
+
+    fetch('${fetchUrl}')
+        .then(response => {
+        if (!response.ok) throw new Error('Network response was not ok: ' + response.statusText);
+        return response.json();
+        })
+        .then(reviews => {
+        if (!reviews || !Array.isArray(reviews) || reviews.length === 0) {
+            container.innerHTML = '<p style="text-align: center; color: #666; padding: 20px; background: #f9fafb; border-radius: 8px;">No reviews available yet.</p>';
+            return;
+        }
         
-        return \`
-          <div style="border: 1px solid \${theme.border}; padding: 16px; margin-bottom: 16px; border-radius: 8px; background: \${theme.bg}; color: \${theme.text}; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
-              <div style="color: #f59e0b; font-size: 18px; letter-spacing: 2px;">\${stars}</div>
-              <div style="font-size: 12px; color: \${theme.meta};">\${date}</div>
+        const theme = {
+            bg: '${theme === 'dark' ? '#1f2937' : '#ffffff'}',
+            text: '${theme === 'dark' ? '#f9fafb' : '#111827'}',
+            border: '${theme === 'dark' ? '#374151' : '#e5e7eb'}',
+            meta: '${theme === 'dark' ? '#9ca3af' : '#6b7280'}'
+        };
+
+        const html = reviews.map(review => {
+            const stars = '${starChar}'.repeat(Math.round(review.rating)) + '${emptyStarChar}'.repeat(5 - Math.round(review.rating));
+            const date = new Date(review.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+            
+            return \`
+            <div style="border: 1px solid \${theme.border}; padding: 16px; margin-bottom: 16px; border-radius: 8px; background: \${theme.bg}; color: \${theme.text}; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+                <div style="color: #f59e0b; font-size: 18px; letter-spacing: 2px;">\${stars}</div>
+                <div style="font-size: 12px; color: \${theme.meta};">\${date}</div>
+                </div>
+                <p style="margin: 0 0 12px 0; line-height: 1.6; font-size: 14px;">\${review.comment}</p>
+                <div style="font-size: 13px; color: \${theme.meta}; font-style: italic; display: flex; align-items: center; gap: 6px;">
+                <span style="font-weight: 500;">\${review.reviewerName || 'Anonymous'}</span>
+                \${review.serviceName ? \`<span style="opacity: 0.7;">• \${review.serviceName}</span>\` : ''}
+                </div>
             </div>
-            <p style="margin: 0 0 12px 0; line-height: 1.6; font-size: 14px;">\${review.comment}</p>
-            <div style="font-size: 13px; color: \${theme.meta}; font-style: italic; display: flex; align-items: center; gap: 6px;">
-              <span style="font-weight: 500;">\${review.reviewerName || 'Anonymous'}</span>
-              \${review.serviceName ? \`<span style="opacity: 0.7;">• \${review.serviceName}</span>\` : ''}
-            </div>
-          </div>
-        \`;
-      }).join('');
-      
-      container.innerHTML = html;
-    })
-    .catch(err => {
-      console.error('KSAA Widget Error:', err);
-      container.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 10px; font-size: 12px;">Unable to load reviews.</p>';
-    });
+            \`;
+        }).join('');
+        
+        container.innerHTML = html;
+        })
+        .catch(err => {
+        console.error('KSAA Widget Error:', err);
+        container.innerHTML = '<p style="color: #ef4444; text-align: center; padding: 10px; font-size: 12px;">Unable to load reviews. Check console for details.</p>';
+        });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initKsaaWidget);
+  } else {
+    initKsaaWidget();
+  }
 })();
 </script>
 <!-- End KSAA Reviews Widget -->
