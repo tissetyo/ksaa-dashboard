@@ -8,23 +8,6 @@ import {
     TableRow
 } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-
-export const dynamic = 'force-dynamic';
-import { Badge } from '@/components/ui/badge';
-import Link from 'next/link';
-import { Plus, Edit, Trash2 } from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
-
-import { db } from '@/lib/db';
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { Plus, Edit } from 'lucide-react';
@@ -133,15 +116,6 @@ function ProductTable({ products, type }: { products: any[], type: 'active' | 'i
                 </TableBody>
             </Table>
         </Card>
-    );
-}
-
-// Wrapper card for the table
-function Card({ children }: { children: React.ReactNode }) {
-    return (
-        <div className="rounded-xl border bg-card text-card-foreground shadow">
-            {children}
-        </div>
     );
 }
 
