@@ -21,7 +21,7 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
     const [staffId, setStaffId] = useState('all');
     const [productId, setProductId] = useState('all');
     const [heading, setHeading] = useState('Patient Reviews');
-    const [theme, setTheme] = useState('light');
+    const [theme, setTheme] = useState('modern-teal');
     const [generatedCode, setGeneratedCode] = useState('');
     const [copied, setCopied] = useState(false);
 
@@ -371,9 +371,9 @@ export function ReviewWidgetGenerator({ staffMembers, products }: ReviewWidgetGe
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="light">Light</SelectItem>
-                                            <SelectItem value="dark">Dark</SelectItem>
-                                            <SelectItem value="premium">Premium</SelectItem>
+                                            <SelectItem value="modern-teal">Modern Teal (Recommended)</SelectItem>
+                                            <SelectItem value="classic-gold">Classic Gold</SelectItem>
+                                            <SelectItem value="minimal-list">Minimal List</SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </div>
