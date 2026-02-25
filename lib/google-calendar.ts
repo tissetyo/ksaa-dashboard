@@ -1,12 +1,11 @@
 'use server';
 
 import { google } from 'googleapis';
-import { randomBytes } from 'crypto';
 
 /**
- * Create an authenticated Google Calendar API client using a Service Account.
+ * Create an authenticated client for Google APIs using a Service Account.
  */
-function getCalendarClient() {
+function getAuthClient() {
     const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
     const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
 
@@ -14,33 +13,35 @@ function getCalendarClient() {
         throw new Error('Google Service Account credentials not configured');
     }
 
-    const auth = new google.auth.JWT({
+    return new google.auth.JWT({
         email,
         key,
-        scopes: ['https://www.googleapis.com/auth/calendar'],
+        scopes: [
+            'https://www.googleapis.com/auth/calendar',
+            'https://www.googleapis.com/auth/meetings.space.created',
+        ],
     });
-
-    return google.calendar({ version: 'v3', auth });
 }
 
 /**
- * Generate a unique Google Meet-style meeting code.
- * Format: xxx-xxxx-xxx (like real Meet links).
+ * Create a Google Meet meeting space using the Meet REST API.
+ * Returns the meeting URI (e.g. https://meet.google.com/xxx-xxxx-xxx).
  */
-function generateMeetCode(): string {
-    const chars = 'abcdefghijklmnopqrstuvwxyz';
-    const part = (len: number) =>
-        Array.from(randomBytes(len))
-            .map((b) => chars[b % chars.length])
-            .join('');
-    return `${part(3)}-${part(4)}-${part(3)}`;
+async function createMeetSpace(auth: any): Promise<string> {
+    const res = await google.meet({ version: 'v2', auth }).spaces.create({
+        requestBody: {},
+    });
+    return res.data.meetingUri!;
 }
 
 /**
- * Create a Google Calendar event with Google Meet link.
- * Strategy:
- *   1. Try creating event WITH conferenceData (works on Google Workspace)
- *   2. If conference fails, create event WITHOUT conferenceData and generate a Meet link separately
+ * Create a Google Calendar event and a real Google Meet link.
+ * 
+ * Steps:
+ *   1. Create a Google Meet space (real, working link)
+ *   2. Create a Google Calendar event with the Meet link in description
+ * 
+ * Returns the calendar event ID and Meet link URL.
  */
 export async function createCalendarEventWithMeet(appointment: {
     id: string;
@@ -61,10 +62,14 @@ export async function createCalendarEventWithMeet(appointment: {
         durationMinutes: number;
     };
 }) {
-    const calendar = getCalendarClient();
+    const auth = getAuthClient();
+    const calendar = google.calendar({ version: 'v3', auth });
     const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
 
-    // Build start / end times
+    // Step 1: Create a real Google Meet space
+    const googleMeetLink = await createMeetSpace(auth);
+
+    // Step 2: Build the calendar event
     const appointmentDate = new Date(appointment.appointmentDate);
     const [hours, minutes] = appointment.timeSlot.split(':').map(Number);
 
@@ -77,7 +82,7 @@ export async function createCalendarEventWithMeet(appointment: {
     // Determine location text
     let location = 'KSAA STEMCARE Clinic';
     if (appointment.consultationType === 'GOOGLE_MEET') {
-        location = 'Online – Google Meet';
+        location = `Online – ${googleMeetLink}`;
     } else if (appointment.consultationType === 'HOME_VISIT' && appointment.consultationAddress) {
         location = appointment.consultationAddress;
     }
@@ -89,10 +94,11 @@ export async function createCalendarEventWithMeet(appointment: {
         appointment.patient.user?.email ? `Email: ${appointment.patient.user.email}` : '',
         `Service: ${appointment.product.name}`,
         `Duration: ${appointment.product.durationMinutes} minutes`,
+        `\nGoogle Meet: ${googleMeetLink}`,
         appointment.adminNotes ? `\nAdmin Notes: ${appointment.adminNotes}` : '',
     ].filter(Boolean);
 
-    const baseEvent: any = {
+    const event: any = {
         summary: `${appointment.product.name} – ${appointment.patient.fullName}`,
         description: descriptionParts.join('\n'),
         location,
@@ -113,49 +119,9 @@ export async function createCalendarEventWithMeet(appointment: {
         },
     };
 
-    // --- Attempt 1: Try with conferenceData (Google Workspace accounts) ---
-    try {
-        const eventWithConf = {
-            ...baseEvent,
-            conferenceData: {
-                createRequest: {
-                    requestId: `ksaa-${appointment.id}`,
-                    conferenceSolutionKey: { type: 'hangoutsMeet' },
-                },
-            },
-        };
-
-        const response = await calendar.events.insert({
-            calendarId,
-            requestBody: eventWithConf,
-            conferenceDataVersion: 1,
-            sendUpdates: 'none',
-        });
-
-        const googleCalendarEventId = response.data.id || null;
-        const googleMeetLink =
-            response.data.conferenceData?.entryPoints?.find(
-                (ep: any) => ep.entryPointType === 'video'
-            )?.uri || response.data.hangoutLink || null;
-
-        return { googleCalendarEventId, googleMeetLink };
-    } catch (confError: any) {
-        console.log('Conference creation not supported, falling back to plain event + generated Meet link:', confError?.message);
-    }
-
-    // --- Attempt 2: Create event without conferenceData, generate Meet link manually ---
-    const meetCode = generateMeetCode();
-    const googleMeetLink = `https://meet.google.com/${meetCode}`;
-
-    // Add Meet link to description so it's visible in the calendar event
-    baseEvent.description += `\n\nGoogle Meet: ${googleMeetLink}`;
-    baseEvent.location = appointment.consultationType === 'GOOGLE_MEET'
-        ? `Online – ${googleMeetLink}`
-        : baseEvent.location;
-
     const response = await calendar.events.insert({
         calendarId,
-        requestBody: baseEvent,
+        requestBody: event,
         sendUpdates: 'none',
     });
 
