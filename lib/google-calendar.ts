@@ -1,47 +1,17 @@
 'use server';
 
-import { google } from 'googleapis';
-
 /**
- * Create an authenticated client for Google APIs using a Service Account.
- */
-function getAuthClient() {
-    const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-    const key = process.env.GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n');
-
-    if (!email || !key) {
-        throw new Error('Google Service Account credentials not configured');
-    }
-
-    return new google.auth.JWT({
-        email,
-        key,
-        scopes: [
-            'https://www.googleapis.com/auth/calendar',
-            'https://www.googleapis.com/auth/meetings.space.created',
-        ],
-    });
-}
-
-/**
- * Create a Google Meet meeting space using the Meet REST API.
- * Returns the meeting URI (e.g. https://meet.google.com/xxx-xxxx-xxx).
- */
-async function createMeetSpace(auth: any): Promise<string> {
-    const res = await google.meet({ version: 'v2', auth }).spaces.create({
-        requestBody: {},
-    });
-    return res.data.meetingUri!;
-}
-
-/**
- * Create a Google Calendar event and a real Google Meet link.
+ * Google Calendar + Meet integration via Google Apps Script.
  * 
- * Steps:
- *   1. Create a Google Meet space (real, working link)
- *   2. Create a Google Calendar event with the Meet link in description
+ * The Apps Script runs as a regular Google user (not a service account),
+ * so it can create Google Meet links on consumer/free Google accounts.
  * 
- * Returns the calendar event ID and Meet link URL.
+ * Requires env var: GOOGLE_APPS_SCRIPT_URL
+ */
+
+/**
+ * Create a Google Calendar event with a real Google Meet link
+ * by calling the deployed Google Apps Script web app.
  */
 export async function createCalendarEventWithMeet(appointment: {
     id: string;
@@ -62,14 +32,13 @@ export async function createCalendarEventWithMeet(appointment: {
         durationMinutes: number;
     };
 }) {
-    const auth = getAuthClient();
-    const calendar = google.calendar({ version: 'v3', auth });
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    const scriptUrl = process.env.GOOGLE_APPS_SCRIPT_URL;
 
-    // Step 1: Create a real Google Meet space
-    const googleMeetLink = await createMeetSpace(auth);
+    if (!scriptUrl) {
+        throw new Error('GOOGLE_APPS_SCRIPT_URL is not configured');
+    }
 
-    // Step 2: Build the calendar event
+    // Build start / end times
     const appointmentDate = new Date(appointment.appointmentDate);
     const [hours, minutes] = appointment.timeSlot.split(':').map(Number);
 
@@ -79,10 +48,10 @@ export async function createCalendarEventWithMeet(appointment: {
     const endDateTime = new Date(startDateTime);
     endDateTime.setMinutes(endDateTime.getMinutes() + appointment.product.durationMinutes);
 
-    // Determine location text
+    // Determine location
     let location = 'KSAA STEMCARE Clinic';
     if (appointment.consultationType === 'GOOGLE_MEET') {
-        location = `Online – ${googleMeetLink}`;
+        location = 'Online – Google Meet';
     } else if (appointment.consultationType === 'HOME_VISIT' && appointment.consultationAddress) {
         location = appointment.consultationAddress;
     }
@@ -94,38 +63,32 @@ export async function createCalendarEventWithMeet(appointment: {
         appointment.patient.user?.email ? `Email: ${appointment.patient.user.email}` : '',
         `Service: ${appointment.product.name}`,
         `Duration: ${appointment.product.durationMinutes} minutes`,
-        `\nGoogle Meet: ${googleMeetLink}`,
         appointment.adminNotes ? `\nAdmin Notes: ${appointment.adminNotes}` : '',
     ].filter(Boolean);
 
-    const event: any = {
-        summary: `${appointment.product.name} – ${appointment.patient.fullName}`,
-        description: descriptionParts.join('\n'),
-        location,
-        start: {
-            dateTime: startDateTime.toISOString(),
-            timeZone: 'Asia/Kuala_Lumpur',
-        },
-        end: {
-            dateTime: endDateTime.toISOString(),
-            timeZone: 'Asia/Kuala_Lumpur',
-        },
-        reminders: {
-            useDefault: false,
-            overrides: [
-                { method: 'email', minutes: 24 * 60 },
-                { method: 'popup', minutes: 60 },
-            ],
-        },
-    };
-
-    const response = await calendar.events.insert({
-        calendarId,
-        requestBody: event,
-        sendUpdates: 'none',
+    // Call the Google Apps Script web app
+    const response = await fetch(scriptUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            summary: `${appointment.product.name} – ${appointment.patient.fullName}`,
+            description: descriptionParts.join('\n'),
+            location,
+            startDateTime: startDateTime.toISOString(),
+            endDateTime: endDateTime.toISOString(),
+            requestId: `ksaa-${appointment.id}`,
+        }),
     });
 
-    const googleCalendarEventId = response.data.id || null;
+    // Apps Script redirects on POST, follow the redirect
+    const result = await response.json();
 
-    return { googleCalendarEventId, googleMeetLink };
+    if (!result.success) {
+        throw new Error(result.error || 'Apps Script returned an error');
+    }
+
+    return {
+        googleCalendarEventId: result.eventId || null,
+        googleMeetLink: result.meetLink || null,
+    };
 }
