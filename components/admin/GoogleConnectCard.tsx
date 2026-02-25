@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { getGoogleConnectionStatus, disconnectGoogleAccount } from '@/lib/actions/google-connect';
 import { Calendar, CheckCircle2, Loader2, LogIn, Unlink } from 'lucide-react';
-import { signIn } from 'next-auth/react';
 import { toast } from 'sonner';
 
 export function GoogleConnectCard() {
@@ -31,8 +30,7 @@ export function GoogleConnectCard() {
 
     const handleConnect = async () => {
         setIsConnecting(true);
-        // This initiates the Google OAuth flow and redirects back to this page
-        await signIn('google', { callbackUrl: '/admin/settings?google_connected=true' });
+        window.location.href = '/api/auth/connect-google';
     };
 
     const handleDisconnect = async () => {

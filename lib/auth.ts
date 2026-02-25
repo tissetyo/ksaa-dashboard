@@ -1,7 +1,6 @@
 import NextAuth from 'next-auth';
 import { PrismaAdapter } from '@auth/prisma-adapter';
 import Credentials from 'next-auth/providers/credentials';
-import Google from 'next-auth/providers/google';
 import { db } from '@/lib/db';
 import authConfig from './auth.config';
 import { UserRole } from '@prisma/client';
@@ -17,33 +16,12 @@ export const {
     callbacks: {
         ...authConfig.callbacks,
         async signIn({ user, account }) {
-            // Allow Credentials login always
-            if (account?.provider === 'credentials') return true;
-
-            // For Google OAuth: only allow if user already exists (linking, not signup)
-            // This prevents random people from creating accounts via Google
-            if (account?.provider === 'google' && user.email) {
-                const existingUser = await db.user.findUnique({
-                    where: { email: user.email.toLowerCase() },
-                });
-                if (!existingUser) {
-                    // User doesn't exist — block sign-in
-                    return '/admin/settings?error=google_no_account';
-                }
-                return true;
-            }
-
             return true;
         },
         async jwt({ token, user, account }) {
             if (user) {
                 token.role = (user as any).role;
                 token.id = user.id;
-            }
-
-            // When linking Google account, store that it was connected
-            if (account?.provider === 'google') {
-                token.googleConnected = true;
             }
 
             if (!token.sub) return token;
@@ -105,17 +83,6 @@ export const {
                     console.error('[AUTH_DEBUG] Authorize error:', error);
                     return null;
                 }
-            },
-        }),
-        Google({
-            clientId: process.env.GOOGLE_CLIENT_ID!,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-            authorization: {
-                params: {
-                    scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
-                    access_type: 'offline',
-                    prompt: 'consent',
-                },
             },
         }),
     ],
