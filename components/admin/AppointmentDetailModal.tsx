@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -8,6 +9,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import {
     User,
@@ -24,23 +26,36 @@ import {
     MessageCircle,
     Building2,
     Home,
+    Copy,
+    Check,
+    CalendarPlus,
+    Loader2,
 } from 'lucide-react';
 import { format } from 'date-fns';
+import { createGoogleCalendarEvent } from '@/lib/actions/admin-appointment';
+import { toast } from 'sonner';
 
 interface AppointmentDetailModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appointment: any;
+    onRefresh?: () => void;
 }
 
 export function AppointmentDetailModal({
     open,
     onOpenChange,
     appointment,
+    onRefresh,
 }: AppointmentDetailModalProps) {
+    const [isCreatingEvent, setIsCreatingEvent] = useState(false);
+    const [meetLink, setMeetLink] = useState<string | null>(null);
+    const [copied, setCopied] = useState(false);
+
     if (!appointment) return null;
 
     const { patient, product } = appointment;
+    const displayMeetLink = meetLink || appointment.googleMeetLink;
 
     const getStatusBadge = (status: string) => {
         switch (status) {
@@ -72,6 +87,31 @@ export function AppointmentDetailModal({
         }
     };
 
+    const handleCreateCalendarEvent = async () => {
+        setIsCreatingEvent(true);
+        try {
+            const result = await createGoogleCalendarEvent(appointment.id);
+            if (result.success) {
+                toast.success('Google Calendar event created with Meet link!');
+                setMeetLink(result.googleMeetLink || null);
+                onRefresh?.();
+            } else {
+                toast.error(result.error || 'Failed to create calendar event');
+            }
+        } catch (error) {
+            toast.error('Failed to create calendar event');
+        } finally {
+            setIsCreatingEvent(false);
+        }
+    };
+
+    const handleCopy = (text: string) => {
+        navigator.clipboard.writeText(text);
+        setCopied(true);
+        toast.success('Link copied to clipboard');
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-[650px] max-h-[90vh] overflow-y-auto">
@@ -89,6 +129,66 @@ export function AppointmentDetailModal({
                 </DialogHeader>
 
                 <div className="space-y-5 py-2">
+                    {/* Google Meet Link / Create Calendar Event Section */}
+                    {(appointment.status === 'CONFIRMED' || appointment.status === 'COMPLETED') && (
+                        <>
+                            <div>
+                                <h4 className="font-semibold text-xs text-gray-500 uppercase mb-3">Google Calendar & Meet</h4>
+                                {displayMeetLink ? (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Video className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                            <span className="text-sm font-medium text-blue-800">Google Meet Link</span>
+                                            <Badge className="bg-green-100 text-green-700 border-none text-xs ml-auto">Active</Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <code className="text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 flex-1 truncate">
+                                                {displayMeetLink}
+                                            </code>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                                                onClick={() => handleCopy(displayMeetLink)}
+                                            >
+                                                {copied ? <Check className="h-3.5 w-3.5 mr-1 text-green-600" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                                                {copied ? 'Copied!' : 'Copy Link'}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                asChild
+                                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                            >
+                                                <a href={displayMeetLink} target="_blank" rel="noopener noreferrer">
+                                                    <Video className="h-3.5 w-3.5 mr-1" /> Open Meet
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                                        <p className="text-sm text-gray-500">No Google Calendar event created yet for this appointment.</p>
+                                        <Button
+                                            onClick={handleCreateCalendarEvent}
+                                            disabled={isCreatingEvent}
+                                            className="bg-[#008E7E] hover:bg-[#0a4f47] text-white"
+                                            size="sm"
+                                        >
+                                            {isCreatingEvent ? (
+                                                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
+                                            ) : (
+                                                <><CalendarPlus className="h-4 w-4 mr-2" /> Create Google Calendar Event</>
+                                            )}
+                                        </Button>
+                                    </div>
+                                )}
+                            </div>
+                            <Separator />
+                        </>
+                    )}
+
                     {/* Patient Details */}
                     <div>
                         <h4 className="font-semibold text-xs text-gray-500 uppercase mb-3">Patient Information</h4>
@@ -154,34 +254,6 @@ export function AppointmentDetailModal({
                                         <div className="flex items-center gap-3">
                                             <Mail className="h-4 w-4 text-gray-400" />
                                             <span className="text-sm">Email: {appointment.consultationEmail}</span>
-                                        </div>
-                                    )}
-                                    {appointment.googleMeetLink && (
-                                        <div className="mt-2 bg-blue-50 border border-blue-200 rounded-lg p-2.5 space-y-1.5">
-                                            <div className="flex items-center gap-2">
-                                                <Video className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                                <span className="text-xs font-medium text-blue-800">Google Meet Link</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-xs bg-white border border-blue-200 rounded px-2 py-0.5 text-blue-700 flex-1 truncate">
-                                                    {appointment.googleMeetLink}
-                                                </code>
-                                                <button
-                                                    type="button"
-                                                    className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
-                                                    onClick={() => navigator.clipboard.writeText(appointment.googleMeetLink)}
-                                                >
-                                                    Copy
-                                                </button>
-                                            </div>
-                                            <a
-                                                href={appointment.googleMeetLink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline"
-                                            >
-                                                <Video className="h-3 w-3" /> Open Meet
-                                            </a>
                                         </div>
                                     )}
                                     {appointment.consultationAddress && (

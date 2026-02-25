@@ -213,3 +213,51 @@ export async function getPatientHistory(patientId: string) {
         return { success: false, error: 'Failed to fetch patient history' };
     }
 }
+
+// Create Google Calendar event with Meet link for an existing appointment
+export async function createGoogleCalendarEvent(appointmentId: string) {
+    await isAdminOrStaff();
+
+    try {
+        const appointment = await db.appointment.findUnique({
+            where: { id: appointmentId },
+            include: {
+                patient: {
+                    include: {
+                        user: { select: { email: true } },
+                    },
+                },
+                product: true,
+            },
+        });
+
+        if (!appointment) {
+            return { success: false, error: 'Appointment not found' };
+        }
+
+        if (appointment.googleCalendarEventId) {
+            return { success: false, error: 'Calendar event already exists for this appointment' };
+        }
+
+        const { createCalendarEventWithMeet } = await import('@/lib/google-calendar');
+        const result = await createCalendarEventWithMeet(appointment);
+
+        await db.appointment.update({
+            where: { id: appointmentId },
+            data: {
+                ...(result.googleCalendarEventId && { googleCalendarEventId: result.googleCalendarEventId }),
+                ...(result.googleMeetLink && { googleMeetLink: result.googleMeetLink }),
+            },
+        });
+
+        revalidatePath('/admin/appointments');
+        revalidatePath('/dashboard');
+        revalidatePath('/appointments');
+        revalidatePath(`/appointments/${appointmentId}`);
+
+        return { success: true, googleMeetLink: result.googleMeetLink };
+    } catch (error) {
+        console.error('Error creating Google Calendar event:', error);
+        return { success: false, error: 'Failed to create Google Calendar event. Check service account credentials.' };
+    }
+}

@@ -239,6 +239,7 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                 open={detailModalOpen}
                 onOpenChange={setDetailModalOpen}
                 appointment={selectedAppointment}
+                onRefresh={handleSuccess}
             />
         </>
     );
