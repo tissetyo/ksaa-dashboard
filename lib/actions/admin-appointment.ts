@@ -40,7 +40,7 @@ export async function addAdminNote(id: string, note: string) {
 
 // Confirm appointment and create Google Calendar event with Meet link
 export async function confirmAppointment(appointmentId: string) {
-    await isAdminOrStaff();
+    const session = await isAdminOrStaff();
 
     try {
         // Fetch appointment with relations needed for calendar event
@@ -66,11 +66,11 @@ export async function confirmAppointment(appointmentId: string) {
 
         try {
             const { createCalendarEventWithMeet } = await import('@/lib/google-calendar');
-            const result = await createCalendarEventWithMeet(appointment);
+            const result = await createCalendarEventWithMeet(appointment, session!.user!.id as string);
             googleCalendarEventId = result.googleCalendarEventId;
             googleMeetLink = result.googleMeetLink;
-        } catch (calError) {
-            console.error('Google Calendar event creation failed (continuing with confirmation):', calError);
+        } catch (calError: any) {
+            console.error('Google Calendar event creation failed (continuing with confirmation):', calError?.message);
         }
 
         await db.appointment.update({
@@ -216,7 +216,7 @@ export async function getPatientHistory(patientId: string) {
 
 // Create Google Calendar event with Meet link for an existing appointment
 export async function createGoogleCalendarEvent(appointmentId: string) {
-    await isAdminOrStaff();
+    const session = await isAdminOrStaff();
 
     try {
         const appointment = await db.appointment.findUnique({
@@ -235,12 +235,12 @@ export async function createGoogleCalendarEvent(appointmentId: string) {
             return { success: false, error: 'Appointment not found' };
         }
 
-        if (appointment.googleCalendarEventId) {
-            return { success: false, error: 'Calendar event already exists for this appointment' };
+        if (appointment.googleMeetLink) {
+            return { success: false, error: 'Appointment already has a Google Meet link' };
         }
 
         const { createCalendarEventWithMeet } = await import('@/lib/google-calendar');
-        const result = await createCalendarEventWithMeet(appointment);
+        const result = await createCalendarEventWithMeet(appointment, session!.user!.id as string);
 
         await db.appointment.update({
             where: { id: appointmentId },
@@ -251,8 +251,6 @@ export async function createGoogleCalendarEvent(appointmentId: string) {
         });
 
         revalidatePath('/admin/appointments');
-        revalidatePath('/dashboard');
-        revalidatePath('/appointments');
         revalidatePath(`/appointments/${appointmentId}`);
 
         return { success: true, googleMeetLink: result.googleMeetLink };

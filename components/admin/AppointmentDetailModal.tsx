@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -33,7 +33,9 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createGoogleCalendarEvent } from '@/lib/actions/admin-appointment';
+import { getGoogleConnectionStatus } from '@/lib/actions/google-connect';
 import { toast } from 'sonner';
+import Link from 'next/link';
 
 interface AppointmentDetailModalProps {
     open: boolean;
@@ -51,6 +53,26 @@ export function AppointmentDetailModal({
     const [isCreatingEvent, setIsCreatingEvent] = useState(false);
     const [meetLink, setMeetLink] = useState<string | null>(null);
     const [copied, setCopied] = useState(false);
+    const [isGoogleConnected, setIsGoogleConnected] = useState<boolean | null>(null);
+    const [isCheckingGoogle, setIsCheckingGoogle] = useState(false);
+
+    useEffect(() => {
+        if (open && (appointment?.status === 'CONFIRMED' || appointment?.status === 'COMPLETED')) {
+            checkGoogleConnection();
+        }
+    }, [open, appointment?.status]);
+
+    const checkGoogleConnection = async () => {
+        setIsCheckingGoogle(true);
+        try {
+            const status = await getGoogleConnectionStatus();
+            setIsGoogleConnected(status.connected);
+        } catch (error) {
+            console.error('Failed to check Google connection:', error);
+        } finally {
+            setIsCheckingGoogle(false);
+        }
+    };
 
     if (!appointment) return null;
 
@@ -167,7 +189,11 @@ export function AppointmentDetailModal({
                                             </Button>
                                         </div>
                                     </div>
-                                ) : (
+                                ) : isCheckingGoogle ? (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-center">
+                                        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                                    </div>
+                                ) : isGoogleConnected ? (
                                     <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
                                         <p className="text-sm text-gray-500">No Google Calendar event created yet for this appointment.</p>
                                         <Button
@@ -181,6 +207,13 @@ export function AppointmentDetailModal({
                                             ) : (
                                                 <><CalendarPlus className="h-4 w-4 mr-2" /> Create Google Calendar Event</>
                                             )}
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                                        <p className="text-sm text-amber-800">You need to connect your Google account to create calendar events and meeting links.</p>
+                                        <Button asChild size="sm" variant="outline" className="border-amber-300 text-amber-900 hover:bg-amber-100">
+                                            <Link href="/admin/settings">Connect Google Account</Link>
                                         </Button>
                                     </div>
                                 )}

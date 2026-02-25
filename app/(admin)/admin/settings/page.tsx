@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { ReviewWidgetGenerator } from "@/components/admin/ReviewWidgetGenerator";
 import { BannerManager } from "@/components/admin/BannerManager";
 import { ClinicLocationManager } from "@/components/admin/ClinicLocationManager";
+import { GoogleConnectCard } from "@/components/admin/GoogleConnectCard";
 import { Separator } from "@/components/ui/separator";
 
 export default async function AdminSettingsPage() {
@@ -37,6 +38,13 @@ export default async function AdminSettingsPage() {
             {/* Banner Management */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <BannerManager initialBanners={banners} products={products} />
+            </div>
+
+            <Separator />
+
+            {/* Google Calendar Integration */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <GoogleConnectCard />
             </div>
 
             <Separator />
