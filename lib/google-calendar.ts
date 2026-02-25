@@ -100,15 +100,8 @@ export async function createCalendarEventWithMeet(appointment: {
         },
     };
 
-    // Add attendee if we have their email
-    if (appointment.patient.user?.email) {
-        event.attendees = [
-            {
-                email: appointment.patient.user.email,
-                displayName: appointment.patient.fullName,
-            },
-        ];
-    }
+    // Note: Service accounts cannot add attendees without Domain-Wide Delegation.
+    // The Meet link is shared with patients via the app UI instead.
 
     // Request automatic Google Meet conferencing
     event.conferenceData = {
