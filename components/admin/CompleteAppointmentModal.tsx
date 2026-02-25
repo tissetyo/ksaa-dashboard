@@ -37,7 +37,7 @@ interface CompleteAppointmentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appointment: any;
-    onSuccess: () => void;
+    onSuccess: (apt?: any) => void;
     staffMembers?: any[];
     products?: any[]; // Available services for recommendation
 }
@@ -92,7 +92,7 @@ export function CompleteAppointmentModal({
         setRecDate('');
         setRecNote('');
         onOpenChange(false);
-        onSuccess();
+        onSuccess(appointment);
     };
 
     const copyLink = () => {

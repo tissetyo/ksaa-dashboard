@@ -35,7 +35,7 @@ interface ConfirmAppointmentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
     appointment: any;
-    onSuccess: () => void;
+    onSuccess: (apt?: any) => void;
 }
 
 export function ConfirmAppointmentModal({
@@ -66,7 +66,7 @@ export function ConfirmAppointmentModal({
             const result = await confirmAppointment(appointment.id);
             if (result.success) {
                 toast.success('Appointment confirmed successfully');
-                onSuccess();
+                onSuccess(appointment);
                 onOpenChange(false);
             } else {
                 toast.error(result.error || 'Failed to confirm appointment');

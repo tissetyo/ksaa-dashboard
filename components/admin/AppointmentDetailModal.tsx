@@ -151,76 +151,6 @@ export function AppointmentDetailModal({
                 </DialogHeader>
 
                 <div className="space-y-5 py-2">
-                    {/* Google Meet Link / Create Calendar Event Section */}
-                    {(appointment.status === 'CONFIRMED' || appointment.status === 'COMPLETED') && (
-                        <>
-                            <div>
-                                <h4 className="font-semibold text-xs text-gray-500 uppercase mb-3">Google Calendar & Meet</h4>
-                                {displayMeetLink ? (
-                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                                        <div className="flex items-center gap-2">
-                                            <Video className="h-4 w-4 text-blue-500 flex-shrink-0" />
-                                            <span className="text-sm font-medium text-blue-800">Google Meet Link</span>
-                                            <Badge className="bg-green-100 text-green-700 border-none text-xs ml-auto">Active</Badge>
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <code className="text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 flex-1 truncate">
-                                                {displayMeetLink}
-                                            </code>
-                                        </div>
-                                        <div className="flex gap-2">
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="border-blue-300 text-blue-700 hover:bg-blue-100"
-                                                onClick={() => handleCopy(displayMeetLink)}
-                                            >
-                                                {copied ? <Check className="h-3.5 w-3.5 mr-1 text-green-600" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
-                                                {copied ? 'Copied!' : 'Copy Link'}
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                asChild
-                                                className="bg-blue-600 hover:bg-blue-700 text-white"
-                                            >
-                                                <a href={displayMeetLink} target="_blank" rel="noopener noreferrer">
-                                                    <Video className="h-3.5 w-3.5 mr-1" /> Open Meet
-                                                </a>
-                                            </Button>
-                                        </div>
-                                    </div>
-                                ) : isCheckingGoogle ? (
-                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-center">
-                                        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-                                    </div>
-                                ) : isGoogleConnected ? (
-                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-                                        <p className="text-sm text-gray-500">No Google Calendar event created yet for this appointment.</p>
-                                        <Button
-                                            onClick={handleCreateCalendarEvent}
-                                            disabled={isCreatingEvent}
-                                            className="bg-[#008E7E] hover:bg-[#0a4f47] text-white"
-                                            size="sm"
-                                        >
-                                            {isCreatingEvent ? (
-                                                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
-                                            ) : (
-                                                <><CalendarPlus className="h-4 w-4 mr-2" /> Create Google Calendar Event</>
-                                            )}
-                                        </Button>
-                                    </div>
-                                ) : (
-                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
-                                        <p className="text-sm text-amber-800">You need to connect your Google account to create calendar events and meeting links.</p>
-                                        <Button asChild size="sm" variant="outline" className="border-amber-300 text-amber-900 hover:bg-amber-100">
-                                            <Link href="/admin/settings">Connect Google Account</Link>
-                                        </Button>
-                                    </div>
-                                )}
-                            </div>
-                            <Separator />
-                        </>
-                    )}
 
                     {/* Patient Details */}
                     <div>
@@ -296,6 +226,77 @@ export function AppointmentDetailModal({
                                         </div>
                                     )}
                                 </div>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Google Meet Link / Create Calendar Event Section */}
+                    {(appointment.status === 'CONFIRMED' || appointment.status === 'COMPLETED') && (
+                        <>
+                            <Separator />
+                            <div>
+                                <h4 className="font-semibold text-xs text-gray-500 uppercase mb-3">Google Calendar & Meet</h4>
+                                {displayMeetLink ? (
+                                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
+                                        <div className="flex items-center gap-2">
+                                            <Video className="h-4 w-4 text-blue-500 flex-shrink-0" />
+                                            <span className="text-sm font-medium text-blue-800">Google Meet Link</span>
+                                            <Badge className="bg-green-100 text-green-700 border-none text-xs ml-auto">Active</Badge>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            <code className="text-xs bg-white border border-blue-200 rounded px-2 py-1 text-blue-700 flex-1 truncate">
+                                                {displayMeetLink}
+                                            </code>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <Button
+                                                size="sm"
+                                                variant="outline"
+                                                className="border-blue-300 text-blue-700 hover:bg-blue-100"
+                                                onClick={() => handleCopy(displayMeetLink)}
+                                            >
+                                                {copied ? <Check className="h-3.5 w-3.5 mr-1 text-green-600" /> : <Copy className="h-3.5 w-3.5 mr-1" />}
+                                                {copied ? 'Copied!' : 'Copy Link'}
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                asChild
+                                                className="bg-blue-600 hover:bg-blue-700 text-white"
+                                            >
+                                                <a href={displayMeetLink} target="_blank" rel="noopener noreferrer">
+                                                    <Video className="h-3.5 w-3.5 mr-1" /> Open Meet
+                                                </a>
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : isCheckingGoogle ? (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 flex items-center justify-center">
+                                        <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                                    </div>
+                                ) : isGoogleConnected ? (
+                                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
+                                        <p className="text-sm text-gray-500">No Google Calendar event created yet for this appointment.</p>
+                                        <Button
+                                            onClick={handleCreateCalendarEvent}
+                                            disabled={isCreatingEvent}
+                                            className="bg-[#008E7E] hover:bg-[#0a4f47] text-white"
+                                            size="sm"
+                                        >
+                                            {isCreatingEvent ? (
+                                                <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Creating...</>
+                                            ) : (
+                                                <><CalendarPlus className="h-4 w-4 mr-2" /> Create Google Calendar Event</>
+                                            )}
+                                        </Button>
+                                    </div>
+                                ) : (
+                                    <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
+                                        <p className="text-sm text-amber-800">You need to connect your Google account to create calendar events and meeting links.</p>
+                                        <Button asChild size="sm" variant="outline" className="border-amber-300 text-amber-900 hover:bg-amber-100">
+                                            <Link href="/admin/settings">Connect Google Account</Link>
+                                        </Button>
+                                    </div>
+                                )}
                             </div>
                         </>
                     )}

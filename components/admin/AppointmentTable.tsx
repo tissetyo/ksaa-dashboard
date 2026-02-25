@@ -73,9 +73,17 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
         setHistoryModalOpen(true);
     };
 
-    const handleSuccess = () => {
+    const handleSuccess = (apt?: any) => {
         router.refresh();
         refresh(); // Refresh client-side cache
+        if (apt) {
+            const updatedApt = { ...apt };
+            if (confirmModalOpen) updatedApt.status = 'CONFIRMED';
+            if (completeModalOpen) updatedApt.status = 'COMPLETED';
+            if (cancelModalOpen) updatedApt.status = 'CANCELLED';
+            setSelectedAppointment(updatedApt);
+            setDetailModalOpen(true);
+        }
     };
 
     const getStatusBadge = (status: string) => {
@@ -111,7 +119,14 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                             </TableRow>
                         ) : (
                             appointments.map((apt) => (
-                                <TableRow key={apt.id}>
+                                <TableRow
+                                    key={apt.id}
+                                    className="cursor-pointer hover:bg-gray-50 transition-colors"
+                                    onClick={() => {
+                                        setSelectedAppointment(apt);
+                                        setDetailModalOpen(true);
+                                    }}
+                                >
                                     <TableCell>
                                         <div className="flex flex-col">
                                             <span className="font-medium text-sm">{format(new Date(apt.appointmentDate), 'dd MMM yyyy')}</span>
@@ -139,7 +154,7 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                                     <TableCell>{getStatusBadge(apt.status)}</TableCell>
                                     <TableCell className="text-right">
                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
+                                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
