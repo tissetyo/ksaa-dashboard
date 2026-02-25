@@ -15,6 +15,7 @@ import { format } from 'date-fns';
 import { BannerCarousel } from './BannerCarousel';
 import { ProfileCompletionBar } from './ProfileCompletionBar';
 import { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 
 const CONSULTATION_ICON: Record<string, any> = {
     WHATSAPP_CALL: PhoneCall,
@@ -203,6 +204,7 @@ export function PatientDashboardClient() {
                                                 className="border-gray-300 text-gray-600 hover:bg-gray-50"
                                                 onClick={() => {
                                                     navigator.clipboard.writeText(nextAppointment.googleMeetLink);
+                                                    toast.success('Link copied to clipboard');
                                                 }}
                                             >
                                                 <ExternalLink className="mr-1 h-3.5 w-3.5" /> Copy Link

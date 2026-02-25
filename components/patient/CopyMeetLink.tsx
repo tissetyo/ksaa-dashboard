@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Copy, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface CopyMeetLinkProps {
     link: string;
@@ -14,6 +15,7 @@ export function CopyMeetLink({ link }: CopyMeetLinkProps) {
         try {
             await navigator.clipboard.writeText(link);
             setCopied(true);
+            toast.success('Meeting link copied to clipboard');
             setTimeout(() => setCopied(false), 2000);
         } catch {
             // Fallback for older browsers
@@ -24,6 +26,7 @@ export function CopyMeetLink({ link }: CopyMeetLinkProps) {
             document.execCommand('copy');
             document.body.removeChild(textarea);
             setCopied(true);
+            toast.success('Meeting link copied to clipboard');
             setTimeout(() => setCopied(false), 2000);
         }
     };
