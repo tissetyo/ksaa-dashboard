@@ -1,0 +1,767 @@
+================================================================================
+NOTIFICATION SYSTEM - MANUAL APPROACH (NO API COSTS)
+================================================================================
+
+OBJECTIVE: Create manual notification queues for admin to send reminders
+           via email and WhatsApp without using paid APIs.
+
+APPROACH: Manual copy-paste system with pre-formatted templates
+
+================================================================================
+1. SYSTEM ARCHITECTURE
+================================================================================
+
+Components:
+1. Notification Queue Builder (cron job or manual trigger)
+2. Email Queue Interface (admin dashboard)
+3. WhatsApp Queue Interface (admin dashboard)
+4. Message Templates
+5. Tracking System (mark as sent)
+
+Flow:
+- System identifies appointments needing reminders
+- Admin views queue in dashboard
+- Admin copies message and sends manually
+- Admin marks as sent
+- System tracks notification status
+
+================================================================================
+2. REMINDER TRIGGER LOGIC
+================================================================================
+
+File: /lib/notifications/queue-builder.ts
+
+```typescript
+import { db } from '@/lib/db';
+
+export async function buildNotificationQueues() {
+  // Get tomorrow's date
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  tomorrow.setHours(0, 0, 0, 0);
+  
+  const dayAfter = new Date(tomorrow);
+  dayAfter.setDate(dayAfter.getDate() + 1);
+  
+  // Find appointments for tomorrow that:
+  // - Status is CONFIRMED
+  // - Reminders not sent yet
+  const appointments = await db.appointment.findMany({
+    where: {
+      appointmentDate: {
+        gte: tomorrow,
+        lt: dayAfter
+      },
+      status: 'CONFIRMED',
+      OR: [
+        { reminderEmailSent: false },
+        { reminderWhatsAppSent: false }
+      ]
+    },
+    include: {
+      patient: {
+        include: {
+          user: true
+        }
+      },
+      product: true
+    },
+    orderBy: {
+      timeSlot: 'asc'
+    }
+  });
+  
+  return {
+    emailQueue: appointments.filter(a => !a.reminderEmailSent),
+    whatsappQueue: appointments.filter(a => !a.reminderWhatsAppSent),
+    total: appointments.length
+  };
+}
+```
+
+================================================================================
+3. EMAIL QUEUE INTERFACE
+================================================================================
+
+File: /app/admin/notifications/page.tsx
+
+```typescript
+'use client';
+
+import { useState, useEffect } from 'react';
+import { formatDate, formatTime } from '@/lib/utils';
+
+export default function NotificationsPage() {
+  const [emailQueue, setEmailQueue] = useState([]);
+  const [whatsappQueue, setWhatsappQueue] = useState([]);
+  
+  useEffect(() => {
+    loadQueues();
+  }, []);
+  
+  async function loadQueues() {
+    const res = await fetch('/api/admin/notifications/queue');
+    const data = await res.json();
+    setEmailQueue(data.emailQueue);
+    setWhatsappQueue(data.whatsappQueue);
+  }
+  
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-6">Notification Management</h1>
+      
+      <div className="grid grid-cols-2 gap-6">
+        <EmailQueue appointments={emailQueue} onMarkSent={loadQueues} />
+        <WhatsAppQueue appointments={whatsappQueue} onMarkSent={loadQueues} />
+      </div>
+    </div>
+  );
+}
+```
+
+--- EMAIL QUEUE COMPONENT ---
+
+```typescript
+function EmailQueue({ appointments, onMarkSent }) {
+  const [copiedId, setCopiedId] = useState(null);
+  
+  const copyEmail = (appointment) => {
+    const emailContent = generateEmailTemplate(appointment);
+    navigator.clipboard.writeText(emailContent);
+    setCopiedId(appointment.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+  
+  const markAsSent = async (appointmentId) => {
+    await fetch('/api/admin/notifications/mark-sent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appointmentId, type: 'email' })
+    });
+    onMarkSent();
+  };
+  
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          📧 Email Reminders
+          <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-sm">
+            {appointments.length}
+          </span>
+        </h2>
+        <button 
+          onClick={() => copyAllEmails(appointments)}
+          className="text-sm text-blue-600 hover:underline"
+        >
+          Copy All Emails
+        </button>
+      </div>
+      
+      {appointments.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">
+          No email reminders to send
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {appointments.map(appointment => (
+            <EmailQueueItem
+              key={appointment.id}
+              appointment={appointment}
+              isCopied={copiedId === appointment.id}
+              onCopy={() => copyEmail(appointment)}
+              onMarkSent={() => markAsSent(appointment.id)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EmailQueueItem({ appointment, isCopied, onCopy, onMarkSent }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="font-medium">{appointment.patient.fullName}</div>
+          <div className="text-sm text-gray-600">
+            {appointment.patient.user.email}
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            {formatDate(appointment.appointmentDate)} at {appointment.timeSlot}
+          </div>
+          <div className="text-sm font-medium text-blue-600 mt-1">
+            {appointment.product.name}
+          </div>
+        </div>
+        
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-sm text-gray-600 hover:text-gray-800"
+        >
+          {expanded ? '▼' : '▶'}
+        </button>
+      </div>
+      
+      {expanded && (
+        <div className="mt-4">
+          <div className="bg-gray-50 rounded p-3 text-sm font-mono whitespace-pre-wrap mb-3">
+            {generateEmailTemplate(appointment)}
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={onCopy}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded
+                       hover:bg-blue-700 transition"
+            >
+              {isCopied ? '✓ Copied!' : 'Copy Email Content'}
+            </button>
+            
+            <button
+              onClick={onMarkSent}
+              className="px-4 py-2 border border-green-600 text-green-600
+                       rounded hover:bg-green-50 transition"
+            >
+              Mark as Sent
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+================================================================================
+4. EMAIL TEMPLATES
+================================================================================
+
+File: /lib/notifications/email-templates.ts
+
+```typescript
+export function generateEmailTemplate(appointment) {
+  const date = formatDate(appointment.appointmentDate);
+  const time = formatTime(appointment.timeSlot);
+  
+  return `Subject: Appointment Reminder - KSAA STEMCARE
+
+Dear ${appointment.patient.fullName},
+
+This is a friendly reminder for your upcoming appointment at KSAA STEMCARE.
+
+Appointment Details:
+━━━━━━━━━━━━━━━━━━━━
+📅 Date: ${date}
+⏰ Time: ${time}
+💉 Service: ${appointment.product.name}
+⏱️ Duration: ${appointment.product.durationMinutes} minutes
+
+📍 Location:
+KSAA STEMCARE Clinic
+[Your clinic address]
+
+Important Reminders:
+• Please arrive 10 minutes before your scheduled time
+• Bring your identification and any relevant medical documents
+• If you need to cancel or reschedule, please contact us at least 48 hours in advance
+
+${appointment.paymentStatus === 'DEPOSIT_PAID' ? `
+💰 Outstanding Balance: RM ${appointment.balanceAmountMYR.toFixed(2)}
+Please settle the remaining balance at the clinic.
+` : ''}
+
+If you have any questions, please contact us:
+📞 Phone: [Your phone number]
+📧 Email: [Your email]
+
+We look forward to seeing you!
+
+Best regards,
+KSAA STEMCARE Team
+
+━━━━━━━━━━━━━━━━━━━━
+This is an automated reminder. Please do not reply to this email.
+For inquiries, contact us at [your email].`;
+}
+
+export function generateConfirmationEmail(appointment) {
+  const date = formatDate(appointment.appointmentDate);
+  const time = formatTime(appointment.timeSlot);
+  
+  return `Subject: Appointment Confirmed - KSAA STEMCARE
+
+Dear ${appointment.patient.fullName},
+
+Thank you for booking with KSAA STEMCARE! Your appointment has been confirmed.
+
+Appointment Details:
+━━━━━━━━━━━━━━━━━━━━
+📅 Date: ${date}
+⏰ Time: ${time}
+💉 Service: ${appointment.product.name}
+💰 Amount Paid: RM ${appointment.paidAmountMYR.toFixed(2)}
+${appointment.paymentStatus === 'DEPOSIT_PAID' ? `
+💵 Balance Due: RM ${appointment.balanceAmountMYR.toFixed(2)}
+(To be paid at clinic)
+` : ''}
+
+Booking Reference: ${appointment.id.slice(-8).toUpperCase()}
+
+You will receive a reminder 24 hours before your appointment.
+
+If you need to cancel or reschedule:
+• More than 7 days before: Full refund
+• 3-7 days before: 50% refund
+• Less than 3 days: No refund
+
+Contact us:
+📞 [Your phone]
+📧 [Your email]
+
+Best regards,
+KSAA STEMCARE Team`;
+}
+
+export function generateCancellationEmail(appointment, refundAmount) {
+  return `Subject: Appointment Cancelled - KSAA STEMCARE
+
+Dear ${appointment.patient.fullName},
+
+Your appointment has been cancelled as requested.
+
+Cancelled Appointment:
+━━━━━━━━━━━━━━━━━━━━
+📅 Date: ${formatDate(appointment.appointmentDate)}
+⏰ Time: ${appointment.timeSlot}
+💉 Service: ${appointment.product.name}
+
+${refundAmount > 0 ? `
+💰 Refund Amount: RM ${refundAmount.toFixed(2)}
+Your refund will be processed within 5-7 business days.
+` : `
+As per our cancellation policy, no refund is applicable for this cancellation.
+`}
+
+We're sorry to see you cancel. If you'd like to book another appointment,
+visit our website or contact us.
+
+Best regards,
+KSAA STEMCARE Team`;
+}
+```
+
+================================================================================
+5. WHATSAPP QUEUE INTERFACE
+================================================================================
+
+```typescript
+function WhatsAppQueue({ appointments, onMarkSent }) {
+  const [copiedId, setCopiedId] = useState(null);
+  
+  const copyWhatsApp = (appointment) => {
+    const message = generateWhatsAppTemplate(appointment);
+    navigator.clipboard.writeText(message);
+    setCopiedId(appointment.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+  
+  const openWhatsApp = (appointment) => {
+    const phone = appointment.patient.phone.replace(/\D/g, ''); // Remove non-digits
+    const message = encodeURIComponent(generateWhatsAppTemplate(appointment));
+    const url = `https://wa.me/${phone}?text=${message}`;
+    window.open(url, '_blank');
+  };
+  
+  const markAsSent = async (appointmentId) => {
+    await fetch('/api/admin/notifications/mark-sent', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ appointmentId, type: 'whatsapp' })
+    });
+    onMarkSent();
+  };
+  
+  return (
+    <div className="bg-white rounded-lg shadow p-6">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-semibold flex items-center gap-2">
+          💬 WhatsApp Reminders
+          <span className="bg-green-100 text-green-800 px-2 py-1 rounded text-sm">
+            {appointments.length}
+          </span>
+        </h2>
+      </div>
+      
+      {appointments.length === 0 ? (
+        <p className="text-gray-500 text-center py-8">
+          No WhatsApp reminders to send
+        </p>
+      ) : (
+        <div className="space-y-4">
+          {appointments.map(appointment => (
+            <WhatsAppQueueItem
+              key={appointment.id}
+              appointment={appointment}
+              isCopied={copiedId === appointment.id}
+              onCopy={() => copyWhatsApp(appointment)}
+              onOpen={() => openWhatsApp(appointment)}
+              onMarkSent={() => markAsSent(appointment.id)}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function WhatsAppQueueItem({ appointment, isCopied, onCopy, onOpen, onMarkSent }) {
+  const [expanded, setExpanded] = useState(false);
+  
+  return (
+    <div className="border rounded-lg p-4">
+      <div className="flex items-start justify-between">
+        <div className="flex-1">
+          <div className="font-medium">{appointment.patient.fullName}</div>
+          <div className="text-sm text-gray-600">
+            {appointment.patient.phone}
+          </div>
+          <div className="text-sm text-gray-500 mt-1">
+            {formatDate(appointment.appointmentDate)} at {appointment.timeSlot}
+          </div>
+          <div className="text-sm font-medium text-blue-600 mt-1">
+            {appointment.product.name}
+          </div>
+        </div>
+        
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="text-sm text-gray-600 hover:text-gray-800"
+        >
+          {expanded ? '▼' : '▶'}
+        </button>
+      </div>
+      
+      {expanded && (
+        <div className="mt-4">
+          <div className="bg-gray-50 rounded p-3 text-sm whitespace-pre-wrap mb-3">
+            {generateWhatsAppTemplate(appointment)}
+          </div>
+          
+          <div className="flex gap-2">
+            <button
+              onClick={onCopy}
+              className="flex-1 bg-gray-600 text-white px-4 py-2 rounded
+                       hover:bg-gray-700 transition"
+            >
+              {isCopied ? '✓ Copied!' : 'Copy Message'}
+            </button>
+            
+            <button
+              onClick={onOpen}
+              className="flex-1 bg-green-600 text-white px-4 py-2 rounded
+                       hover:bg-green-700 transition"
+            >
+              Open WhatsApp
+            </button>
+            
+            <button
+              onClick={onMarkSent}
+              className="px-4 py-2 border border-green-600 text-green-600
+                       rounded hover:bg-green-50 transition"
+            >
+              Mark Sent
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+================================================================================
+6. WHATSAPP TEMPLATES
+================================================================================
+
+File: /lib/notifications/whatsapp-templates.ts
+
+```typescript
+export function generateWhatsAppTemplate(appointment) {
+  const date = formatDate(appointment.appointmentDate);
+  const time = formatTime(appointment.timeSlot);
+  
+  return `Hello ${appointment.patient.fullName},
+
+This is a reminder for your STEMCARE appointment at KSAA:
+
+📅 *Date:* ${date}
+⏰ *Time:* ${time}
+💉 *Service:* ${appointment.product.name}
+📍 *Location:* KSAA STEMCARE Clinic
+
+Please arrive 10 minutes early.
+
+${appointment.paymentStatus === 'DEPOSIT_PAID' ? `
+💰 *Balance Due:* RM ${appointment.balanceAmountMYR.toFixed(2)}
+(To be paid at clinic)
+` : ''}
+Reply *CONFIRM* to acknowledge this reminder.
+
+If you need to cancel or reschedule, please contact us at least 48 hours in advance.
+
+Thank you!
+KSAA STEMCARE Team
+📞 [Your phone number]`;
+}
+
+export function generateWhatsAppConfirmation(appointment) {
+  const date = formatDate(appointment.appointmentDate);
+  const time = formatTime(appointment.timeSlot);
+  
+  return `Hello ${appointment.patient.fullName},
+
+✅ Your appointment is *CONFIRMED*!
+
+📅 *Date:* ${date}
+⏰ *Time:* ${time}
+💉 *Service:* ${appointment.product.name}
+💰 *Paid:* RM ${appointment.paidAmountMYR.toFixed(2)}
+${appointment.paymentStatus === 'DEPOSIT_PAID' ? `
+💵 *Balance:* RM ${appointment.balanceAmountMYR.toFixed(2)}
+` : ''}
+
+📍 *Location:* KSAA STEMCARE Clinic
+[Your address]
+
+You will receive a reminder 24 hours before your appointment.
+
+See you soon!
+KSAA STEMCARE
+📞 [Your phone]`;
+}
+```
+
+================================================================================
+7. MARK AS SENT API
+================================================================================
+
+File: /app/api/admin/notifications/mark-sent/route.ts
+
+```typescript
+import { db } from '@/lib/db';
+
+export async function POST(req: Request) {
+  try {
+    const { appointmentId, type } = await req.json();
+    
+    // Validate type
+    if (!['email', 'whatsapp'].includes(type)) {
+      return Response.json({ error: 'Invalid type' }, { status: 400 });
+    }
+    
+    // Update appointment
+    const updateData = type === 'email' 
+      ? { reminderEmailSent: true }
+      : { reminderWhatsAppSent: true };
+    
+    await db.appointment.update({
+      where: { id: appointmentId },
+      data: updateData
+    });
+    
+    return Response.json({ success: true });
+    
+  } catch (error) {
+    console.error('Mark sent error:', error);
+    return Response.json({ error: 'Failed to update' }, { status: 500 });
+  }
+}
+```
+
+================================================================================
+8. BULK ACTIONS
+================================================================================
+
+Copy All Emails:
+```typescript
+function copyAllEmails(appointments) {
+  const allEmails = appointments.map(a => {
+    return `
+TO: ${a.patient.user.email}
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+${generateEmailTemplate(a)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+`;
+  }).join('\n\n');
+  
+  navigator.clipboard.writeText(allEmails);
+  alert('All emails copied! Paste into your email client.');
+}
+```
+
+Mark All as Sent:
+```typescript
+async function markAllAsSent(type) {
+  const appointmentIds = appointments.map(a => a.id);
+  
+  await fetch('/api/admin/notifications/mark-all-sent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ appointmentIds, type })
+  });
+  
+  onMarkSent();
+}
+```
+
+================================================================================
+9. NOTIFICATION HISTORY
+================================================================================
+
+Track when notifications were sent:
+
+```typescript
+// Add to Appointment model
+model Appointment {
+  // ... existing fields
+  
+  reminderEmailSent: boolean (default: false)
+  reminderWhatsAppSent: boolean (default: false)
+  reminderEmailSentAt: DateTime?
+  reminderWhatsAppSentAt: DateTime?
+  reminderSentBy: String? // Admin user ID
+}
+```
+
+Update mark-sent API to include timestamp:
+```typescript
+await db.appointment.update({
+  where: { id: appointmentId },
+  data: {
+    reminderEmailSent: true,
+    reminderEmailSentAt: new Date(),
+    reminderSentBy: adminId
+  }
+});
+```
+
+View history in admin dashboard:
+```typescript
+function NotificationHistory() {
+  const [history, setHistory] = useState([]);
+  
+  useEffect(() => {
+    fetch('/api/admin/notifications/history')
+      .then(res => res.json())
+      .then(setHistory);
+  }, []);
+  
+  return (
+    <div>
+      <h2>Notification History</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Patient</th>
+            <th>Type</th>
+            <th>Sent By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {history.map(item => (
+            <tr key={item.id}>
+              <td>{formatDate(item.sentAt)}</td>
+              <td>{item.patient.fullName}</td>
+              <td>{item.type}</td>
+              <td>{item.sentBy}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+```
+
+================================================================================
+10. CRON JOB (OPTIONAL)
+================================================================================
+
+Auto-refresh queue daily using Vercel Cron:
+
+File: /app/api/cron/build-queues/route.ts
+
+```typescript
+export async function GET(req: Request) {
+  // Verify cron secret
+  const authHeader = req.headers.get('authorization');
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  
+  // Build queues
+  const queues = await buildNotificationQueues();
+  
+  // Store in cache or trigger notification to admin
+  
+  return Response.json({ success: true, queues });
+}
+```
+
+File: vercel.json
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/build-queues",
+      "schedule": "0 9 * * *"
+    }
+  ]
+}
+```
+
+================================================================================
+11. ADMIN WORKFLOW
+================================================================================
+
+Daily Routine:
+
+1. Login to admin dashboard
+2. Navigate to Notifications page
+3. View Email Queue and WhatsApp Queue
+4. For each appointment:
+   a. Click to expand
+   b. Review message
+   c. Click "Copy Email" or "Open WhatsApp"
+   d. Paste in email client or send via WhatsApp
+   e. Click "Mark as Sent"
+5. Repeat for all appointments
+6. Check "Sent History" for confirmation
+
+Time Required: ~2-3 minutes per appointment
+
+================================================================================
+12. ADVANTAGES OF MANUAL SYSTEM
+================================================================================
+
+✓ Zero recurring costs (no API fees)
+✓ Full control over messaging
+✓ Personal touch (admin can customize messages)
+✓ No spam filters (manual sending less likely flagged)
+✓ Quality control (admin reviews each message)
+✓ Flexibility (can adjust templates on the fly)
+✓ Simple to implement and maintain
+
+Disadvantages:
+✗ Requires daily admin action
+✗ Not fully automated
+✗ Potential for human error (forgetting to send)
+
+================================================================================

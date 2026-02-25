@@ -1,0 +1,31 @@
+import { AdminAppointmentsClient } from '@/components/admin/AdminAppointmentsClient';
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { db } from '@/lib/db';
+
+export default async function AdminAppointmentsPage() {
+    const session = await auth();
+    if (!session?.user?.id) redirect('/admin-login');
+
+    const user = await db.user.findUnique({
+        where: { id: session.user.id },
+        select: { role: true }
+    });
+    if (!user || !['SUPERADMIN', 'STAFF'].includes(user.role)) redirect('/admin-login');
+
+    const [staffMembers, products] = await Promise.all([
+        db.staff.findMany({
+            where: { isActive: true },
+            select: { id: true, fullName: true, staffCode: true },
+            orderBy: { fullName: 'asc' }
+        }),
+        db.product.findMany({
+            where: { isActive: true },
+            select: { id: true, name: true },
+            orderBy: { name: 'asc' }
+        }),
+    ]);
+
+    return <AdminAppointmentsClient staffMembers={staffMembers} products={products} />;
+}
+

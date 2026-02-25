@@ -1,0 +1,605 @@
+================================================================================
+ENVIRONMENT SETUP & CONFIGURATION
+================================================================================
+
+================================================================================
+1. ENVIRONMENT VARIABLES
+================================================================================
+
+Create .env.local file in project root:
+
+```env
+# Database (Vercel Postgres or Supabase)
+DATABASE_URL="postgresql://username:password@host:5432/database"
+DIRECT_URL="postgresql://username:password@host:5432/database" # For migrations
+
+# NextAuth.js
+NEXTAUTH_URL="http://localhost:3000" # Change to production URL
+NEXTAUTH_SECRET="your-random-secret-key-generate-with-openssl"
+
+# Stripe
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY="pk_test_xxxxx"
+STRIPE_SECRET_KEY="sk_test_xxxxx"
+STRIPE_WEBHOOK_SECRET="whsec_xxxxx"
+STRIPE_CURRENCY="myr"
+
+# Google Calendar API
+GOOGLE_CLIENT_ID="your-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+GOOGLE_CALENDAR_ID="primary"
+
+# Admin Credentials (Initial Setup)
+ADMIN_EMAIL="admin@ksaa.com"
+ADMIN_PASSWORD="SecurePassword123!"
+
+# App Configuration
+NEXT_PUBLIC_APP_NAME="KSAA STEMCARE"
+NEXT_PUBLIC_APP_URL="https://your-domain.vercel.app"
+
+# Cron Secret (Optional)
+CRON_SECRET="your-cron-secret-key"
+```
+
+================================================================================
+2. GENERATING SECRETS
+================================================================================
+
+--- NextAuth Secret ---
+
+```bash
+openssl rand -base64 32
+```
+
+Copy output to NEXTAUTH_SECRET
+
+--- Cron Secret ---
+
+```bash
+openssl rand -hex 32
+```
+
+Copy output to CRON_SECRET
+
+================================================================================
+3. DATABASE SETUP
+================================================================================
+
+Option A: Vercel Postgres (Recommended for Vercel deployment)
+
+1. Go to Vercel dashboard
+2. Select your project
+3. Go to Storage tab
+4. Create Postgres Database
+5. Copy connection strings to .env.local:
+   - DATABASE_URL
+   - DIRECT_URL
+
+Option B: Supabase (Free tier alternative)
+
+1. Go to https://supabase.com
+2. Create new project
+3. Get database connection string
+4. Add to .env.local
+
+--- Database Initialization ---
+
+```bash
+# Install Prisma
+npm install prisma @prisma/client
+
+# Generate Prisma client
+npx prisma generate
+
+# Push schema to database (development)
+npx prisma db push
+
+# Or create migration (production)
+npx prisma migrate dev --name init
+
+# Seed database (optional)
+npx prisma db seed
+```
+
+================================================================================
+4. STRIPE SETUP
+================================================================================
+
+--- Step 1: Create Stripe Account ---
+
+1. Go to https://stripe.com
+2. Sign up for account
+3. Complete business verification
+4. Set business country to Malaysia
+5. Set default currency to MYR
+
+--- Step 2: Get API Keys ---
+
+1. Go to Developers → API Keys
+2. Copy Publishable key → NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+3. Copy Secret key → STRIPE_SECRET_KEY
+
+--- Step 3: Setup Webhooks ---
+
+1. Go to Developers → Webhooks
+2. Add endpoint:
+   - URL: https://your-domain.vercel.app/api/webhooks/stripe
+   - Events: payment_intent.succeeded, payment_intent.payment_failed
+3. Copy Signing secret → STRIPE_WEBHOOK_SECRET
+
+--- Step 4: Test Mode ---
+
+For development, use test keys (starts with pk_test_ and sk_test_)
+For production, use live keys (starts with pk_live_ and sk_live_)
+
+================================================================================
+5. GOOGLE CALENDAR SETUP
+================================================================================
+
+--- Step 1: Google Cloud Console ---
+
+1. Go to https://console.cloud.google.com
+2. Create new project: "KSAA-STEMCARE-Calendar"
+3. Enable Google Calendar API:
+   - APIs & Services → Library
+   - Search "Google Calendar API"
+   - Click Enable
+
+--- Step 2: Create OAuth Credentials ---
+
+1. APIs & Services → Credentials
+2. Create Credentials → OAuth 2.0 Client ID
+3. Application type: Web application
+4. Authorized redirect URIs:
+   - http://localhost:3000/api/auth/callback/google (dev)
+   - https://your-domain.vercel.app/api/auth/callback/google (prod)
+5. Copy Client ID and Client Secret to .env.local
+
+--- Step 3: OAuth Consent Screen ---
+
+1. Configure OAuth consent screen
+2. User type: External
+3. App name: KSAA STEMCARE
+4. Scopes:
+   - .../auth/calendar
+   - .../auth/calendar.events
+
+================================================================================
+6. VERCEL DEPLOYMENT SETUP
+================================================================================
+
+--- Step 1: Install Vercel CLI ---
+
+```bash
+npm install -g vercel
+```
+
+--- Step 2: Link Project ---
+
+```bash
+vercel login
+vercel link
+```
+
+--- Step 3: Set Environment Variables ---
+
+```bash
+vercel env add DATABASE_URL
+vercel env add NEXTAUTH_URL
+vercel env add NEXTAUTH_SECRET
+vercel env add STRIPE_SECRET_KEY
+# ... add all other env variables
+```
+
+Or add via Vercel dashboard:
+1. Project Settings → Environment Variables
+2. Add each variable for Production, Preview, Development
+
+--- Step 4: Deploy ---
+
+```bash
+# Deploy to preview
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
+================================================================================
+7. PROJECT INITIALIZATION
+================================================================================
+
+--- Step 1: Create Next.js Project ---
+
+```bash
+npx create-next-app@latest ksaa-stemcare --typescript --tailwind --app --src-dir
+cd ksaa-stemcare
+```
+
+--- Step 2: Install Dependencies ---
+
+```bash
+# Core dependencies
+npm install @prisma/client next-auth bcryptjs stripe
+npm install googleapis date-fns date-fns-tz
+
+# UI components
+npm install @radix-ui/react-dialog @radix-ui/react-dropdown-menu
+npm install @radix-ui/react-label @radix-ui/react-select
+npm install @radix-ui/react-slot @radix-ui/react-toast
+npm install class-variance-authority clsx tailwind-merge
+
+# Icons
+npm install lucide-react
+
+# Dev dependencies
+npm install -D prisma @types/bcryptjs
+npm install -D tailwindcss-animate
+```
+
+--- Step 3: Initialize shadcn/ui ---
+
+```bash
+npx shadcn-ui@latest init
+```
+
+Select options:
+- Style: Default
+- Base color: Slate
+- CSS variables: Yes
+
+--- Step 4: Add shadcn Components ---
+
+```bash
+npx shadcn-ui@latest add button
+npx shadcn-ui@latest add card
+npx shadcn-ui@latest add input
+npx shadcn-ui@latest add label
+npx shadcn-ui@latest add select
+npx shadcn-ui@latest add dialog
+npx shadcn-ui@latest add dropdown-menu
+npx shadcn-ui@latest add table
+npx shadcn-ui@latest add badge
+npx shadcn-ui@latest add calendar
+npx shadcn-ui@latest add toast
+npx shadcn-ui@latest add tabs
+npx shadcn-ui@latest add separator
+```
+
+--- Step 5: Setup Prisma ---
+
+```bash
+npx prisma init
+```
+
+Copy database schema from 01-DATABASE-SCHEMA.txt to prisma/schema.prisma
+
+================================================================================
+8. FOLDER STRUCTURE SETUP
+================================================================================
+
+Create the following folders:
+
+```bash
+mkdir -p app/(auth)/login
+mkdir -p app/(auth)/signup
+mkdir -p app/(auth)/admin-login
+mkdir -p app/(patient)/dashboard
+mkdir -p app/(patient)/profile
+mkdir -p app/(patient)/services
+mkdir -p app/(patient)/book
+mkdir -p app/(patient)/appointments
+mkdir -p app/(admin)/admin/dashboard
+mkdir -p app/(admin)/admin/patients
+mkdir -p app/(admin)/admin/products
+mkdir -p app/(admin)/admin/appointments
+mkdir -p app/(admin)/admin/schedule
+mkdir -p app/(admin)/admin/notifications
+mkdir -p app/(admin)/admin/payments
+mkdir -p app/(admin)/admin/settings
+mkdir -p app/api/auth
+mkdir -p app/api/patients
+mkdir -p app/api/products
+mkdir -p app/api/appointments
+mkdir -p app/api/payments
+mkdir -p app/api/admin
+mkdir -p app/api/webhooks
+mkdir -p components/ui
+mkdir -p components/patient
+mkdir -p components/admin
+mkdir -p lib
+mkdir -p prisma
+```
+
+================================================================================
+9. INITIAL ADMIN USER CREATION
+================================================================================
+
+Create: prisma/seed.ts
+
+```typescript
+import { PrismaClient } from '@prisma/client';
+import bcrypt from 'bcryptjs';
+
+const prisma = new PrismaClient();
+
+async function main() {
+  // Create admin user
+  const hashedPassword = await bcrypt.hash(
+    process.env.ADMIN_PASSWORD || 'admin123',
+    10
+  );
+  
+  const admin = await prisma.user.upsert({
+    where: { email: process.env.ADMIN_EMAIL || 'admin@ksaa.com' },
+    update: {},
+    create: {
+      email: process.env.ADMIN_EMAIL || 'admin@ksaa.com',
+      password: hashedPassword,
+      role: 'SUPERADMIN',
+    },
+  });
+  
+  console.log('Admin user created:', admin.email);
+  
+  // Create sample products
+  const products = [
+    {
+      name: 'STEMCARE Facial Treatment',
+      description: 'Premium stem cell facial treatment for skin rejuvenation',
+      priceMYR: 450.00,
+      depositPercentage: 30,
+      durationMinutes: 60,
+      quotaPerDay: 5,
+      isActive: true,
+    },
+    {
+      name: 'STEMCARE Hair Treatment',
+      description: 'Advanced stem cell therapy for hair restoration',
+      priceMYR: 650.00,
+      depositPercentage: 30,
+      durationMinutes: 90,
+      quotaPerDay: 3,
+      isActive: true,
+    },
+    {
+      name: 'STEMCARE IV Therapy',
+      description: 'Intravenous stem cell therapy for overall wellness',
+      priceMYR: 850.00,
+      depositPercentage: 50,
+      durationMinutes: 120,
+      quotaPerDay: 2,
+      isActive: true,
+    },
+  ];
+  
+  for (const product of products) {
+    await prisma.product.upsert({
+      where: { name: product.name },
+      update: {},
+      create: product,
+    });
+  }
+  
+  console.log('Sample products created');
+  
+  // Create default weekly schedule (Monday to Friday, 9 AM - 5 PM)
+  const timeSlots = ['09:00', '10:30', '13:00', '14:30', '16:00'];
+  const weekDays = [1, 2, 3, 4, 5]; // Mon to Fri
+  
+  for (const day of weekDays) {
+    for (const slot of timeSlots) {
+      await prisma.availabilitySlot.upsert({
+        where: {
+          dayOfWeek_timeSlot: {
+            dayOfWeek: day,
+            timeSlot: slot,
+          }
+        },
+        update: {},
+        create: {
+          dayOfWeek: day,
+          timeSlot: slot,
+          isActive: true,
+        },
+      });
+    }
+  }
+  
+  console.log('Default schedule created');
+}
+
+main()
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
+```
+
+Add to package.json:
+
+```json
+{
+  "prisma": {
+    "seed": "ts-node --compiler-options {\"module\":\"CommonJS\"} prisma/seed.ts"
+  }
+}
+```
+
+Run seed:
+
+```bash
+npm install -D ts-node
+npx prisma db seed
+```
+
+================================================================================
+10. MIDDLEWARE SETUP
+================================================================================
+
+Create: middleware.ts
+
+```typescript
+import { withAuth } from 'next-auth/middleware';
+
+export default withAuth({
+  callbacks: {
+    authorized: ({ req, token }) => {
+      const pathname = req.nextUrl.pathname;
+      
+      // Admin routes require SUPERADMIN role
+      if (pathname.startsWith('/admin')) {
+        return token?.role === 'SUPERADMIN';
+      }
+      
+      // Patient routes require PATIENT role
+      if (pathname.startsWith('/patient')) {
+        return token?.role === 'PATIENT';
+      }
+      
+      return !!token;
+    },
+  },
+});
+
+export const config = {
+  matcher: ['/patient/:path*', '/admin/:path*'],
+};
+```
+
+================================================================================
+11. TAILWIND CONFIG
+================================================================================
+
+Update: tailwind.config.ts
+
+```typescript
+import type { Config } from 'tailwindcss';
+
+const config: Config = {
+  darkMode: ['class'],
+  content: [
+    './pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './components/**/*.{js,ts,jsx,tsx,mdx}',
+    './app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
+  theme: {
+    extend: {
+      colors: {
+        border: 'hsl(var(--border))',
+        input: 'hsl(var(--input))',
+        ring: 'hsl(var(--ring))',
+        background: 'hsl(var(--background))',
+        foreground: 'hsl(var(--foreground))',
+        primary: {
+          DEFAULT: '#4A90E2',
+          foreground: '#FFFFFF',
+        },
+        secondary: {
+          DEFAULT: '#50C878',
+          foreground: '#FFFFFF',
+        },
+        navy: {
+          700: '#1E3A8A',
+          800: '#1E293B',
+        },
+      },
+    },
+  },
+  plugins: [require('tailwindcss-animate')],
+};
+
+export default config;
+```
+
+================================================================================
+12. TESTING SETUP
+================================================================================
+
+--- Test Database ---
+
+For testing, create separate test database:
+
+```env
+# .env.test
+DATABASE_URL="postgresql://username:password@host:5432/test_database"
+```
+
+--- Sample Test Data ---
+
+Create test patient:
+- Email: test@patient.com
+- Password: password123
+
+Create test appointment:
+- Service: STEMCARE Facial
+- Date: Tomorrow
+- Time: 09:00
+
+================================================================================
+13. DEVELOPMENT COMMANDS
+================================================================================
+
+```bash
+# Development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Start production server
+npm start
+
+# Database commands
+npx prisma studio              # Open Prisma Studio
+npx prisma db push             # Push schema changes
+npx prisma migrate dev         # Create migration
+npx prisma generate            # Regenerate client
+
+# Deploy to Vercel
+vercel                         # Preview deployment
+vercel --prod                  # Production deployment
+```
+
+================================================================================
+14. CHECKLIST BEFORE FIRST RUN
+================================================================================
+
+[ ] .env.local file created with all variables
+[ ] Database created and connection string added
+[ ] Prisma schema created
+[ ] npx prisma db push executed successfully
+[ ] npx prisma generate executed
+[ ] Admin user seeded
+[ ] Sample products seeded
+[ ] Default schedule seeded
+[ ] Stripe account created and keys added
+[ ] Google Calendar API enabled and credentials added
+[ ] All dependencies installed (npm install)
+[ ] Build successful (npm run build)
+[ ] Development server running (npm run dev)
+
+================================================================================
+15. TROUBLESHOOTING
+================================================================================
+
+Problem: Database connection failed
+Solution: Check DATABASE_URL is correct and database is running
+
+Problem: Prisma client errors
+Solution: Run npx prisma generate
+
+Problem: NextAuth errors
+Solution: Ensure NEXTAUTH_SECRET is set and NEXTAUTH_URL matches your URL
+
+Problem: Stripe webhook not working
+Solution: 
+- For local dev, use Stripe CLI: stripe listen --forward-to localhost:3000/api/webhooks/stripe
+- For production, ensure webhook URL is correct in Stripe dashboard
+
+Problem: Google Calendar not connecting
+Solution: Check OAuth redirect URIs match exactly in Google Cloud Console
+
+================================================================================

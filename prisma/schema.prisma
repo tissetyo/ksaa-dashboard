@@ -1,0 +1,640 @@
+// This is your Prisma schema file
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ============================================================================
+// AUTHENTICATION & USER MANAGEMENT
+// ============================================================================
+
+enum UserRole {
+  PATIENT
+  STAFF
+  SUPERADMIN
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  password      String // Hashed password
+  role          UserRole  @default(PATIENT)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  patient  Patient?
+  staff    Staff?
+  accounts Account[]
+  sessions Session[]
+
+  @@index([email])
+}
+
+// NextAuth.js required tables
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================================
+// PATIENT INFORMATION
+// ============================================================================
+
+enum Salutation {
+  MR
+  MRS
+  MS
+  DR
+  DATO
+  DATIN
+  PROF
+}
+
+enum BloodType {
+  A_POSITIVE
+  A_NEGATIVE
+  B_POSITIVE
+  B_NEGATIVE
+  AB_POSITIVE
+  AB_NEGATIVE
+  O_POSITIVE
+  O_NEGATIVE
+  UNKNOWN
+}
+
+model Patient {
+  id     String @id @default(cuid())
+
+  userId String @unique
+
+  // Personal Information
+  salutation    Salutation?
+  fullName      String
+  phone         String
+  address       String?
+  dateOfBirth   DateTime?
+  placeOfBirth  String?
+  nationality   String?
+  maritalStatus String?   // Single, Married, Divorced, Widowed
+  country       String?
+  gender        String?   // Male, Female
+
+  // Home Visit Address (saved separately, reused for home visits)
+  homeAddress  String?
+  homeCity     String?
+  homeState    String?
+  homePostcode String?
+
+  // Physical Information
+  age       Int?
+  heightCm  Float?
+  weightKg  Float?
+  bloodType BloodType @default(UNKNOWN)
+
+  // Emergency Contact
+  emergencyContactName  String?
+  emergencyContactPhone String?
+
+  // New Fields
+  icNumber                 String?
+  interestedService        String?
+  stemCellInterestQuantity String?
+  medicalHistory           String? @db.Text
+
+  // Medical Information
+  medicalAllergies   String? @db.Text
+  currentMedications String? @db.Text
+  previousTreatments String? @db.Text
+  additionalNotes    String? @db.Text
+
+  // Referral Tracking
+  referredByStaffId String?
+  referredByStaff   Staff?  @relation("StaffReferrals", fields: [referredByStaffId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments     Appointment[]
+  refundRequests   RefundRequest[]
+  patientAddresses PatientAddress[]
+
+  @@index([userId])
+  @@index([fullName])
+  @@index([phone])
+  
+  reviews                Review[]
+  serviceRecommendations ServiceRecommendation[]
+}
+
+// Staff Members with Referral Codes
+model Staff {
+  id        String @id @default(cuid())
+  userId    String @unique
+  staffCode String @unique // Auto-generated referral code
+
+  // Personal Information
+  fullName String
+  email    String
+  phone    String?
+
+  // Status
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referredPatients Patient[] @relation("StaffReferrals")
+  appointments     Appointment[] // Appointments performed/confirmed by this staff
+
+  reviews Review[]
+  @@index([staffCode])
+  @@index([email])
+}
+
+// ============================================================================
+// PRODUCTS/SERVICES
+// ============================================================================
+
+model Product {
+  id          String @id @default(cuid())
+  name        String @unique
+  description String @db.Text
+
+  // Pricing
+  isFree            Boolean @default(false)
+  priceMYR          Float?
+  depositPercentage Int?    @default(30) // 0-100, percentage for deposit option
+
+  // Service Details
+  durationMinutes Int
+  quotaPerDay     Int @default(5) // Max appointments per day for this service
+
+  // Status
+  isActive  Boolean @default(true)
+  showPrice Boolean @default(true) // Whether to show price on patient-facing pages
+  imageUrl  String? // URL to product banner image
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  appointments Appointment[]
+  dailyQuotas  DailyQuota[]
+
+  @@index([isActive])
+  @@index([name])
+
+  reviews                Review[]
+  serviceRecommendations ServiceRecommendation[]
+}
+
+// ============================================================================
+// APPOINTMENTS
+// ============================================================================
+
+enum AppointmentStatus {
+  PENDING // Just created, awaiting confirmation
+  CONFIRMED // Confirmed by admin or auto-confirmed
+  COMPLETED // Service completed
+  CANCELLED // Cancelled by patient or admin
+  NO_SHOW // Patient didn't show up
+}
+
+enum PaymentStatus {
+  UNPAID // No payment made
+  DEPOSIT_PAID // Deposit paid, balance remaining
+  FULL_PAID // Fully paid
+  REFUNDED // Refunded (full or partial)
+}
+
+enum PaymentType {
+  FULL // 100% payment
+  DEPOSIT // Partial payment (deposit)
+}
+
+enum ConsultationType {
+  GOOGLE_MEET
+  WHATSAPP_CALL
+  IN_PERSON
+  HOME_VISIT
+}
+
+model Appointment {
+  id        String @id @default(cuid())
+  patientId String
+  productId String
+
+  // Staff who performed/confirmed the service
+  staffId         String?
+  staff           Staff?            @relation(fields: [staffId], references: [id])
+
+  // Appointment Details
+  appointmentDate DateTime // Date of appointment
+  timeSlot        String // e.g., "09:00", "14:30"
+
+  // Status
+  status        AppointmentStatus @default(PENDING)
+  paymentStatus PaymentStatus     @default(UNPAID)
+  paymentType   PaymentType       @default(FULL)
+
+  // Payment Information
+  totalAmountMYR   Float
+  paidAmountMYR    Float @default(0)
+  balanceAmountMYR Float @default(0)
+
+  // Stripe Integration
+  stripePaymentIntentId String? @unique
+  stripeRefundId        String?
+
+  // Notifications
+  reminderEmailSent    Boolean @default(false)
+  reminderWhatsAppSent Boolean @default(false)
+
+  // Admin Notes
+  adminNotes String? @db.Text
+
+  // Consultation Details (for consultation appointments)
+  consultationType    ConsultationType?
+  consultationPhone   String?  // WhatsApp number for WHATSAPP_CALL
+  consultationEmail   String?  // Email for GOOGLE_MEET
+  googleMeetLink      String?  // Generated Google Meet link
+  consultationAddress String?  // Address for HOME_VISIT
+
+  // Health Statement (filled during booking)
+  healthCondition     String? @db.Text  // Current health condition description
+  onMedication        Boolean @default(false)
+  medicationDetails   String? @db.Text  // Medication details if yes
+
+  // Google Calendar
+  googleCalendarEventId String? @unique
+
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  cancelledAt DateTime?
+
+  // Cancellation and Completion Details
+  cancellationReason String?  @db.Text // Reason for cancellation
+  treatmentReport      String?  @db.Text // Staff report after completion
+  attendingStaffOther  String?           // Free-text staff name when "Other" selected
+  completedAt          DateTime?         // When appointment was completed
+
+  // Relations
+  patient        Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  product        Product         @relation(fields: [productId], references: [id])
+  payments       Payment[]
+  refundRequests RefundRequest[]
+
+  @@index([patientId])
+  @@index([productId])
+  @@index([appointmentDate])
+  @@index([status])
+  @@index([paymentStatus])
+
+  // Reviews
+  review                Review?
+  reviewToken           ReviewToken?
+  serviceRecommendations ServiceRecommendation[]
+}
+
+// ============================================================================
+// CLINIC LOCATIONS
+// ============================================================================
+
+model ClinicLocation {
+  id       String  @id @default(cuid())
+  name     String
+  address  String
+  city     String
+  state    String?
+  postcode String?
+  mapLink  String? // e.g., Google Maps URL
+  isActive Boolean @default(true)
+  order    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+// ============================================================================
+// PATIENT SAVED ADDRESSES
+// ============================================================================
+
+model PatientAddress {
+  id        String  @id @default(cuid())
+  patientId String
+  label     String  @default("Home") // e.g., "Home", "Work", "Parents"
+  address   String
+  city      String
+  state     String?
+  postcode  String?
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  patient Patient @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([patientId])
+}
+
+
+// ============================================================================
+
+enum PaymentTransactionStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+model Payment {
+  id            String @id @default(cuid())
+  appointmentId String
+
+  // Payment Details
+  amountMYR             Float
+  stripePaymentIntentId String?                  @unique
+  stripeChargeId        String?
+  status                PaymentTransactionStatus @default(PENDING)
+
+  // Metadata
+  paymentMethod String? // e.g., "card", "fpx"
+  currency      String  @default("MYR")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@index([stripePaymentIntentId])
+}
+
+// ============================================================================
+// SCHEDULING SYSTEM
+// ============================================================================
+
+// Weekly recurring schedule
+model AvailabilitySlot {
+  id String @id @default(cuid())
+
+  dayOfWeek Int // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  timeSlot  String // e.g., "09:00", "14:30"
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dayOfWeek, timeSlot])
+  @@index([dayOfWeek])
+  @@index([isActive])
+}
+
+// Override for specific dates (holidays, special hours)
+model DateOverride {
+  id String @id @default(cuid())
+
+  specificDate DateTime @unique // The date to override
+  isClosed     Boolean  @default(true) // If true, clinic is closed
+  reason       String? // e.g., "Public Holiday", "Staff Training"
+
+  // If not closed, can specify custom time slots (JSON array)
+  customTimeSlots String? @db.Text // JSON: ["09:00", "11:00", "15:00"]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([specificDate])
+}
+
+// Real-time quota tracking per product per day
+model DailyQuota {
+  id          String   @id @default(cuid())
+  productId   String
+  bookingDate DateTime // Date for which quota applies
+
+  bookedCount Int @default(0) // Current bookings
+  maxQuota    Int // Max allowed (from Product.quotaPerDay)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  product Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([productId, bookingDate])
+  @@index([bookingDate])
+  @@index([productId])
+}
+
+// ============================================================================
+// REFUND MANAGEMENT
+// ============================================================================
+
+enum RefundRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  PROCESSED
+}
+
+model RefundRequest {
+  id            String @id @default(cuid())
+  appointmentId String
+  patientId     String
+
+  // Request Details
+  reason             String @db.Text
+  requestedRefundMYR Float // Amount patient requesting
+
+  // Admin Processing
+  status             RefundRequestStatus @default(PENDING)
+  processedByAdminId String?
+  approvedRefundMYR  Float? // Actual approved amount
+  rejectionReason    String?             @db.Text
+
+  // Stripe
+  stripeRefundId String?
+
+  // Timestamps
+  requestedAt DateTime  @default(now())
+  processedAt DateTime?
+
+  // Relations
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+
+  @@index([appointmentId])
+  @@index([patientId])
+  @@index([status])
+}
+// ============================================================================
+// REVIEW SYSTEM
+// ============================================================================
+
+model Review {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Review content
+  rating  Int    // 1-5 stars
+  comment String @db.Text
+
+  // Relations
+  appointmentId String?      @unique
+  appointment   Appointment? @relation(fields: [appointmentId], references: [id])
+
+  patientId String?
+  patient   Patient? @relation(fields: [patientId], references: [id])
+
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+
+  staffId String?
+  staff   Staff?  @relation(fields: [staffId], references: [id])
+
+  // For non-logged-in reviewers
+  reviewerName  String?
+  reviewerEmail String?
+
+  // Token reference
+  tokenId String      @unique
+  token   ReviewToken @relation(fields: [tokenId], references: [id])
+
+  // Moderation
+  isApproved Boolean @default(false)
+  isPublic   Boolean @default(true)
+
+  @@index([isApproved, isPublic])
+  @@index([productId])
+  @@index([staffId])
+}
+
+model ReviewToken {
+  id        String   @id @default(cuid())
+  token     String   @unique @default(cuid())
+  createdAt DateTime @default(now())
+  expiresAt DateTime // 30 days validity
+
+  appointmentId String      @unique
+  appointment   Appointment @relation(fields: [appointmentId], references: [id])
+
+  productId String
+  staffId   String?
+
+  isUsed Boolean @default(false)
+  review Review?
+
+  @@index([token])
+}
+
+// ============================================================================
+// BANNER SYSTEM
+// ============================================================================
+
+model Banner {
+  id       String  @id @default(cuid())
+  title    String?
+  imageUrl String
+  linkType String  @default("custom") // "custom" | "service"
+  linkUrl  String? // for custom links
+  serviceId String? // for service-related links (references Product.id)
+  isActive Boolean @default(true)
+  order    Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([order])
+}
+
+// ============================================================================
+// SERVICE RECOMMENDATIONS (Post-Consultation)
+// ============================================================================
+
+enum RecommendationStatus {
+  PENDING
+  APPROVED
+  DECLINED
+  SCHEDULED
+}
+
+model ServiceRecommendation {
+  id            String               @id @default(cuid())
+  appointmentId String               // Completed appointment that triggered this
+  patientId     String
+  productId     String               // Recommended service
+
+  staffNote     String?              @db.Text
+  status        RecommendationStatus @default(PENDING)
+
+  // Scheduled after patient approves
+  scheduledDate DateTime?
+  scheduledSlot String?
+  newAppointmentId String? @unique   // Set when patient books the recommended service
+
+  emailSent Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  patient     Patient     @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+
+  @@index([patientId])
+  @@index([appointmentId])
+  @@index([status])
+}

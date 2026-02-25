@@ -1,0 +1,732 @@
+================================================================================
+GOOGLE CALENDAR INTEGRATION - COMPLETE SPECIFICATION
+================================================================================
+
+OBJECTIVE: Sync all appointments to Google Calendar automatically
+
+FEATURES:
+- Create calendar event when appointment booked
+- Update event when appointment rescheduled
+- Delete event when appointment cancelled
+- Include patient and service details in event
+
+================================================================================
+1. GOOGLE CLOUD SETUP
+================================================================================
+
+Step 1: Create Google Cloud Project
+1. Go to https://console.cloud.google.com
+2. Create new project: "KSAA-STEMCARE-Calendar"
+3. Enable Google Calendar API
+
+Step 2: Create OAuth 2.0 Credentials
+1. Go to APIs & Services → Credentials
+2. Create OAuth 2.0 Client ID
+3. Application type: Web application
+4. Authorized redirect URIs:
+   - http://localhost:3000/api/auth/callback/google (development)
+   - https://your-domain.vercel.app/api/auth/callback/google (production)
+5. Download credentials JSON
+
+Step 3: Get Credentials
+You'll receive:
+- Client ID
+- Client Secret
+
+Add to .env:
+```env
+GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_client_secret
+GOOGLE_CALENDAR_ID=primary
+```
+
+================================================================================
+2. OAUTH AUTHENTICATION FLOW
+================================================================================
+
+Use NextAuth.js Google provider for OAuth:
+
+File: /app/api/auth/[...nextauth]/route.ts
+
+```typescript
+import NextAuth from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+
+const handler = NextAuth({
+  providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: 'openid email profile https://www.googleapis.com/auth/calendar',
+          access_type: 'offline',
+          prompt: 'consent',
+        },
+      },
+    }),
+  ],
+  callbacks: {
+    async jwt({ token, account }) {
+      if (account) {
+        token.accessToken = account.access_token;
+        token.refreshToken = account.refresh_token;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      session.accessToken = token.accessToken;
+      session.refreshToken = token.refreshToken;
+      return session;
+    },
+  },
+});
+
+export { handler as GET, handler as POST };
+```
+
+================================================================================
+3. GOOGLE CALENDAR API CLIENT
+================================================================================
+
+File: /lib/google-calendar.ts
+
+```typescript
+import { google } from 'googleapis';
+
+export function getCalendarClient(accessToken: string) {
+  const oauth2Client = new google.auth.OAuth2(
+    process.env.GOOGLE_CLIENT_ID,
+    process.env.GOOGLE_CLIENT_SECRET
+  );
+  
+  oauth2Client.setCredentials({
+    access_token: accessToken,
+  });
+  
+  return google.calendar({ version: 'v3', auth: oauth2Client });
+}
+
+export async function getAdminAccessToken() {
+  // Retrieve admin's Google access token from database
+  // This assumes admin has connected their Google Calendar
+  const admin = await db.user.findFirst({
+    where: { role: 'SUPERADMIN' }
+  });
+  
+  if (!admin?.googleAccessToken) {
+    throw new Error('Admin Google Calendar not connected');
+  }
+  
+  return admin.googleAccessToken;
+}
+```
+
+================================================================================
+4. CREATE CALENDAR EVENT
+================================================================================
+
+File: /lib/calendar/create-event.ts
+
+```typescript
+import { getCalendarClient } from '@/lib/google-calendar';
+
+export async function createCalendarEvent(appointment: Appointment) {
+  try {
+    const accessToken = await getAdminAccessToken();
+    const calendar = getCalendarClient(accessToken);
+    
+    // Format date and time
+    const appointmentDate = new Date(appointment.appointmentDate);
+    const [hours, minutes] = appointment.timeSlot.split(':');
+    
+    const startDateTime = new Date(appointmentDate);
+    startDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+    
+    const endDateTime = new Date(startDateTime);
+    endDateTime.setMinutes(
+      startDateTime.getMinutes() + appointment.product.durationMinutes
+    );
+    
+    // Create event
+    const event = {
+      summary: `${appointment.product.name} - ${appointment.patient.fullName}`,
+      description: `
+Patient: ${appointment.patient.fullName}
+Phone: ${appointment.patient.phone}
+Email: ${appointment.patient.user.email}
+Service: ${appointment.product.name}
+Duration: ${appointment.product.durationMinutes} minutes
+
+Payment Status: ${appointment.paymentStatus}
+${appointment.balanceAmountMYR > 0 ? `Balance Due: RM ${appointment.balanceAmountMYR.toFixed(2)}` : ''}
+
+Medical Notes:
+${appointment.patient.medicalAllergies ? `Allergies: ${appointment.patient.medicalAllergies}` : ''}
+${appointment.patient.currentMedications ? `Medications: ${appointment.patient.currentMedications}` : ''}
+
+Admin Notes: ${appointment.adminNotes || 'None'}
+      `.trim(),
+      location: 'KSAA STEMCARE Clinic, [Your Address]',
+      start: {
+        dateTime: startDateTime.toISOString(),
+        timeZone: 'Asia/Kuala_Lumpur',
+      },
+      end: {
+        dateTime: endDateTime.toISOString(),
+        timeZone: 'Asia/Kuala_Lumpur',
+      },
+      attendees: [
+        {
+          email: appointment.patient.user.email,
+          displayName: appointment.patient.fullName,
+        }
+      ],
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'email', minutes: 24 * 60 }, // 24 hours before
+          { method: 'popup', minutes: 60 }, // 1 hour before
+        ],
+      },
+      colorId: '11', // Red for medical appointments
+    };
+    
+    const response = await calendar.events.insert({
+      calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
+      requestBody: event,
+      sendUpdates: 'all', // Send email to attendees
+    });
+    
+    // Save event ID to appointment
+    await db.appointment.update({
+      where: { id: appointment.id },
+      data: {
+        googleCalendarEventId: response.data.id,
+      }
+    });
+    
+    return response.data;
+    
+  } catch (error) {
+    console.error('Error creating calendar event:', error);
+    throw error;
+  }
+}
+```
+
+================================================================================
+5. UPDATE CALENDAR EVENT
+================================================================================
+
+File: /lib/calendar/update-event.ts
+
+```typescript
+export async function updateCalendarEvent(
+  appointment: Appointment,
+  changes: Partial<Appointment>
+) {
+  try {
+    if (!appointment.googleCalendarEventId) {
+      console.warn('No calendar event to update');
+      return;
+    }
+    
+    const accessToken = await getAdminAccessToken();
+    const calendar = getCalendarClient(accessToken);
+    
+    // Get existing event
+    const existingEvent = await calendar.events.get({
+      calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
+      eventId: appointment.googleCalendarEventId,
+    });
+    
+    // Prepare updates
+    const updates: any = {};
+    
+    // If date/time changed
+    if (changes.appointmentDate || changes.timeSlot) {
+      const newDate = changes.appointmentDate || appointment.appointmentDate;
+      const newTime = changes.timeSlot || appointment.timeSlot;
+      const [hours, minutes] = newTime.split(':');
+      
+      const startDateTime = new Date(newDate);
+      startDateTime.setHours(parseInt(hours), parseInt(minutes), 0);
+      
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setMinutes(
+        startDateTime.getMinutes() + appointment.product.durationMinutes
+      );
+      
+      updates.start = {
+        dateTime: startDateTime.toISOString(),
+        timeZone: 'Asia/Kuala_Lumpur',
+      };
+      updates.end = {
+        dateTime: endDateTime.toISOString(),
+        timeZone: 'Asia/Kuala_Lumpur',
+      };
+    }
+    
+    // If service changed
+    if (changes.productId) {
+      const newProduct = await db.product.findUnique({
+        where: { id: changes.productId }
+      });
+      updates.summary = `${newProduct.name} - ${appointment.patient.fullName}`;
+    }
+    
+    // If status changed
+    if (changes.status) {
+      updates.description = existingEvent.data.description + 
+        `\n\nStatus Updated: ${changes.status}`;
+    }
+    
+    // Update event
+    await calendar.events.patch({
+      calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
+      eventId: appointment.googleCalendarEventId,
+      requestBody: updates,
+      sendUpdates: 'all',
+    });
+    
+  } catch (error) {
+    console.error('Error updating calendar event:', error);
+    throw error;
+  }
+}
+```
+
+================================================================================
+6. DELETE CALENDAR EVENT
+================================================================================
+
+File: /lib/calendar/delete-event.ts
+
+```typescript
+export async function deleteCalendarEvent(eventId: string) {
+  try {
+    const accessToken = await getAdminAccessToken();
+    const calendar = getCalendarClient(accessToken);
+    
+    await calendar.events.delete({
+      calendarId: process.env.GOOGLE_CALENDAR_ID || 'primary',
+      eventId: eventId,
+      sendUpdates: 'all', // Notify attendees
+    });
+    
+  } catch (error) {
+    console.error('Error deleting calendar event:', error);
+    throw error;
+  }
+}
+```
+
+================================================================================
+7. INTEGRATION WITH APPOINTMENT FLOW
+================================================================================
+
+--- When Creating Appointment (After Payment Success) ---
+
+File: /app/api/webhooks/stripe/route.ts
+
+```typescript
+async function handlePaymentSuccess(paymentIntent) {
+  // ... existing payment handling code
+  
+  // Create Google Calendar event
+  try {
+    await createCalendarEvent(appointment);
+  } catch (error) {
+    console.error('Calendar event creation failed:', error);
+    // Don't fail the entire booking if calendar sync fails
+  }
+}
+```
+
+--- When Rescheduling Appointment ---
+
+File: /app/api/admin/appointments/reschedule/route.ts
+
+```typescript
+export async function POST(req: Request) {
+  const { appointmentId, newDate, newTimeSlot } = await req.json();
+  
+  const appointment = await db.appointment.update({
+    where: { id: appointmentId },
+    data: {
+      appointmentDate: newDate,
+      timeSlot: newTimeSlot,
+    },
+    include: { patient: true, product: true }
+  });
+  
+  // Update calendar event
+  if (appointment.googleCalendarEventId) {
+    await updateCalendarEvent(appointment, {
+      appointmentDate: newDate,
+      timeSlot: newTimeSlot
+    });
+  }
+  
+  return Response.json({ success: true });
+}
+```
+
+--- When Cancelling Appointment ---
+
+File: /app/api/appointments/cancel/route.ts
+
+```typescript
+export async function POST(req: Request) {
+  const { appointmentId } = await req.json();
+  
+  const appointment = await db.appointment.findUnique({
+    where: { id: appointmentId }
+  });
+  
+  // Delete calendar event
+  if (appointment.googleCalendarEventId) {
+    await deleteCalendarEvent(appointment.googleCalendarEventId);
+  }
+  
+  // Update appointment status
+  await db.appointment.update({
+    where: { id: appointmentId },
+    data: {
+      status: 'CANCELLED',
+      cancelledAt: new Date(),
+      googleCalendarEventId: null,
+    }
+  });
+  
+  return Response.json({ success: true });
+}
+```
+
+================================================================================
+8. ADMIN CALENDAR CONNECTION UI
+================================================================================
+
+File: /app/admin/settings/calendar/page.tsx
+
+```typescript
+'use client';
+
+import { signIn, signOut, useSession } from 'next-auth/react';
+
+export default function CalendarSettings() {
+  const { data: session } = useSession();
+  const [isConnected, setIsConnected] = useState(false);
+  
+  useEffect(() => {
+    checkConnection();
+  }, []);
+  
+  async function checkConnection() {
+    const res = await fetch('/api/admin/calendar/status');
+    const data = await res.json();
+    setIsConnected(data.connected);
+  }
+  
+  async function connectCalendar() {
+    await signIn('google', {
+      callbackUrl: '/admin/settings/calendar'
+    });
+  }
+  
+  async function disconnectCalendar() {
+    await fetch('/api/admin/calendar/disconnect', { method: 'POST' });
+    await signOut({ callbackUrl: '/admin/login' });
+  }
+  
+  return (
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">Google Calendar Integration</h1>
+      
+      <div className="bg-white rounded-lg shadow p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-semibold text-lg">Calendar Status</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              {isConnected 
+                ? '✅ Connected to Google Calendar' 
+                : '❌ Not connected'}
+            </p>
+          </div>
+          
+          {isConnected ? (
+            <button
+              onClick={disconnectCalendar}
+              className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Disconnect Calendar
+            </button>
+          ) : (
+            <button
+              onClick={connectCalendar}
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Connect Google Calendar
+            </button>
+          )}
+        </div>
+        
+        {isConnected && (
+          <div className="mt-6 p-4 bg-blue-50 rounded">
+            <h3 className="font-medium mb-2">Sync Features:</h3>
+            <ul className="space-y-2 text-sm">
+              <li>✓ New appointments automatically added to calendar</li>
+              <li>✓ Cancelled appointments removed from calendar</li>
+              <li>✓ Rescheduled appointments updated in calendar</li>
+              <li>✓ Patient details included in event description</li>
+              <li>✓ Email reminders sent to patients</li>
+            </ul>
+          </div>
+        )}
+        
+        <div className="mt-6">
+          <h3 className="font-medium mb-2">Instructions:</h3>
+          <ol className="list-decimal list-inside space-y-1 text-sm text-gray-600">
+            <li>Click "Connect Google Calendar"</li>
+            <li>Sign in with your Google account</li>
+            <li>Grant calendar access permissions</li>
+            <li>All future appointments will sync automatically</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  );
+}
+```
+
+================================================================================
+9. CALENDAR SYNC STATUS API
+================================================================================
+
+File: /app/api/admin/calendar/status/route.ts
+
+```typescript
+export async function GET() {
+  try {
+    const admin = await db.user.findFirst({
+      where: { role: 'SUPERADMIN' }
+    });
+    
+    const connected = !!admin?.googleAccessToken;
+    
+    return Response.json({ 
+      connected,
+      calendarId: process.env.GOOGLE_CALENDAR_ID
+    });
+    
+  } catch (error) {
+    return Response.json({ connected: false }, { status: 500 });
+  }
+}
+```
+
+================================================================================
+10. ERROR HANDLING & RETRY LOGIC
+================================================================================
+
+File: /lib/calendar/with-retry.ts
+
+```typescript
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries = 3,
+  delayMs = 1000
+): Promise<T> {
+  let lastError;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error;
+      console.error(`Attempt ${i + 1} failed:`, error);
+      
+      if (i < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, delayMs * (i + 1)));
+      }
+    }
+  }
+  
+  throw lastError;
+}
+
+// Usage
+export async function createCalendarEventWithRetry(appointment) {
+  return withRetry(() => createCalendarEvent(appointment));
+}
+```
+
+================================================================================
+11. BULK SYNC EXISTING APPOINTMENTS
+================================================================================
+
+File: /app/api/admin/calendar/bulk-sync/route.ts
+
+```typescript
+export async function POST() {
+  try {
+    // Get all confirmed appointments without calendar event
+    const appointments = await db.appointment.findMany({
+      where: {
+        status: 'CONFIRMED',
+        googleCalendarEventId: null,
+        appointmentDate: {
+          gte: new Date() // Only future appointments
+        }
+      },
+      include: {
+        patient: {
+          include: { user: true }
+        },
+        product: true
+      }
+    });
+    
+    let synced = 0;
+    let failed = 0;
+    
+    for (const appointment of appointments) {
+      try {
+        await createCalendarEvent(appointment);
+        synced++;
+      } catch (error) {
+        console.error(`Failed to sync appointment ${appointment.id}:`, error);
+        failed++;
+      }
+    }
+    
+    return Response.json({
+      success: true,
+      synced,
+      failed,
+      total: appointments.length
+    });
+    
+  } catch (error) {
+    return Response.json({ error: 'Bulk sync failed' }, { status: 500 });
+  }
+}
+```
+
+Button in Admin UI:
+```typescript
+<button onClick={bulkSyncCalendar}>
+  Sync All Existing Appointments
+</button>
+```
+
+================================================================================
+12. CALENDAR EVENT COLOR CODING
+================================================================================
+
+Use Google Calendar color IDs to categorize:
+
+```typescript
+const CALENDAR_COLORS = {
+  confirmed: '11', // Red
+  pending: '5',    // Yellow
+  completed: '10', // Green
+  cancelled: '8',  // Gray
+};
+
+// In createCalendarEvent
+const event = {
+  // ... other fields
+  colorId: CALENDAR_COLORS.confirmed,
+};
+```
+
+================================================================================
+13. TIMEZONE HANDLING
+================================================================================
+
+All appointments stored in UTC in database.
+Convert to Malaysian time (GMT+8) for calendar:
+
+```typescript
+import { formatInTimeZone } from 'date-fns-tz';
+
+const TIMEZONE = 'Asia/Kuala_Lumpur';
+
+// When creating event
+start: {
+  dateTime: startDateTime.toISOString(),
+  timeZone: TIMEZONE,
+}
+```
+
+================================================================================
+14. TESTING CALENDAR INTEGRATION
+================================================================================
+
+Test Cases:
+
+1. ✓ Create appointment → Calendar event created
+2. ✓ Cancel appointment → Calendar event deleted
+3. ✓ Reschedule appointment → Calendar event updated
+4. ✓ Change service → Event title updated
+5. ✓ Admin disconnects calendar → Events stop syncing
+6. ✓ API rate limit hit → Retry with backoff
+7. ✓ Invalid access token → Refresh token flow
+8. ✓ Bulk sync → All appointments synced
+
+================================================================================
+15. PACKAGE DEPENDENCIES
+================================================================================
+
+Add to package.json:
+
+```json
+{
+  "dependencies": {
+    "googleapis": "^128.0.0",
+    "next-auth": "^5.0.0",
+    "date-fns": "^3.0.0",
+    "date-fns-tz": "^2.0.0"
+  }
+}
+```
+
+Install:
+```bash
+npm install googleapis next-auth date-fns date-fns-tz
+```
+
+================================================================================
+16. PERMISSIONS REQUIRED
+================================================================================
+
+OAuth Scopes needed:
+- https://www.googleapis.com/auth/calendar (Full calendar access)
+- https://www.googleapis.com/auth/calendar.events (Manage events)
+
+In Google Cloud Console, verify these scopes are enabled.
+
+================================================================================
+17. CALENDAR SYNC INDICATOR
+================================================================================
+
+Show sync status in appointment cards:
+
+```typescript
+<div className="flex items-center gap-2">
+  {appointment.googleCalendarEventId ? (
+    <span className="text-green-600 text-sm flex items-center gap-1">
+      <svg>📅</svg>
+      Synced to Calendar
+    </span>
+  ) : (
+    <span className="text-gray-400 text-sm">
+      Not synced
+    </span>
+  )}
+</div>
+```
+
+================================================================================

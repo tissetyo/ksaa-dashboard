@@ -1,0 +1,784 @@
+================================================================================
+UI/UX DESIGN GUIDELINES
+================================================================================
+
+OBJECTIVE: Create a professional, clean, and trustworthy interface for both
+           patient portal and admin dashboard.
+
+================================================================================
+1. DESIGN PRINCIPLES
+================================================================================
+
+PATIENT PORTAL:
+- Friendly and approachable
+- Clear and simple
+- Mobile-first
+- Trust-building (medical/healthcare feel)
+
+ADMIN DASHBOARD:
+- Professional and efficient
+- Data-dense but organized
+- Quick actions easily accessible
+- Desktop-optimized (with mobile support)
+
+BOTH:
+- Consistent branding
+- Fast and responsive
+- Accessible (WCAG 2.1 AA)
+- Error-preventive
+
+================================================================================
+2. COLOR PALETTE
+================================================================================
+
+--- PRIMARY COLORS (Patient Portal) ---
+
+Primary Blue: #4A90E2
+- Used for: Primary buttons, links, active states
+- RGB: 74, 144, 226
+- Conveys: Trust, medical professionalism
+
+Secondary Mint: #50C878
+- Used for: Success states, health indicators, secondary buttons
+- RGB: 80, 200, 120
+- Conveys: Health, wellness, stem cell therapy
+
+--- ACCENT COLORS ---
+
+White: #FFFFFF
+Background Light: #F8F9FA
+Text Dark: #1F2937
+Text Gray: #6B7280
+Border Gray: #E5E7EB
+
+--- ADMIN DASHBOARD COLORS ---
+
+Primary Navy: #1E3A8A
+- Used for: Sidebar, headers, primary actions
+
+Secondary Gray: #6B7280
+- Used for: Secondary text, borders
+
+Status Colors:
+- Success: #10B981 (Green)
+- Warning: #F59E0B (Yellow)
+- Danger: #EF4444 (Red)
+- Info: #3B82F6 (Blue)
+
+--- COLOR USAGE EXAMPLES ---
+
+Buttons:
+Primary: bg-blue-600 hover:bg-blue-700
+Secondary: bg-gray-200 hover:bg-gray-300
+Success: bg-green-600 hover:bg-green-700
+Danger: bg-red-600 hover:bg-red-700
+
+Text:
+Heading: text-gray-900
+Body: text-gray-700
+Muted: text-gray-500
+
+Backgrounds:
+Page: bg-gray-50
+Card: bg-white
+Hover: hover:bg-gray-100
+
+================================================================================
+3. TYPOGRAPHY
+================================================================================
+
+Font Family: Inter (Google Fonts)
+Fallback: system-ui, -apple-system, sans-serif
+
+Import in layout:
+```typescript
+import { Inter } from 'next/font/google';
+
+const inter = Inter({ subsets: ['latin'] });
+
+export default function RootLayout({ children }) {
+  return (
+    <html className={inter.className}>
+      {children}
+    </html>
+  );
+}
+```
+
+--- Font Sizes (Tailwind) ---
+
+Headings:
+- H1: text-3xl (30px) font-bold
+- H2: text-2xl (24px) font-semibold
+- H3: text-xl (20px) font-semibold
+- H4: text-lg (18px) font-medium
+
+Body:
+- Large: text-lg (18px)
+- Normal: text-base (16px)
+- Small: text-sm (14px)
+- Tiny: text-xs (12px)
+
+Line Heights:
+- Headings: leading-tight
+- Body: leading-normal (1.5)
+- Relaxed: leading-relaxed (1.625)
+
+--- Example Usage ---
+
+```tsx
+<h1 className="text-3xl font-bold text-gray-900 mb-4">
+  Welcome to KSAA STEMCARE
+</h1>
+
+<p className="text-base text-gray-700 leading-normal">
+  Book your appointment today and experience our premium services.
+</p>
+```
+
+================================================================================
+4. SPACING & LAYOUT
+================================================================================
+
+--- Spacing Scale (Tailwind) ---
+
+Extra Small: space-x-1, gap-1 (4px)
+Small: space-x-2, gap-2 (8px)
+Medium: space-x-4, gap-4 (16px)
+Large: space-x-6, gap-6 (24px)
+Extra Large: space-x-8, gap-8 (32px)
+
+--- Container Widths ---
+
+Patient Portal:
+- Max width: max-w-7xl (1280px)
+- Content width: max-w-4xl (896px)
+- Form width: max-w-2xl (672px)
+
+Admin Dashboard:
+- Full width with sidebar
+- Content area: flex-1 with padding
+
+--- Padding Standards ---
+
+Cards: p-6 (24px)
+Sections: py-8 (32px vertical)
+Page: p-4 md:p-6 lg:p-8
+
+--- Grid Layouts ---
+
+2 Columns (Tablet): grid grid-cols-2 gap-6
+3 Columns (Desktop): grid md:grid-cols-2 lg:grid-cols-3 gap-6
+4 Columns (Wide): grid md:grid-cols-2 lg:grid-cols-4 gap-4
+
+================================================================================
+5. COMPONENTS LIBRARY (shadcn/ui)
+================================================================================
+
+Install shadcn/ui components:
+```bash
+npx shadcn-ui@latest init
+npx shadcn-ui@latest add button
+npx shadcn-ui@latest add card
+npx shadcn-ui@latest add input
+npx shadcn-ui@latest add label
+npx shadcn-ui@latest add select
+npx shadcn-ui@latest add dialog
+npx shadcn-ui@latest add dropdown-menu
+npx shadcn-ui@latest add table
+npx shadcn-ui@latest add badge
+npx shadcn-ui@latest add calendar
+npx shadcn-ui@latest add toast
+```
+
+--- Button Component ---
+
+```tsx
+import { Button } from '@/components/ui/button';
+
+// Primary
+<Button>Book Appointment</Button>
+
+// Secondary
+<Button variant="secondary">Cancel</Button>
+
+// Outline
+<Button variant="outline">Learn More</Button>
+
+// Destructive
+<Button variant="destructive">Delete</Button>
+
+// With icon
+<Button>
+  <CalendarIcon className="mr-2 h-4 w-4" />
+  Book Now
+</Button>
+
+// Loading state
+<Button disabled>
+  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+  Processing...
+</Button>
+```
+
+--- Card Component ---
+
+```tsx
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+
+<Card>
+  <CardHeader>
+    <CardTitle>Upcoming Appointment</CardTitle>
+  </CardHeader>
+  <CardContent>
+    <p>Your appointment details here...</p>
+  </CardContent>
+</Card>
+```
+
+--- Form Components ---
+
+```tsx
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+
+<div className="space-y-2">
+  <Label htmlFor="email">Email</Label>
+  <Input 
+    id="email" 
+    type="email" 
+    placeholder="your@email.com"
+  />
+</div>
+```
+
+--- Badge Component ---
+
+```tsx
+import { Badge } from '@/components/ui/badge';
+
+<Badge variant="default">Confirmed</Badge>
+<Badge variant="secondary">Pending</Badge>
+<Badge variant="destructive">Cancelled</Badge>
+<Badge variant="outline">Draft</Badge>
+```
+
+================================================================================
+6. ICONS
+================================================================================
+
+Use Lucide React icons:
+```bash
+npm install lucide-react
+```
+
+Common Icons:
+```tsx
+import { 
+  Calendar, 
+  User, 
+  Mail, 
+  Phone,
+  Clock,
+  CreditCard,
+  CheckCircle,
+  XCircle,
+  AlertCircle,
+  ArrowRight,
+  ChevronDown,
+  Menu,
+  X,
+  Home,
+  Settings
+} from 'lucide-react';
+
+// Usage
+<Calendar className="h-5 w-5 text-gray-500" />
+```
+
+Icon Sizes:
+- Small: h-4 w-4 (16px)
+- Medium: h-5 w-5 (20px)
+- Large: h-6 w-6 (24px)
+- Extra Large: h-8 w-8 (32px)
+
+================================================================================
+7. RESPONSIVE DESIGN BREAKPOINTS
+================================================================================
+
+Tailwind Breakpoints:
+- sm: 640px (Mobile landscape)
+- md: 768px (Tablet)
+- lg: 1024px (Desktop)
+- xl: 1280px (Large desktop)
+- 2xl: 1536px (Extra large)
+
+--- Mobile-First Approach ---
+
+```tsx
+<div className="
+  flex flex-col       // Mobile: Stack vertically
+  md:flex-row         // Tablet+: Side by side
+  gap-4               // Mobile: 16px gap
+  md:gap-6            // Tablet+: 24px gap
+">
+  <div className="w-full md:w-1/2">Content 1</div>
+  <div className="w-full md:w-1/2">Content 2</div>
+</div>
+```
+
+--- Common Responsive Patterns ---
+
+Hide on mobile:
+```tsx
+<div className="hidden md:block">Desktop only</div>
+```
+
+Show only on mobile:
+```tsx
+<div className="md:hidden">Mobile only</div>
+```
+
+Responsive padding:
+```tsx
+<div className="p-4 md:p-6 lg:p-8">Content</div>
+```
+
+Responsive grid:
+```tsx
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+```
+
+================================================================================
+8. PATIENT PORTAL COMPONENTS
+================================================================================
+
+--- Navigation Header ---
+
+```tsx
+export function PatientHeader() {
+  return (
+    <header className="bg-white border-b border-gray-200">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          <div className="flex items-center">
+            <h1 className="text-xl font-bold text-blue-600">
+              KSAA STEMCARE
+            </h1>
+          </div>
+          
+          <nav className="hidden md:flex space-x-8">
+            <a href="/patient/dashboard" className="text-gray-700 hover:text-blue-600">
+              Dashboard
+            </a>
+            <a href="/patient/services" className="text-gray-700 hover:text-blue-600">
+              Services
+            </a>
+            <a href="/patient/appointments" className="text-gray-700 hover:text-blue-600">
+              Appointments
+            </a>
+          </nav>
+          
+          <UserMenu />
+        </div>
+      </div>
+    </header>
+  );
+}
+```
+
+--- Service Card ---
+
+```tsx
+export function ServiceCard({ product }) {
+  return (
+    <Card className="hover:shadow-lg transition-shadow">
+      <CardHeader>
+        <CardTitle className="text-blue-600">{product.name}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-gray-600 text-sm mb-4">
+          {product.description}
+        </p>
+        
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center text-sm text-gray-500">
+            <Clock className="h-4 w-4 mr-2" />
+            {product.durationMinutes} minutes
+          </div>
+          <div className="flex items-center text-sm font-semibold text-gray-900">
+            <CreditCard className="h-4 w-4 mr-2" />
+            RM {product.priceMYR.toFixed(2)}
+          </div>
+        </div>
+        
+        <Button className="w-full">
+          Book Appointment
+          <ArrowRight className="ml-2 h-4 w-4" />
+        </Button>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+--- Appointment Card ---
+
+```tsx
+export function AppointmentCard({ appointment }) {
+  const statusColors = {
+    CONFIRMED: 'bg-green-100 text-green-800',
+    PENDING: 'bg-yellow-100 text-yellow-800',
+    CANCELLED: 'bg-red-100 text-red-800',
+  };
+  
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <div>
+            <h3 className="font-semibold text-lg">
+              {appointment.product.name}
+            </h3>
+            <p className="text-sm text-gray-500 mt-1">
+              {formatDate(appointment.appointmentDate)}
+            </p>
+          </div>
+          <Badge className={statusColors[appointment.status]}>
+            {appointment.status}
+          </Badge>
+        </div>
+        
+        <div className="space-y-2">
+          <div className="flex items-center text-sm">
+            <Clock className="h-4 w-4 mr-2 text-gray-400" />
+            {appointment.timeSlot}
+          </div>
+          <div className="flex items-center text-sm">
+            <CreditCard className="h-4 w-4 mr-2 text-gray-400" />
+            RM {appointment.paidAmountMYR.toFixed(2)} paid
+          </div>
+        </div>
+        
+        <div className="flex gap-2 mt-4">
+          <Button variant="outline" size="sm">View Details</Button>
+          <Button variant="destructive" size="sm">Cancel</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+================================================================================
+9. ADMIN DASHBOARD COMPONENTS
+================================================================================
+
+--- Sidebar Navigation ---
+
+```tsx
+export function AdminSidebar() {
+  const navigation = [
+    { name: 'Dashboard', icon: Home, href: '/admin/dashboard' },
+    { name: 'Appointments', icon: Calendar, href: '/admin/appointments' },
+    { name: 'Patients', icon: User, href: '/admin/patients' },
+    { name: 'Products', icon: Package, href: '/admin/products' },
+    { name: 'Schedule', icon: Clock, href: '/admin/schedule' },
+    { name: 'Payments', icon: CreditCard, href: '/admin/payments' },
+    { name: 'Settings', icon: Settings, href: '/admin/settings' },
+  ];
+  
+  return (
+    <div className="w-64 bg-navy-800 h-screen flex flex-col">
+      <div className="p-6">
+        <h1 className="text-white text-xl font-bold">KSAA Admin</h1>
+      </div>
+      
+      <nav className="flex-1 px-4">
+        {navigation.map((item) => (
+          <a
+            key={item.name}
+            href={item.href}
+            className="flex items-center px-4 py-3 text-gray-300 
+                     hover:bg-navy-700 hover:text-white rounded-lg mb-1"
+          >
+            <item.icon className="h-5 w-5 mr-3" />
+            {item.name}
+          </a>
+        ))}
+      </nav>
+    </div>
+  );
+}
+```
+
+--- Stats Card ---
+
+```tsx
+export function StatsCard({ title, value, icon: Icon, trend }) {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-600">{title}</p>
+            <p className="text-3xl font-bold mt-2">{value}</p>
+            {trend && (
+              <p className="text-sm text-green-600 mt-1">{trend}</p>
+            )}
+          </div>
+          <div className="bg-blue-100 p-3 rounded-full">
+            <Icon className="h-6 w-6 text-blue-600" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+--- Data Table ---
+
+```tsx
+import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
+
+export function AppointmentsTable({ appointments }) {
+  return (
+    <Table>
+      <TableHeader>
+        <TableRow>
+          <TableHead>Date & Time</TableHead>
+          <TableHead>Patient</TableHead>
+          <TableHead>Service</TableHead>
+          <TableHead>Payment</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {appointments.map((appointment) => (
+          <TableRow key={appointment.id}>
+            <TableCell>
+              {formatDate(appointment.appointmentDate)}<br />
+              <span className="text-sm text-gray-500">
+                {appointment.timeSlot}
+              </span>
+            </TableCell>
+            <TableCell>
+              {appointment.patient.fullName}
+            </TableCell>
+            <TableCell>
+              {appointment.product.name}
+            </TableCell>
+            <TableCell>
+              RM {appointment.paidAmountMYR.toFixed(2)}
+            </TableCell>
+            <TableCell>
+              <Badge>{appointment.status}</Badge>
+            </TableCell>
+            <TableCell>
+              <Button variant="ghost" size="sm">View</Button>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+}
+```
+
+================================================================================
+10. FORM DESIGN
+================================================================================
+
+--- Multi-Step Form Progress ---
+
+```tsx
+export function FormProgress({ currentStep, totalSteps }) {
+  return (
+    <div className="flex justify-between mb-8">
+      {Array.from({ length: totalSteps }, (_, i) => (
+        <div key={i} className="flex items-center flex-1">
+          <div className={`
+            w-10 h-10 rounded-full flex items-center justify-center
+            ${i < currentStep ? 'bg-blue-600 text-white' : 
+              i === currentStep ? 'bg-blue-600 text-white' :
+              'bg-gray-200 text-gray-600'}
+          `}>
+            {i + 1}
+          </div>
+          {i < totalSteps - 1 && (
+            <div className={`flex-1 h-1 mx-2 ${
+              i < currentStep ? 'bg-blue-600' : 'bg-gray-200'
+            }`} />
+          )}
+        </div>
+      ))}
+    </div>
+  );
+}
+```
+
+--- Form Layout ---
+
+```tsx
+export function BookingForm() {
+  return (
+    <form className="max-w-2xl mx-auto space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <Label htmlFor="firstName">First Name *</Label>
+          <Input id="firstName" required />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="lastName">Last Name *</Label>
+          <Input id="lastName" required />
+        </div>
+      </div>
+      
+      <div className="space-y-2">
+        <Label htmlFor="email">Email Address *</Label>
+        <Input id="email" type="email" required />
+      </div>
+      
+      <div className="flex gap-4 justify-end">
+        <Button type="button" variant="outline">Back</Button>
+        <Button type="submit">Continue</Button>
+      </div>
+    </form>
+  );
+}
+```
+
+================================================================================
+11. LOADING & ERROR STATES
+================================================================================
+
+--- Loading Skeleton ---
+
+```tsx
+export function AppointmentSkeleton() {
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="h-8 bg-gray-200 rounded w-full"></div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+```
+
+--- Error State ---
+
+```tsx
+export function ErrorState({ message, retry }) {
+  return (
+    <div className="text-center py-12">
+      <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        Something went wrong
+      </h3>
+      <p className="text-gray-600 mb-4">{message}</p>
+      {retry && (
+        <Button onClick={retry}>Try Again</Button>
+      )}
+    </div>
+  );
+}
+```
+
+--- Empty State ---
+
+```tsx
+export function EmptyState({ title, description, action }) {
+  return (
+    <div className="text-center py-12">
+      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+      <h3 className="text-lg font-semibold text-gray-900 mb-2">
+        {title}
+      </h3>
+      <p className="text-gray-600 mb-4">{description}</p>
+      {action && <Button onClick={action.onClick}>{action.label}</Button>}
+    </div>
+  );
+}
+```
+
+================================================================================
+12. TOAST NOTIFICATIONS
+================================================================================
+
+```tsx
+import { useToast } from '@/components/ui/use-toast';
+
+export function BookingFlow() {
+  const { toast } = useToast();
+  
+  const handleBooking = async () => {
+    try {
+      await bookAppointment();
+      toast({
+        title: "Appointment Booked!",
+        description: "You will receive a confirmation email shortly.",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Booking Failed",
+        description: "Please try again or contact support.",
+      });
+    }
+  };
+}
+```
+
+================================================================================
+13. ACCESSIBILITY GUIDELINES
+================================================================================
+
+- All interactive elements must be keyboard accessible
+- Forms must have proper labels
+- Images must have alt text
+- Color contrast ratio minimum 4.5:1
+- Focus indicators must be visible
+- ARIA labels for screen readers
+
+Example:
+```tsx
+<button 
+  aria-label="Book appointment for STEMCARE Facial"
+  className="focus:ring-2 focus:ring-blue-500 focus:outline-none"
+>
+  Book Now
+</button>
+```
+
+================================================================================
+14. ANIMATION & TRANSITIONS
+================================================================================
+
+Use Tailwind transition utilities:
+
+```tsx
+<button className="
+  bg-blue-600 text-white px-4 py-2 rounded
+  transition-colors duration-200
+  hover:bg-blue-700
+">
+  Click me
+</button>
+
+<div className="
+  transform transition-transform duration-300
+  hover:scale-105
+">
+  Card content
+</div>
+```
+
+================================================================================
