@@ -260,3 +260,69 @@ export async function createGoogleCalendarEvent(appointmentId: string) {
         return { success: false, error: `Failed to create Google Calendar event: ${detail}` };
     }
 }
+
+// Create an appointment on behalf of a patient (Admin functionality)
+export async function createAppointmentFromAdmin(data: {
+    patientId: string;
+    productId: string;
+    appointmentDate: string;
+    timeSlot: string;
+    consultationType?: 'GOOGLE_MEET' | 'WHATSAPP_CALL' | 'IN_PERSON' | 'HOME_VISIT';
+    adminNotes?: string;
+}) {
+    await isAdminOrStaff();
+
+    try {
+        const product = await db.product.findUnique({ where: { id: data.productId } });
+        if (!product) throw new Error('Product not found');
+
+        const totalAmount = product.priceMYR || 0;
+
+        const appointment = await db.appointment.create({
+            data: {
+                patientId: data.patientId,
+                productId: data.productId,
+                appointmentDate: new Date(data.appointmentDate.split('T')[0] + 'T12:00:00'),
+                timeSlot: data.timeSlot,
+                status: 'PENDING',
+                paymentStatus: 'UNPAID',
+                totalAmountMYR: totalAmount,
+                paidAmountMYR: 0,
+                balanceAmountMYR: totalAmount,
+                consultationType: data.consultationType,
+                adminNotes: data.adminNotes,
+            },
+        });
+
+        // Update Daily Quota
+        const bookingDate = new Date(data.appointmentDate);
+        bookingDate.setHours(0, 0, 0, 0);
+
+        await db.dailyQuota.upsert({
+            where: {
+                productId_bookingDate: {
+                    productId: data.productId,
+                    bookingDate: bookingDate,
+                },
+            },
+            update: {
+                bookedCount: { increment: 1 },
+            },
+            create: {
+                productId: data.productId,
+                bookingDate: bookingDate,
+                bookedCount: 1,
+                maxQuota: product.quotaPerDay,
+            },
+        });
+
+        revalidatePath('/admin/appointments');
+        revalidatePath('/admin/schedule');
+        revalidatePath('/dashboard');
+
+        return { success: true, appointmentId: appointment.id };
+    } catch (error: any) {
+        console.error('Failed to create appointment from admin:', error);
+        return { success: false, error: error.message || 'Failed to create appointment' };
+    }
+}

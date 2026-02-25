@@ -4,9 +4,16 @@ import { useAdminData } from '@/components/providers/AdminDataProvider';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { AppointmentTable } from '@/components/admin/AppointmentTable';
+import { Plus, Calendar, List } from 'lucide-react';
+import { useState } from 'react';
+import { CreateAppointmentModal } from '@/components/admin/CreateAppointmentModal';
+import { AdminCalendarView } from '@/components/admin/AdminCalendarView';
+import { Button } from '@/components/ui/button';
 
-export function AdminAppointmentsClient({ staffMembers = [], products = [] }: { staffMembers?: any[]; products?: any[] }) {
+export function AdminAppointmentsClient({ staffMembers = [], products = [], patients = [] }: { staffMembers?: any[]; products?: any[]; patients?: any[] }) {
     const { data, isLoading } = useAdminData();
+    const [view, setView] = useState<'list' | 'calendar'>('list');
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
     if (isLoading || !data) {
         return <AppointmentsSkeleton />;
@@ -30,35 +37,56 @@ export function AdminAppointmentsClient({ staffMembers = [], products = [] }: { 
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center mb-6">
                 <h1 className="text-2xl font-bold text-gray-900">Appointments</h1>
+                <div className="flex items-center gap-3">
+                    <Button variant="outline" size="icon" onClick={() => setView(view === 'list' ? 'calendar' : 'list')}>
+                        {view === 'list' ? <Calendar className="h-4 w-4" /> : <List className="h-4 w-4" />}
+                    </Button>
+                    <Button onClick={() => setIsCreateModalOpen(true)} className="bg-[#008E7E] hover:bg-[#0a4f47] text-white">
+                        <Plus className="h-4 w-4 mr-2" /> Create Appointment
+                    </Button>
+                </div>
             </div>
 
-            <Tabs defaultValue="pending" className="w-full">
-                <TabsList>
-                    <TabsTrigger value="pending">
-                        Pending ({pendingAppointments.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="upcoming">
-                        Upcoming ({upcomingAppointments.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="history">
-                        History ({historicalAppointments.length})
-                    </TabsTrigger>
-                </TabsList>
+            {view === 'list' ? (
+                <Tabs defaultValue="pending" className="w-full mt-6">
+                    <TabsList>
+                        <TabsTrigger value="pending">
+                            Pending ({pendingAppointments.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="upcoming">
+                            Upcoming ({upcomingAppointments.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="history">
+                            History ({historicalAppointments.length})
+                        </TabsTrigger>
+                    </TabsList>
 
-                <TabsContent value="pending" className="mt-4">
-                    <AppointmentTable appointments={pendingAppointments} staffMembers={staffMembers} products={products} />
-                </TabsContent>
+                    <TabsContent value="pending" className="mt-4">
+                        <AppointmentTable appointments={pendingAppointments} staffMembers={staffMembers} products={products} />
+                    </TabsContent>
 
-                <TabsContent value="upcoming" className="mt-4">
-                    <AppointmentTable appointments={upcomingAppointments} staffMembers={staffMembers} products={products} />
-                </TabsContent>
+                    <TabsContent value="upcoming" className="mt-4">
+                        <AppointmentTable appointments={upcomingAppointments} staffMembers={staffMembers} products={products} />
+                    </TabsContent>
 
-                <TabsContent value="history" className="mt-4">
-                    <AppointmentTable appointments={historicalAppointments} staffMembers={staffMembers} products={products} />
-                </TabsContent>
-            </Tabs>
+                    <TabsContent value="history" className="mt-4">
+                        <AppointmentTable appointments={historicalAppointments} staffMembers={staffMembers} products={products} />
+                    </TabsContent>
+                </Tabs>
+            ) : (
+                <div className="mt-6">
+                    <AdminCalendarView appointments={appointments} />
+                </div>
+            )}
+
+            <CreateAppointmentModal
+                open={isCreateModalOpen}
+                onOpenChange={setIsCreateModalOpen}
+                patients={patients}
+                products={products}
+            />
         </div>
     );
 }

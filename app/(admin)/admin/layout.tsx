@@ -1,6 +1,8 @@
 import { AdminSidebar } from '@/components/admin/AdminSidebar';
 import { AdminDataProvider } from '@/components/providers/AdminDataProvider';
 
+import { GoogleConnectionWarning } from '@/components/admin/GoogleConnectionWarning';
+
 export default function AdminLayout({
     children,
 }: {
@@ -17,6 +19,7 @@ export default function AdminLayout({
                             {/* Admin profile / notices can go here */}
                         </div>
                     </header>
+                    <GoogleConnectionWarning />
                     <main className="flex-1 overflow-y-auto p-8">
                         {children}
                     </main>

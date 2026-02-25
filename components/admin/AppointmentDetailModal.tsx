@@ -11,6 +11,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { DialogFooter } from '@/components/ui/dialog';
 import {
     User,
     Phone,
@@ -30,6 +31,8 @@ import {
     Check,
     CalendarPlus,
     Loader2,
+    ExternalLink,
+    History,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createGoogleCalendarEvent } from '@/lib/actions/admin-appointment';
@@ -42,6 +45,9 @@ interface AppointmentDetailModalProps {
     onOpenChange: (open: boolean) => void;
     appointment: any;
     onRefresh?: () => void;
+    onConfirm?: (appointment: any) => void;
+    onComplete?: (appointment: any) => void;
+    onHistory?: (patientId: string, patientName: string) => void;
 }
 
 export function AppointmentDetailModal({
@@ -49,6 +55,9 @@ export function AppointmentDetailModal({
     onOpenChange,
     appointment,
     onRefresh,
+    onConfirm,
+    onComplete,
+    onHistory,
 }: AppointmentDetailModalProps) {
     const [isCreatingEvent, setIsCreatingEvent] = useState(false);
     const [meetLink, setMeetLink] = useState<string | null>(null);
@@ -292,8 +301,8 @@ export function AppointmentDetailModal({
                                 ) : (
                                     <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 space-y-3">
                                         <p className="text-sm text-amber-800">You need to connect your Google account to create calendar events and meeting links.</p>
-                                        <Button asChild size="sm" variant="outline" className="border-amber-300 text-amber-900 hover:bg-amber-100">
-                                            <Link href="/admin/settings">Connect Google Account</Link>
+                                        <Button asChild size="sm" className="bg-[#008E7E] hover:bg-[#0a4f47] text-white">
+                                            <Link href="/admin/settings">Connect Email</Link>
                                         </Button>
                                     </div>
                                 )}
@@ -389,6 +398,44 @@ export function AppointmentDetailModal({
                         </div>
                     </div>
                 </div>
+
+                <DialogFooter className="flex flex-col sm:flex-row sm:justify-between items-center bg-gray-50 -mx-6 -mb-6 px-6 py-4 mt-6 border-t gap-3 sm:gap-0">
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        {onHistory && (
+                            <Button variant="outline" size="sm" onClick={() => onHistory(patient.id, patient.fullName)} className="flex-1 sm:flex-none">
+                                <History className="h-4 w-4 mr-2" />
+                                History
+                            </Button>
+                        )}
+                        {appointment.consultationPhone && (
+                            <Button variant="outline" size="sm" asChild className="text-green-600 hover:text-green-700 hover:bg-green-50 flex-1 sm:flex-none">
+                                <a href={`https://wa.me/${appointment.consultationPhone.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer">
+                                    <MessageCircle className="h-4 w-4 mr-2" /> WhatsApp
+                                </a>
+                            </Button>
+                        )}
+                        {appointment.consultationAddress && appointment.consultationType === 'HOME_VISIT' && (
+                            <Button variant="outline" size="sm" asChild className="flex-1 sm:flex-none">
+                                <a href={`https://maps.google.com/?q=${encodeURIComponent(appointment.consultationAddress)}`} target="_blank" rel="noopener noreferrer">
+                                    <MapPin className="h-4 w-4 mr-2" /> Maps
+                                </a>
+                            </Button>
+                        )}
+                    </div>
+
+                    <div className="flex gap-2 w-full sm:w-auto">
+                        {appointment.status === 'PENDING' && onConfirm && (
+                            <Button className="bg-[#008E7E] hover:bg-[#0a4f47] w-full sm:w-auto" onClick={() => onConfirm(appointment)}>
+                                Confirm Slot
+                            </Button>
+                        )}
+                        {(appointment.status === 'PENDING' || appointment.status === 'CONFIRMED') && onComplete && (
+                            <Button className="bg-green-600 hover:bg-green-700 w-full sm:w-auto" onClick={() => onComplete(appointment)}>
+                                Mark Completed
+                            </Button>
+                        )}
+                    </div>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
     );

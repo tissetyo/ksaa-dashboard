@@ -13,7 +13,7 @@ export default async function AdminAppointmentsPage() {
     });
     if (!user || !['SUPERADMIN', 'STAFF'].includes(user.role)) redirect('/admin-login');
 
-    const [staffMembers, products] = await Promise.all([
+    const [staffMembers, products, patients] = await Promise.all([
         db.staff.findMany({
             where: { isActive: true },
             select: { id: true, fullName: true, staffCode: true },
@@ -21,11 +21,22 @@ export default async function AdminAppointmentsPage() {
         }),
         db.product.findMany({
             where: { isActive: true },
-            select: { id: true, name: true },
+            select: { id: true, name: true, durationMinutes: true },
             orderBy: { name: 'asc' }
+        }),
+        db.patient.findMany({
+            select: {
+                id: true,
+                fullName: true,
+                phone: true,
+                user: { select: { email: true } }
+            },
+            orderBy: { fullName: 'asc' },
+            // Limit to 100 for perf, in a real app would use async search
+            take: 100
         }),
     ]);
 
-    return <AdminAppointmentsClient staffMembers={staffMembers} products={products} />;
+    return <AdminAppointmentsClient staffMembers={staffMembers} products={products} patients={patients} />;
 }
 

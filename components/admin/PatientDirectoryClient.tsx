@@ -4,8 +4,10 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { Search, User, Phone, Calendar, ChevronRight } from 'lucide-react';
+import { Search, User, Phone, Calendar, ChevronRight, Plus } from 'lucide-react';
 import { format } from 'date-fns';
+import { CreatePatientModal } from '@/components/admin/CreatePatientModal';
+import { Button } from '@/components/ui/button';
 
 interface PatientRow {
     id: string;
@@ -18,6 +20,7 @@ interface PatientRow {
 
 export function PatientDirectoryClient({ patients }: { patients: PatientRow[] }) {
     const [search, setSearch] = useState('');
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const router = useRouter();
 
     const filtered = patients.filter(p => {
@@ -31,14 +34,23 @@ export function PatientDirectoryClient({ patients }: { patients: PatientRow[] })
 
     return (
         <div className="space-y-4">
-            <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                <Input
-                    placeholder="Search by name, phone, or email..."
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="pl-9"
-                />
+            <div className="flex flex-col sm:flex-row gap-3">
+                <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Input
+                        placeholder="Search by name, phone, or email..."
+                        value={search}
+                        onChange={e => setSearch(e.target.value)}
+                        className="pl-9"
+                    />
+                </div>
+                <Button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="bg-[#008E7E] hover:bg-[#0a4f47] text-white whitespace-nowrap"
+                >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Patient
+                </Button>
             </div>
 
             <div className="text-xs text-gray-400">{filtered.length} patient{filtered.length !== 1 ? 's' : ''}</div>
@@ -80,6 +92,12 @@ export function PatientDirectoryClient({ patients }: { patients: PatientRow[] })
                     ))
                 )}
             </div>
+
+            <CreatePatientModal
+                open={isCreateModalOpen}
+                onOpenChange={setIsCreateModalOpen}
+                onSuccess={() => router.refresh()}
+            />
         </div>
     );
 }

@@ -159,7 +159,7 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                                                     <MoreHorizontal className="h-4 w-4" />
                                                 </Button>
                                             </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
+                                            <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
                                                 <DropdownMenuLabel>Actions</DropdownMenuLabel>
                                                 <DropdownMenuItem onClick={() => { setSelectedAppointment(apt); setDetailModalOpen(true); }}>
                                                     <Eye className="mr-2 h-4 w-4 text-[#008E7E]" />
@@ -249,12 +249,25 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                 patientName={selectedPatientName}
             />
 
-            {/* Appointment Detail Modal */}
             <AppointmentDetailModal
                 open={detailModalOpen}
                 onOpenChange={setDetailModalOpen}
                 appointment={selectedAppointment}
                 onRefresh={handleSuccess}
+                onConfirm={(apt) => {
+                    setDetailModalOpen(false);
+                    handleConfirmClick(apt);
+                }}
+                onComplete={(apt) => {
+                    setDetailModalOpen(false);
+                    handleCompleteClick(apt);
+                }}
+                onHistory={(patientId, patientName) => {
+                    setDetailModalOpen(false);
+                    setSelectedPatientId(patientId);
+                    setSelectedPatientName(patientName);
+                    setHistoryModalOpen(true);
+                }}
             />
         </>
     );

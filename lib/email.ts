@@ -128,3 +128,46 @@ export async function sendReferralServiceBookingNotification(data: {
         console.error('[EMAIL_ERROR] Failed to send referral service booking notification:', error);
     }
 }
+
+/**
+ * Send welcome email to a patient created by an admin
+ */
+export async function sendPatientWelcomeEmail(data: {
+    patientName: string;
+    email: string;
+    temporaryPassword?: string;
+}) {
+    try {
+        await resend.emails.send({
+            from: FROM_EMAIL,
+            to: data.email,
+            subject: 'Welcome to KSAA Clinic - Your Account is Ready',
+            html: `
+                <div style="font-family: Arial, sans-serif; max-w: 600px; margin: 0 auto;">
+                    <h2 style="color: #008E7E;">Welcome to KSAA Clinic!</h2>
+                    <p>Hi ${data.patientName},</p>
+                    <p>An account has been created for you at KSAA Clinic to manage your appointments and health records.</p>
+                    
+                    <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                        <h3 style="margin-top: 0; color: #334155;">Your Login Details</h3>
+                        <p><strong>Email:</strong> ${data.email}</p>
+                        ${data.temporaryPassword ? `<p><strong>Temporary Password:</strong> ${data.temporaryPassword}</p>` : ''}
+                    </div>
+                    
+                    <p>Please log in to our portal to complete your profile and view your upcoming appointments.</p>
+                    
+                    <a href="${process.env.NEXTAUTH_URL || 'https://ksaa-dashboard.vercel.app'}/login" 
+                       style="display: inline-block; background-color: #008E7E; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold; margin-top: 10px;">
+                        Access Portal
+                    </a>
+                    
+                    ${data.temporaryPassword ? `<p style="font-size: 12px; color: #64748b; margin-top: 30px;">For your security, we recommend changing your password after you log in.</p>` : ''}
+                    <p style="color: #64748b;">If you prefer, you can also log in securely using your Google account if it uses the same email address.</p>
+                </div>
+            `,
+        });
+        console.log('[EMAIL] Patient welcome email sent');
+    } catch (error) {
+        console.error('[EMAIL_ERROR] Failed to send patient welcome email:', error);
+    }
+}
