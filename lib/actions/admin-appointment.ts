@@ -256,8 +256,9 @@ export async function createGoogleCalendarEvent(appointmentId: string) {
         revalidatePath(`/appointments/${appointmentId}`);
 
         return { success: true, googleMeetLink: result.googleMeetLink };
-    } catch (error) {
+    } catch (error: any) {
         console.error('Error creating Google Calendar event:', error);
-        return { success: false, error: 'Failed to create Google Calendar event. Check service account credentials.' };
+        const detail = error?.message || error?.errors?.[0]?.message || 'Unknown error';
+        return { success: false, error: `Failed to create Google Calendar event: ${detail}` };
     }
 }
