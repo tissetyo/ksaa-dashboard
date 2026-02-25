@@ -5,12 +5,15 @@
  * 1. Go to https://script.google.com
  * 2. Create a new project, name it "KSAA Meet Generator"
  * 3. Paste this entire code into Code.gs (replace everything)
- * 4. Click Deploy → New Deployment
- * 5. Select Type: "Web app"
- * 6. Set "Execute as": "Me"
- * 7. Set "Who has access": "Anyone"
- * 8. Click Deploy and authorize when prompted
- * 9. Copy the Web App URL and add it to Vercel as GOOGLE_APPS_SCRIPT_URL
+ * 4. In sidebar, click Services (+) → add "Google Calendar API"
+ * 5. Click Deploy → New Deployment
+ * 6. Select Type: "Web app"
+ * 7. Set "Execute as": "Me"
+ * 8. Set "Who has access": "Anyone"
+ * 9. Click Deploy and authorize when prompted
+ * 10. Copy the Web App URL and add it to Vercel as GOOGLE_APPS_SCRIPT_URL
+ * 
+ * UPDATE: After editing, Deploy → Manage Deployments → Edit → Version: New → Deploy
  */
 
 function doPost(e) {
@@ -20,18 +23,24 @@ function doPost(e) {
         var startTime = new Date(data.startDateTime);
         var endTime = new Date(data.endDateTime);
 
+        // Create the calendar event
         var event = CalendarApp.getDefaultCalendar().createEvent(
             data.summary,
             startTime,
             endTime,
             {
                 description: data.description,
-                location: data.location || ''
+                location: data.location || '',
+                guests: data.patientEmail || ''  // Add patient as guest so they can join without approval
             }
         );
 
-        // This is the magic — createEvent on a regular Google account
-        // supports adding Google Meet conferencing!
+        // Set guests can join without knocking
+        event.setGuestsCanModify(false);
+        event.setGuestsCanInviteOthers(false);
+        event.setGuestsCanSeeGuests(true);
+
+        // Add Google Meet conferencing via Calendar Advanced API
         var conferenceData = Calendar.Events.patch(
             {
                 conferenceData: {

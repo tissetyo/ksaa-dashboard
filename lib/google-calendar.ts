@@ -77,6 +77,7 @@ export async function createCalendarEventWithMeet(appointment: {
             startDateTime: startDateTime.toISOString(),
             endDateTime: endDateTime.toISOString(),
             requestId: `ksaa-${appointment.id}`,
+            patientEmail: appointment.patient.user?.email || '',
         }),
     });
 
