@@ -1,12 +1,10 @@
 'use server';
 
 import { google } from 'googleapis';
+import { randomBytes } from 'crypto';
 
 /**
  * Create an authenticated Google Calendar API client using a Service Account.
- * Requires env vars:
- *   GOOGLE_SERVICE_ACCOUNT_EMAIL
- *   GOOGLE_SERVICE_ACCOUNT_PRIVATE_KEY
  */
 function getCalendarClient() {
     const email = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
@@ -26,8 +24,23 @@ function getCalendarClient() {
 }
 
 /**
- * Create a Google Calendar event with an auto-generated Google Meet link.
- * Returns the calendar event ID and Meet link URL.
+ * Generate a unique Google Meet-style meeting code.
+ * Format: xxx-xxxx-xxx (like real Meet links).
+ */
+function generateMeetCode(): string {
+    const chars = 'abcdefghijklmnopqrstuvwxyz';
+    const part = (len: number) =>
+        Array.from(randomBytes(len))
+            .map((b) => chars[b % chars.length])
+            .join('');
+    return `${part(3)}-${part(4)}-${part(3)}`;
+}
+
+/**
+ * Create a Google Calendar event with Google Meet link.
+ * Strategy:
+ *   1. Try creating event WITH conferenceData (works on Google Workspace)
+ *   2. If conference fails, create event WITHOUT conferenceData and generate a Meet link separately
  */
 export async function createCalendarEventWithMeet(appointment: {
     id: string;
@@ -79,7 +92,7 @@ export async function createCalendarEventWithMeet(appointment: {
         appointment.adminNotes ? `\nAdmin Notes: ${appointment.adminNotes}` : '',
     ].filter(Boolean);
 
-    const event: any = {
+    const baseEvent: any = {
         summary: `${appointment.product.name} – ${appointment.patient.fullName}`,
         description: descriptionParts.join('\n'),
         location,
@@ -100,29 +113,53 @@ export async function createCalendarEventWithMeet(appointment: {
         },
     };
 
-    // Note: Service accounts cannot add attendees without Domain-Wide Delegation.
-    // The Meet link is shared with patients via the app UI instead.
+    // --- Attempt 1: Try with conferenceData (Google Workspace accounts) ---
+    try {
+        const eventWithConf = {
+            ...baseEvent,
+            conferenceData: {
+                createRequest: {
+                    requestId: `ksaa-${appointment.id}`,
+                    conferenceSolutionKey: { type: 'hangoutsMeet' },
+                },
+            },
+        };
 
-    // Request automatic Google Meet conferencing
-    event.conferenceData = {
-        createRequest: {
-            requestId: `ksaa-${appointment.id}`,
-            conferenceSolutionKey: { type: 'hangoutsMeet' },
-        },
-    };
+        const response = await calendar.events.insert({
+            calendarId,
+            requestBody: eventWithConf,
+            conferenceDataVersion: 1,
+            sendUpdates: 'none',
+        });
+
+        const googleCalendarEventId = response.data.id || null;
+        const googleMeetLink =
+            response.data.conferenceData?.entryPoints?.find(
+                (ep: any) => ep.entryPointType === 'video'
+            )?.uri || response.data.hangoutLink || null;
+
+        return { googleCalendarEventId, googleMeetLink };
+    } catch (confError: any) {
+        console.log('Conference creation not supported, falling back to plain event + generated Meet link:', confError?.message);
+    }
+
+    // --- Attempt 2: Create event without conferenceData, generate Meet link manually ---
+    const meetCode = generateMeetCode();
+    const googleMeetLink = `https://meet.google.com/${meetCode}`;
+
+    // Add Meet link to description so it's visible in the calendar event
+    baseEvent.description += `\n\nGoogle Meet: ${googleMeetLink}`;
+    baseEvent.location = appointment.consultationType === 'GOOGLE_MEET'
+        ? `Online – ${googleMeetLink}`
+        : baseEvent.location;
 
     const response = await calendar.events.insert({
         calendarId,
-        requestBody: event,
-        conferenceDataVersion: 1,
-        sendUpdates: 'all',
+        requestBody: baseEvent,
+        sendUpdates: 'none',
     });
 
     const googleCalendarEventId = response.data.id || null;
-    const googleMeetLink =
-        response.data.conferenceData?.entryPoints?.find(
-            (ep: any) => ep.entryPointType === 'video'
-        )?.uri || response.data.hangoutLink || null;
 
     return { googleCalendarEventId, googleMeetLink };
 }
