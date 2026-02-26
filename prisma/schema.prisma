@@ -89,6 +89,8 @@ enum Salutation {
   DATO
   DATIN
   PROF
+  TUN
+  TAN_SRI
 }
 
 enum BloodType {

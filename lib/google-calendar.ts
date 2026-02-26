@@ -96,15 +96,8 @@ export async function createCalendarEventWithMeet(
     const calendar = await getCalendarClientForUser(userId);
     const calendarId = 'primary'; // Create the event on their primary calendar
 
-    // Build start / end times
-    const appointmentDate = new Date(appointment.appointmentDate);
+    // Extract time explicitly for local usage
     const [hours, minutes] = appointment.timeSlot.split(':').map(Number);
-
-    const startDateTime = new Date(appointmentDate);
-    startDateTime.setHours(hours, minutes, 0, 0);
-
-    const endDateTime = new Date(startDateTime);
-    endDateTime.setMinutes(endDateTime.getMinutes() + appointment.product.durationMinutes);
 
     // Determine location text
     let location = 'KSAA STEMCARE Clinic';
@@ -124,16 +117,33 @@ export async function createCalendarEventWithMeet(
         appointment.adminNotes ? `\nAdmin Notes: ${appointment.adminNotes}` : '',
     ].filter(Boolean);
 
+    // Calculate dates treating it as local time, format correctly for Google
+    // Google API requires YYYY-MM-DDTHH:mm:SS without the 'Z' if timeZone is specified separately.
+    const pad = (n: number) => String(n).padStart(2, '0');
+
+    // E.g., appointmentDate is '2026-02-26T12:00:00.000Z' or Date object
+    const dStr = typeof appointment.appointmentDate === 'string'
+        ? appointment.appointmentDate.split('T')[0]
+        : appointment.appointmentDate.toISOString().split('T')[0];
+    // Construct local ISO-like string without Z
+    const startIsoLocal = `${dStr}T${pad(hours)}:${pad(minutes)}:00`;
+
+    // Calculate end time
+    const startObj = new Date(`${dStr}T${pad(hours)}:${pad(minutes)}:00`);
+    const endObj = new Date(startObj.getTime() + appointment.product.durationMinutes * 60000);
+
+    const endIsoLocal = `${endObj.getFullYear()}-${pad(endObj.getMonth() + 1)}-${pad(endObj.getDate())}T${pad(endObj.getHours())}:${pad(endObj.getMinutes())}:00`;
+
     const event: any = {
         summary: `${appointment.product.name} – ${appointment.patient.fullName}`,
         description: descriptionParts.join('\n'),
         location,
         start: {
-            dateTime: startDateTime.toISOString(),
+            dateTime: startIsoLocal,
             timeZone: 'Asia/Kuala_Lumpur',
         },
         end: {
-            dateTime: endDateTime.toISOString(),
+            dateTime: endIsoLocal,
             timeZone: 'Asia/Kuala_Lumpur',
         },
         reminders: {

@@ -25,14 +25,20 @@ export function AdminAppointmentsClient({ staffMembers = [], products = [], pati
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
 
-    const pendingAppointments = appointments.filter((apt: any) => apt.status === 'PENDING');
+    const allAppointments = appointments;
+
     const upcomingAppointments = appointments.filter((apt: any) =>
         ['PENDING', 'CONFIRMED'].includes(apt.status) &&
         new Date(apt.appointmentDate) >= startOfToday
     );
-    const historicalAppointments = appointments.filter((apt: any) =>
-        ['COMPLETED', 'CANCELLED'].includes(apt.status) ||
-        (new Date(apt.appointmentDate) < startOfToday && apt.status !== 'PENDING')
+
+    const completedAppointments = appointments.filter((apt: any) => apt.status === 'COMPLETED');
+
+    const canceledAppointments = appointments.filter((apt: any) => apt.status === 'CANCELLED');
+
+    const expiredAppointments = appointments.filter((apt: any) =>
+        ['PENDING', 'CONFIRMED'].includes(apt.status) &&
+        new Date(apt.appointmentDate) < startOfToday
     );
 
     return (
@@ -50,29 +56,43 @@ export function AdminAppointmentsClient({ staffMembers = [], products = [], pati
             </div>
 
             {view === 'list' ? (
-                <Tabs defaultValue="pending" className="w-full mt-6">
-                    <TabsList>
-                        <TabsTrigger value="pending">
-                            Pending ({pendingAppointments.length})
+                <Tabs defaultValue="all" className="w-full mt-6">
+                    <TabsList className="bg-white border text-gray-500 rounded-xl h-auto p-1 overflow-x-auto justify-start flex-nowrap w-full">
+                        <TabsTrigger value="all" className="data-[state=active]:bg-[#008E7E] data-[state=active]:text-white rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                            All ({allAppointments.length})
                         </TabsTrigger>
-                        <TabsTrigger value="upcoming">
+                        <TabsTrigger value="upcoming" className="data-[state=active]:bg-[#008E7E] data-[state=active]:text-white rounded-lg px-4 py-2 text-sm font-medium transition-all">
                             Upcoming ({upcomingAppointments.length})
                         </TabsTrigger>
-                        <TabsTrigger value="history">
-                            History ({historicalAppointments.length})
+                        <TabsTrigger value="completed" className="data-[state=active]:bg-[#008E7E] data-[state=active]:text-white rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                            Completed ({completedAppointments.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="expired" className="data-[state=active]:bg-[#008E7E] data-[state=active]:text-white rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                            Expired ({expiredAppointments.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="canceled" className="data-[state=active]:bg-[#008E7E] data-[state=active]:text-white rounded-lg px-4 py-2 text-sm font-medium transition-all">
+                            Canceled ({canceledAppointments.length})
                         </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="pending" className="mt-4">
-                        <AppointmentTable appointments={pendingAppointments} staffMembers={staffMembers} products={products} />
+                    <TabsContent value="all" className="mt-4">
+                        <AppointmentTable appointments={allAppointments} staffMembers={staffMembers} products={products} />
                     </TabsContent>
 
                     <TabsContent value="upcoming" className="mt-4">
                         <AppointmentTable appointments={upcomingAppointments} staffMembers={staffMembers} products={products} />
                     </TabsContent>
 
-                    <TabsContent value="history" className="mt-4">
-                        <AppointmentTable appointments={historicalAppointments} staffMembers={staffMembers} products={products} />
+                    <TabsContent value="completed" className="mt-4">
+                        <AppointmentTable appointments={completedAppointments} staffMembers={staffMembers} products={products} />
+                    </TabsContent>
+
+                    <TabsContent value="expired" className="mt-4">
+                        <AppointmentTable appointments={expiredAppointments} staffMembers={staffMembers} products={products} />
+                    </TabsContent>
+
+                    <TabsContent value="canceled" className="mt-4">
+                        <AppointmentTable appointments={canceledAppointments} staffMembers={staffMembers} products={products} />
                     </TabsContent>
                 </Tabs>
             ) : (

@@ -8,7 +8,7 @@ if (!resendApiKey && process.env.NODE_ENV === 'production') {
 
 const resend = new Resend(resendApiKey || 're_123456789');
 
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@yourdomain.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'onboarding@resend.dev';
 const NOTIFICATION_EMAIL = process.env.NOTIFICATION_EMAIL || 'admin@ksaa.com';
 
 /**

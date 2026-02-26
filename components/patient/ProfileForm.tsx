@@ -66,7 +66,7 @@ export function ProfileForm({ initialData, services = [], showAddress = false }:
                                     <SelectItem key={sal} value={sal}>
                                         {sal === 'MR' ? 'Mr.' : sal === 'MRS' ? 'Mrs.' : sal === 'MS' ? 'Ms.'
                                             : sal === 'DR' ? 'Dr.' : sal === 'PROF' ? 'Prof.' : sal === 'DATO' ? 'Dato\''
-                                                : sal === 'DATIN' ? 'Datin' : sal}
+                                                : sal === 'DATIN' ? 'Datin' : sal === 'TUN' ? 'Tun.' : sal === 'TAN_SRI' ? 'Tan Sri' : sal}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
