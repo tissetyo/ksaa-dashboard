@@ -21,6 +21,9 @@ interface PatientRow {
 export function PatientDirectoryClient({ patients }: { patients: PatientRow[] }) {
     const [search, setSearch] = useState('');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+
     const router = useRouter();
 
     const filtered = patients.filter(p => {
@@ -32,6 +35,10 @@ export function PatientDirectoryClient({ patients }: { patients: PatientRow[] })
         );
     });
 
+    const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedPatients = filtered.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
     return (
         <div className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-3">
@@ -40,7 +47,10 @@ export function PatientDirectoryClient({ patients }: { patients: PatientRow[] })
                     <Input
                         placeholder="Search by name, phone, or email..."
                         value={search}
-                        onChange={e => setSearch(e.target.value)}
+                        onChange={e => {
+                            setSearch(e.target.value);
+                            setCurrentPage(1); // Reset page on search
+                        }}
                         className="pl-9"
                     />
                 </div>
@@ -53,13 +63,11 @@ export function PatientDirectoryClient({ patients }: { patients: PatientRow[] })
                 </Button>
             </div>
 
-            <div className="text-xs text-gray-400">{filtered.length} patient{filtered.length !== 1 ? 's' : ''}</div>
-
             <div className="border rounded-xl overflow-hidden divide-y">
-                {filtered.length === 0 ? (
+                {paginatedPatients.length === 0 ? (
                     <div className="text-center py-12 text-gray-400 text-sm">No patients found</div>
                 ) : (
-                    filtered.map(patient => (
+                    paginatedPatients.map(patient => (
                         <button
                             key={patient.id}
                             onClick={() => router.push(`/admin/patients/${patient.id}`)}
@@ -90,6 +98,32 @@ export function PatientDirectoryClient({ patients }: { patients: PatientRow[] })
                             <ChevronRight className="h-4 w-4 text-gray-300 group-hover:text-gray-500 transition-colors flex-shrink-0" />
                         </button>
                     ))
+                )}
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between bg-gray-50/50 px-4 py-3">
+                        <div className="text-sm text-gray-500">
+                            Showing <span className="font-medium text-gray-900">{startIndex + 1}</span> to <span className="font-medium text-gray-900">{Math.min(startIndex + ITEMS_PER_PAGE, filtered.length)}</span> of <span className="font-medium text-gray-900">{filtered.length}</span> patients
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 )}
             </div>
 

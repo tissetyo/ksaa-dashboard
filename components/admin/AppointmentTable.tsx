@@ -52,6 +52,13 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
     const [selectedPatientId, setSelectedPatientId] = useState<string>('');
     const [selectedPatientName, setSelectedPatientName] = useState<string>('');
 
+    // Pagination
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 10;
+    const totalPages = Math.ceil(appointments.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedAppointments = appointments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
     const handleConfirmClick = (apt: any) => {
         setSelectedAppointment(apt);
         setConfirmModalOpen(true);
@@ -118,7 +125,7 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            appointments.map((apt) => (
+                            paginatedAppointments.map((apt) => (
                                 <TableRow
                                     key={apt.id}
                                     className="cursor-pointer hover:bg-gray-50 transition-colors"
@@ -214,6 +221,32 @@ export function AppointmentTable({ appointments, staffMembers = [], products = [
                         )}
                     </TableBody>
                 </Table>
+
+                {totalPages > 1 && (
+                    <div className="flex items-center justify-between border-t border-gray-100 bg-gray-50/50 px-4 py-3">
+                        <div className="text-sm text-gray-500">
+                            Showing <span className="font-medium text-gray-900">{startIndex + 1}</span> to <span className="font-medium text-gray-900">{Math.min(startIndex + ITEMS_PER_PAGE, appointments.length)}</span> of <span className="font-medium text-gray-900">{appointments.length}</span> results
+                        </div>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                disabled={currentPage === 1}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                disabled={currentPage === totalPages}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* Confirm Appointment Modal */}
