@@ -21,9 +21,10 @@ import {
     Star,
     Gift
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { getSiteSetting } from '@/lib/actions/site-settings';
 
 type NavItem = {
     name: string;
@@ -37,6 +38,13 @@ export function AdminSidebar() {
     const [isCollapsed, setIsCollapsed] = useState(false);
     const { data: session } = useSession();
     const userRole = session?.user?.role as 'SUPERADMIN' | 'STAFF' | undefined;
+    const [logoUrl, setLogoUrl] = useState('/ksaa-logo.png');
+
+    useEffect(() => {
+        getSiteSetting('logo_url').then(url => {
+            if (url) setLogoUrl(url);
+        });
+    }, []);
 
     // Define navigation with role-based access
     const navigation: NavItem[] = [
@@ -68,7 +76,7 @@ export function AdminSidebar() {
                 {!isCollapsed && (
                     <div>
                         <Link href="/admin/dashboard">
-                            <Image src="/ksaa-logo.png" alt="KSAA STEMCARE" width={130} height={40} className="object-contain" />
+                            <img src={logoUrl} alt="KSAA STEMCARE" className="object-contain h-10 max-w-[130px]" />
                         </Link>
                         {userRole === 'STAFF' && (
                             <span className="text-xs text-gray-500">Staff Portal</span>

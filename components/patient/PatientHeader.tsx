@@ -14,7 +14,7 @@ import {
     Package,
     Gift
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -24,11 +24,19 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
+import { getSiteSetting } from '@/lib/actions/site-settings';
 
 export function PatientHeader() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
     const { data: session } = useSession();
+    const [logoUrl, setLogoUrl] = useState('/ksaa-logo.png');
+
+    useEffect(() => {
+        getSiteSetting('logo_url').then(url => {
+            if (url) setLogoUrl(url);
+        });
+    }, []);
 
     const navigation = [
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -44,7 +52,7 @@ export function PatientHeader() {
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center">
                         <Link href="/dashboard">
-                            <Image src="/ksaa-logo.png" alt="KSAA STEMCARE" width={130} height={40} className="object-contain" />
+                            <img src={logoUrl} alt="KSAA STEMCARE" className="object-contain h-10 max-w-[130px]" />
                         </Link>
                     </div>
 
