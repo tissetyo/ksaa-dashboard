@@ -683,3 +683,23 @@ model SiteSetting {
 
   @@index([key])
 }
+
+// ============================================================================
+// PROMOTIONS & EVENTS
+// ============================================================================
+
+model Promotion {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @db.Text
+  type        String   // EVENT, DISCOUNT, ANNOUNCEMENT
+  isActive    Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  imageUrl    String?  @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive])
+  @@index([type])
+}

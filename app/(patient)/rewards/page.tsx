@@ -7,16 +7,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Gift, Ticket, CheckCircle2, Loader2, Copy, Calendar, Megaphone } from 'lucide-react';
 import { toast } from 'sonner';
 import { getPatientCoupons } from '@/lib/actions/patient-rewards';
+import { getActivePromotions } from '@/lib/actions/promotion';
 import { format } from 'date-fns';
+
+const TYPE_STYLES: Record<string, { label: string; color: string }> = {
+    EVENT: { label: 'Event', color: 'bg-purple-100 text-purple-700 border-purple-200' },
+    DISCOUNT: { label: 'Discount', color: 'bg-green-100 text-green-700 border-green-200' },
+    ANNOUNCEMENT: { label: 'Announcement', color: 'bg-blue-100 text-blue-700 border-blue-200' },
+};
 
 export default function PatientRewardsPage() {
     const [coupons, setCoupons] = useState<any[]>([]);
+    const [promotions, setPromotions] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isLoadingPromos, setIsLoadingPromos] = useState(true);
 
     useEffect(() => {
         getPatientCoupons()
             .then(setCoupons)
             .finally(() => setIsLoading(false));
+        getActivePromotions()
+            .then(setPromotions)
+            .finally(() => setIsLoadingPromos(false));
     }, []);
 
     const copyCouponCode = (code: string) => {
@@ -62,13 +74,13 @@ export default function PatientRewardsPage() {
                                 <div
                                     key={coupon.id}
                                     className={`relative rounded-2xl overflow-hidden ${coupon.isRedeemed
-                                            ? 'bg-gray-100 border-2 border-gray-200'
-                                            : 'bg-gradient-to-r from-[#008E7E] to-[#00b39e] text-white'
+                                        ? 'bg-gray-100 border-2 border-gray-200'
+                                        : 'bg-gradient-to-r from-[#008E7E] to-[#00b39e] text-white'
                                         }`}
                                 >
                                     {/* Ticket notches */}
-                                    <div className={`absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full ${coupon.isRedeemed ? 'bg-gray-50' : 'bg-gray-50'}`} />
-                                    <div className={`absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full ${coupon.isRedeemed ? 'bg-gray-50' : 'bg-gray-50'}`} />
+                                    <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-50" />
+                                    <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 rounded-full bg-gray-50" />
 
                                     <div className="p-5 pl-8 pr-8">
                                         <div className="flex items-center justify-between mb-2">
@@ -128,15 +140,58 @@ export default function PatientRewardsPage() {
                 </TabsContent>
 
                 <TabsContent value="promotions">
-                    <Card className="border-dashed">
-                        <CardContent className="py-20 text-center">
-                            <div className="bg-gray-100 rounded-full p-4 inline-flex mb-4">
-                                <Megaphone className="h-8 w-8 text-gray-400" />
-                            </div>
-                            <p className="text-gray-500 font-semibold">No promotions available</p>
-                            <p className="text-sm text-gray-400 mt-1">Check back later for special offers and events!</p>
-                        </CardContent>
-                    </Card>
+                    {isLoadingPromos ? (
+                        <div className="flex justify-center py-16">
+                            <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
+                        </div>
+                    ) : promotions.length === 0 ? (
+                        <Card className="border-dashed">
+                            <CardContent className="py-20 text-center">
+                                <div className="bg-gray-100 rounded-full p-4 inline-flex mb-4">
+                                    <Megaphone className="h-8 w-8 text-gray-400" />
+                                </div>
+                                <p className="text-gray-500 font-semibold">No promotions available</p>
+                                <p className="text-sm text-gray-400 mt-1">Check back later for special offers and events!</p>
+                            </CardContent>
+                        </Card>
+                    ) : (
+                        <div className="space-y-4">
+                            {promotions.map(promo => {
+                                const typeStyle = TYPE_STYLES[promo.type] || TYPE_STYLES.ANNOUNCEMENT;
+                                return (
+                                    <Card key={promo.id} className="overflow-hidden hover:shadow-md transition-shadow">
+                                        <CardContent className="p-5">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <Badge className={typeStyle.color}>
+                                                            {typeStyle.label}
+                                                        </Badge>
+                                                        {promo.endDate && new Date(promo.endDate) < new Date(Date.now() + 3 * 24 * 60 * 60 * 1000) && (
+                                                            <Badge variant="destructive" className="text-[10px]">Ending Soon</Badge>
+                                                        )}
+                                                    </div>
+                                                    <h3 className="text-lg font-bold text-gray-900">{promo.title}</h3>
+                                                    <p className="text-sm text-gray-600 mt-1">{promo.description}</p>
+                                                    {(promo.startDate || promo.endDate) && (
+                                                        <div className="flex items-center gap-1 mt-2 text-xs text-gray-400">
+                                                            <Calendar className="h-3 w-3" />
+                                                            {promo.startDate && format(new Date(promo.startDate), 'MMM d, yyyy')}
+                                                            {promo.startDate && promo.endDate && ' — '}
+                                                            {promo.endDate && format(new Date(promo.endDate), 'MMM d, yyyy')}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="shrink-0 bg-[#008E7E]/10 rounded-xl p-3">
+                                                    <Megaphone className="h-6 w-6 text-[#008E7E]" />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                );
+                            })}
+                        </div>
+                    )}
                 </TabsContent>
             </Tabs>
         </div>

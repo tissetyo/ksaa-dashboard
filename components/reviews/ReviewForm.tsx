@@ -181,40 +181,6 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
                         </div>
                     )}
 
-                    {/* Service Details Card */}
-                    <div className="bg-[#008E7E]/5 border border-[#008E7E]/15 rounded-lg p-4 space-y-2">
-                        <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-[#008E7E]" />
-                            <span className="text-sm font-medium">{format(new Date(initialData.appointmentDate), 'EEEE, MMMM d, yyyy')}</span>
-                        </div>
-                        {initialData.timeSlot && (
-                            <div className="flex items-center gap-2">
-                                <Clock className="h-4 w-4 text-[#008E7E]/70" />
-                                <span className="text-sm text-gray-600">{initialData.timeSlot}{initialData.durationMinutes ? ` (${initialData.durationMinutes} min)` : ''}</span>
-                            </div>
-                        )}
-                        {initialData.consultationType && (
-                            <div className="flex items-center gap-2">
-                                {initialData.consultationType === 'WHATSAPP_CALL' && <MessageCircle className="h-4 w-4 text-green-600" />}
-                                {initialData.consultationType === 'GOOGLE_MEET' && <Video className="h-4 w-4 text-blue-600" />}
-                                {initialData.consultationType === 'IN_PERSON' && <Building2 className="h-4 w-4 text-orange-600" />}
-                                {initialData.consultationType === 'HOME_VISIT' && <Home className="h-4 w-4 text-purple-600" />}
-                                <span className="text-sm text-gray-600">
-                                    {initialData.consultationType === 'WHATSAPP_CALL' ? 'WhatsApp Call' :
-                                        initialData.consultationType === 'GOOGLE_MEET' ? 'Google Meet' :
-                                            initialData.consultationType === 'IN_PERSON' ? 'In-Person Visit' :
-                                                initialData.consultationType === 'HOME_VISIT' ? 'Home Visit' :
-                                                    initialData.consultationType}
-                                </span>
-                            </div>
-                        )}
-                        {initialData.consultationAddress && (
-                            <div className="flex items-center gap-2">
-                                <MapPin className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-500">{initialData.consultationAddress}</span>
-                            </div>
-                        )}
-                    </div>
                     {/* Rating Section */}
                     <div className="flex flex-col items-center space-y-3 py-2">
                         <StarRating
