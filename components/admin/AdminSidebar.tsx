@@ -76,7 +76,7 @@ export function AdminSidebar() {
                 {!isCollapsed && (
                     <div>
                         <Link href="/admin/dashboard">
-                            <img src={logoUrl} alt="KSAA STEMCARE" className="object-contain h-10 max-w-[130px]" />
+                            <img src={logoUrl} alt="KSAA STEMCARE" className="object-contain w-full max-w-[180px]" />
                         </Link>
                         {userRole === 'STAFF' && (
                             <span className="text-xs text-gray-500">Staff Portal</span>

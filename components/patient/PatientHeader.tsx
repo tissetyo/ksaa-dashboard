@@ -52,7 +52,7 @@ export function PatientHeader() {
                 <div className="flex justify-between items-center h-16">
                     <div className="flex items-center">
                         <Link href="/dashboard">
-                            <img src={logoUrl} alt="KSAA STEMCARE" className="object-contain h-10 max-w-[130px]" />
+                            <img src={logoUrl} alt="KSAA STEMCARE" className="object-contain h-12 max-w-[160px]" />
                         </Link>
                     </div>
 
