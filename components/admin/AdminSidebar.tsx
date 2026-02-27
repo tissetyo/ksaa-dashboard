@@ -18,7 +18,8 @@ import {
     ChevronRight,
     UserCog,
     TrendingUp,
-    Star
+    Star,
+    Gift
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -43,7 +44,8 @@ export function AdminSidebar() {
         { name: 'Appointments', href: '/admin/appointments', icon: Calendar, roles: ['SUPERADMIN', 'STAFF'] },
         { name: 'Patients', href: '/admin/patients', icon: Users, roles: ['SUPERADMIN', 'STAFF'] },
         { name: 'Schedule', href: '/admin/schedule', icon: Clock, roles: ['SUPERADMIN', 'STAFF'] },
-        { name: 'Reviews', href: '/admin/reviews', icon: Star, roles: ['SUPERADMIN'] }, // Added Reviews link
+        { name: 'Reviews', href: '/admin/reviews', icon: Star, roles: ['SUPERADMIN'] },
+        { name: 'Promotions', href: '/admin/promotions', icon: Gift, roles: ['SUPERADMIN', 'STAFF'] },
         { name: 'Staff', href: '/admin/staff', icon: UserCog, roles: ['SUPERADMIN'] },
         { name: 'Referrals', href: '/admin/referrals', icon: TrendingUp, roles: ['SUPERADMIN'] },
         { name: 'Products', href: '/admin/products', icon: Package, roles: ['SUPERADMIN'] },

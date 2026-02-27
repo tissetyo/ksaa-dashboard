@@ -48,7 +48,7 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
     const [reviewerName, setReviewerName] = useState(user?.name || initialData.patientName);
 
     // Derived state
-    const isValid = rating > 0 && comment.length >= 10 && reviewerName.trim().length > 0;
+    const isValid = rating > 0 && comment.length >= 3 && reviewerName.trim().length > 0;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -164,8 +164,8 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
                     {/* Reward Banner */}
                     {initialData.customerType && (
                         <div className={`rounded-lg p-4 border ${initialData.customerType === 'POTENTIAL_CUSTOMER'
-                                ? 'bg-[#008E7E]/5 border-[#008E7E]/20'
-                                : 'bg-green-50 border-green-200'
+                            ? 'bg-[#008E7E]/5 border-[#008E7E]/20'
+                            : 'bg-green-50 border-green-200'
                             }`}>
                             <div className="flex items-center gap-2 mb-1">
                                 <Gift className="h-4 w-4 text-[#008E7E]" />
@@ -257,7 +257,7 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
                             className="min-h-[120px] resize-none bg-white/50"
                         />
                         <p className="text-xs text-right text-muted-foreground">
-                            {comment.length}/10 characters minimum
+                            {comment.length}/3 characters minimum
                         </p>
                     </div>
                 </CardContent>

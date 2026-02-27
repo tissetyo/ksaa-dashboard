@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Calendar, Clock, MapPin, Package, MoreVertical } from 'lucide-react';
+import { Calendar, Clock, MapPin, Package, MoreVertical, Star } from 'lucide-react';
 import { format } from 'date-fns';
 import Link from 'next/link';
 import { CancelAppointmentButton } from '@/components/patient/CancelAppointmentButton';
@@ -23,7 +23,10 @@ export default async function PatientAppointmentsPage() {
 
     const appointments = await db.appointment.findMany({
         where: { patientId: patient.id },
-        include: { product: true },
+        include: {
+            product: true,
+            reviewToken: { select: { token: true, isUsed: true } },
+        },
         orderBy: { appointmentDate: 'desc' },
     });
 
@@ -102,6 +105,14 @@ export default async function PatientAppointmentsPage() {
                             </div>
 
                             <div className="flex gap-2 mt-4">
+                                {/* Leave a Review button for completed appointments without review */}
+                                {apt.status === 'COMPLETED' && apt.reviewToken && !apt.reviewToken.isUsed && (
+                                    <Button size="sm" className="bg-[#008E7E] hover:bg-[#0a4f47]" asChild>
+                                        <Link href={`/review?token=${apt.reviewToken.token}`}>
+                                            <Star className="w-4 h-4 mr-1" /> Leave a Review
+                                        </Link>
+                                    </Button>
+                                )}
                                 <Button variant="outline" size="sm" asChild>
                                     <Link href={`/appointments/${apt.id}`}>Details</Link>
                                 </Button>

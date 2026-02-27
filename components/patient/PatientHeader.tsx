@@ -11,7 +11,8 @@ import {
     X,
     LogOut,
     LayoutDashboard,
-    Package
+    Package,
+    Gift
 } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -33,6 +34,7 @@ export function PatientHeader() {
         { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
         { name: 'Services', href: '/services', icon: Package },
         { name: 'Appointments', href: '/appointments', icon: Calendar },
+        { name: 'Rewards', href: '/rewards', icon: Gift },
         { name: 'Profile', href: '/profile', icon: User },
     ];
 

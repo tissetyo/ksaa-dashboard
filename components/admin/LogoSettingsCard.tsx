@@ -32,12 +32,19 @@ export function LogoSettingsCard() {
     ) => {
         setLoading(true);
         try {
-            const formData = new FormData();
-            formData.append('file', file);
+            // Convert file to base64
+            const reader = new FileReader();
+            const base64Promise = new Promise<string>((resolve, reject) => {
+                reader.onload = () => resolve(reader.result as string);
+                reader.onerror = reject;
+            });
+            reader.readAsDataURL(file);
+            const base64 = await base64Promise;
 
             const res = await fetch('/api/admin/banners/upload', {
                 method: 'POST',
-                body: formData,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ base64 }),
             });
 
             if (!res.ok) throw new Error('Upload failed');
