@@ -119,7 +119,8 @@ export async function getReviewByToken(token: string) {
             consultationAddress: reviewToken.appointment.consultationAddress,
             durationMinutes: reviewToken.appointment.product.durationMinutes,
             patientName: reviewToken.appointment.patient.fullName,
-            patientUserId: reviewToken.appointment.patient.userId
+            patientUserId: reviewToken.appointment.patient.userId,
+            customerType: reviewToken.appointment.customerType,
         }
     };
 }
@@ -192,10 +193,36 @@ export async function submitReview(data: {
         data: { isUsed: true }
     });
 
-    // 5. Revalidate paths
+    // 5. Generate reward coupon based on customerType
+    let coupon = null;
+    const customerType = reviewToken.appointment.customerType;
+    if (customerType) {
+        const couponType = customerType === 'POTENTIAL_CUSTOMER' ? 'FREE_STEMCELLS' : 'FREE_ITEM';
+        const couponDescription = customerType === 'POTENTIAL_CUSTOMER'
+            ? 'Free 5 Million Stemcells - Pre-Treatment Reward'
+            : 'Free Health Drink / Voucher - Thank You Reward';
+
+        coupon = await db.rewardCoupon.create({
+            data: {
+                reviewId: review.id,
+                type: couponType,
+                description: couponDescription,
+            }
+        });
+    }
+
+    // 6. Revalidate paths
     revalidatePath('/admin/reviews');
 
-    return { success: true, reviewId: review.id };
+    return {
+        success: true,
+        reviewId: review.id,
+        coupon: coupon ? {
+            code: coupon.code,
+            type: coupon.type,
+            description: coupon.description,
+        } : null,
+    };
 }
 
 // Get public reviews (for API)

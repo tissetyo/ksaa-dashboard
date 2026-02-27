@@ -99,6 +99,11 @@ function SignupForm() {
                                         <SelectItem value="MRS">Mrs.</SelectItem>
                                         <SelectItem value="MS">Ms.</SelectItem>
                                         <SelectItem value="DR">Dr.</SelectItem>
+                                        <SelectItem value="PROF">Prof.</SelectItem>
+                                        <SelectItem value="DATO">Dato&apos;</SelectItem>
+                                        <SelectItem value="DATIN">Datin</SelectItem>
+                                        <SelectItem value="TUN">Tun.</SelectItem>
+                                        <SelectItem value="TAN_SRI">Tan Sri</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -170,7 +175,7 @@ function SignupForm() {
                                 disabled={isLoading}
                             />
                             <p className="text-xs text-muted-foreground">
-                                Have a referral code? Enter it here for special benefits
+                                Have a referral code? Enter it here to claim your 5 million stemcells
                             </p>
                         </div>
                     </CardContent>

@@ -5,6 +5,8 @@ import { ReviewWidgetGenerator } from "@/components/admin/ReviewWidgetGenerator"
 import { BannerManager } from "@/components/admin/BannerManager";
 import { ClinicLocationManager } from "@/components/admin/ClinicLocationManager";
 import { GoogleConnectCard } from "@/components/admin/GoogleConnectCard";
+import { LogoSettingsCard } from "@/components/admin/LogoSettingsCard";
+import { CouponRedemptionCard } from "@/components/admin/CouponRedemptionCard";
 import { Separator } from "@/components/ui/separator";
 
 export default async function AdminSettingsPage() {
@@ -49,6 +51,13 @@ export default async function AdminSettingsPage() {
 
             <Separator />
 
+            {/* Logo & Favicon */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <LogoSettingsCard />
+            </div>
+
+            <Separator />
+
             {/* Clinic Locations */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
                 <ClinicLocationManager initialLocations={clinicLocations} />
@@ -58,6 +67,13 @@ export default async function AdminSettingsPage() {
 
             {/* Review Widget */}
             <ReviewWidgetGenerator staffMembers={staffMembers} products={products} />
+
+            <Separator />
+
+            {/* Coupon Redemption */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+                <CouponRedemptionCard />
+            </div>
         </div>
     );
 }

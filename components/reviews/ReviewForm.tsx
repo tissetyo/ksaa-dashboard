@@ -10,7 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { submitReview } from '@/lib/actions/review';
-import { Loader2, CheckCircle2, Calendar, Clock, MapPin, Video, MessageCircle, Building2, Home } from 'lucide-react';
+import { Loader2, CheckCircle2, Calendar, Clock, MapPin, Video, MessageCircle, Building2, Home, Gift, Ticket, Copy } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface ReviewFormProps {
@@ -24,6 +24,7 @@ interface ReviewFormProps {
         consultationType?: string | null;
         consultationAddress?: string | null;
         durationMinutes?: number;
+        customerType?: string | null;
     };
     user?: {
         name?: string | null;
@@ -35,6 +36,11 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
     const router = useRouter();
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [couponData, setCouponData] = useState<{
+        code: string;
+        type: string;
+        description: string;
+    } | null>(null);
 
     // Form State
     const [rating, setRating] = useState(0);
@@ -56,18 +62,26 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
                 rating,
                 comment,
                 reviewerName,
-                // If user is logged in, we implicitly have their email via session in action,
-                // or we can pass it if we want to allow email updates (not implementing that now)
             });
 
             if (result.success) {
                 setIsSuccess(true);
+                if (result.coupon) {
+                    setCouponData(result.coupon);
+                }
                 toast.success('Thank you for your review!');
             }
         } catch (error: any) {
             toast.error(error.message || 'Failed to submit review');
         } finally {
             setIsSubmitting(false);
+        }
+    };
+
+    const copyCouponCode = () => {
+        if (couponData?.code) {
+            navigator.clipboard.writeText(couponData.code);
+            toast.success('Coupon code copied!');
         }
     };
 
@@ -82,6 +96,46 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
                     <p className="text-gray-600 max-w-xs mx-auto">
                         Your review has been submitted successfully. We appreciate your feedback!
                     </p>
+
+                    {/* Reward Coupon Ticket */}
+                    {couponData && (
+                        <div className="w-full mt-6">
+                            <div className="relative bg-gradient-to-r from-[#008E7E] to-[#00b39e] rounded-2xl p-6 text-white overflow-hidden">
+                                {/* Decorative circles for ticket look */}
+                                <div className="absolute -left-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full" />
+                                <div className="absolute -right-3 top-1/2 -translate-y-1/2 w-6 h-6 bg-white rounded-full" />
+
+                                <div className="flex items-center gap-2 mb-3">
+                                    <Gift className="h-5 w-5" />
+                                    <span className="text-sm font-semibold uppercase tracking-wide opacity-90">
+                                        {couponData.type === 'FREE_STEMCELLS' ? '🌱 Reward Coupon' : '🎁 Reward Coupon'}
+                                    </span>
+                                </div>
+
+                                <p className="text-lg font-bold mb-1">{couponData.description}</p>
+
+                                <div className="flex items-center gap-2 mt-4 bg-white/20 rounded-lg px-3 py-2">
+                                    <Ticket className="h-4 w-4" />
+                                    <span className="font-mono text-sm font-bold flex-1 tracking-wider">
+                                        {couponData.code.toUpperCase().slice(0, 12)}
+                                    </span>
+                                    <button
+                                        onClick={copyCouponCode}
+                                        className="p-1 hover:bg-white/20 rounded transition-colors"
+                                    >
+                                        <Copy className="h-4 w-4" />
+                                    </button>
+                                </div>
+
+                                <p className="text-xs opacity-80 mt-3">
+                                    {couponData.type === 'FREE_STEMCELLS'
+                                        ? 'Show this coupon to the staff at the clinic to redeem your free stemcells service.'
+                                        : 'Show this coupon to the staff at the clinic to receive your free item.'}
+                                </p>
+                            </div>
+                        </div>
+                    )}
+
                     <Button
                         variant="outline"
                         onClick={() => router.push('/')}
@@ -107,6 +161,26 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
 
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-6 pt-4">
+                    {/* Reward Banner */}
+                    {initialData.customerType && (
+                        <div className={`rounded-lg p-4 border ${initialData.customerType === 'POTENTIAL_CUSTOMER'
+                                ? 'bg-[#008E7E]/5 border-[#008E7E]/20'
+                                : 'bg-green-50 border-green-200'
+                            }`}>
+                            <div className="flex items-center gap-2 mb-1">
+                                <Gift className="h-4 w-4 text-[#008E7E]" />
+                                <span className="text-sm font-semibold text-gray-800">
+                                    {initialData.customerType === 'POTENTIAL_CUSTOMER'
+                                        ? '🌱 Leave a review and get free 5 million stemcells!'
+                                        : '🎁 Leave a review and get a free health drink or voucher!'}
+                                </span>
+                            </div>
+                            <p className="text-xs text-gray-500 ml-6">
+                                Submit your honest feedback below to receive your reward coupon.
+                            </p>
+                        </div>
+                    )}
+
                     {/* Service Details Card */}
                     <div className="bg-[#008E7E]/5 border border-[#008E7E]/15 rounded-lg p-4 space-y-2">
                         <div className="flex items-center gap-2">
@@ -204,7 +278,9 @@ export function ReviewForm({ token, initialData, user }: ReviewFormProps) {
                         )}
                     </Button>
                     <p className="text-xs text-center text-muted-foreground w-full">
-                        Your review helps us improve our services.
+                        {initialData.customerType
+                            ? 'Submit to receive your reward coupon!'
+                            : 'Your review helps us improve our services.'}
                     </p>
                 </CardFooter>
             </form>

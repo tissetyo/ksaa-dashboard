@@ -259,6 +259,11 @@ enum PaymentType {
   DEPOSIT // Partial payment (deposit)
 }
 
+enum CustomerType {
+  POTENTIAL_CUSTOMER
+  CLOSED_DEAL
+}
+
 enum ConsultationType {
   GOOGLE_MEET
   WHATSAPP_CALL
@@ -325,6 +330,7 @@ model Appointment {
   treatmentReport      String?  @db.Text // Staff report after completion
   attendingStaffOther  String?           // Free-text staff name when "Other" selected
   completedAt          DateTime?         // When appointment was completed
+  customerType         CustomerType?     // Set when marking complete: POTENTIAL_CUSTOMER or CLOSED_DEAL
 
   // Relations
   patient        Patient         @relation(fields: [patientId], references: [id], onDelete: Cascade)
@@ -558,6 +564,9 @@ model Review {
   isApproved Boolean @default(false)
   isPublic   Boolean @default(true)
 
+  // Reward coupon
+  coupon RewardCoupon?
+
   @@index([isApproved, isPublic])
   @@index([productId])
   @@index([staffId])
@@ -639,4 +648,38 @@ model ServiceRecommendation {
   @@index([patientId])
   @@index([appointmentId])
   @@index([status])
+}
+
+// ============================================================================
+// REWARD COUPONS (Post-Review)
+// ============================================================================
+
+model RewardCoupon {
+  id          String   @id @default(cuid())
+  code        String   @unique @default(cuid())
+  reviewId    String   @unique
+  review      Review   @relation(fields: [reviewId], references: [id])
+  type        String   // "FREE_STEMCELLS" or "FREE_ITEM"
+  description String   // Human-readable reward description
+  isRedeemed  Boolean  @default(false)
+  redeemedAt  DateTime?
+  redeemedBy  String?  // Staff ID who confirmed redemption
+  createdAt   DateTime @default(now())
+
+  @@index([code])
+  @@index([isRedeemed])
+}
+
+// ============================================================================
+// SITE SETTINGS (Key-Value Store)
+// ============================================================================
+
+model SiteSetting {
+  id    String @id @default(cuid())
+  key   String @unique
+  value String @db.Text
+
+  updatedAt DateTime @updatedAt
+
+  @@index([key])
 }

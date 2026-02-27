@@ -104,7 +104,8 @@ export async function completeAppointment(
         customServiceName?: string;
         scheduledDate?: string;
         staffNote?: string;
-    }
+    },
+    customerType?: 'POTENTIAL_CUSTOMER' | 'CLOSED_DEAL',
 ) {
     await isAdminOrStaff();
 
@@ -117,6 +118,7 @@ export async function completeAppointment(
                 completedAt: new Date(),
                 staffId: staffId || undefined,
                 attendingStaffOther: attendingStaffOther || undefined,
+                customerType: customerType || undefined,
             },
         });
 

@@ -32,6 +32,7 @@ import {
 import { format } from 'date-fns';
 import { completeAppointment } from '@/lib/actions/admin-appointment';
 import { toast } from 'sonner';
+import type { CustomerType } from '@prisma/client';
 
 interface CompleteAppointmentModalProps {
     open: boolean;
@@ -63,6 +64,7 @@ export function CompleteAppointmentModal({
     const [recCustomName, setRecCustomName] = useState('');
     const [recDate, setRecDate] = useState('');
     const [recNote, setRecNote] = useState('');
+    const [customerType, setCustomerType] = useState<CustomerType | ''>('');
 
     // Reset ALL state when modal opens to prevent stale success screens
     useEffect(() => {
@@ -77,6 +79,7 @@ export function CompleteAppointmentModal({
             setRecCustomName('');
             setRecDate('');
             setRecNote('');
+            setCustomerType('');
             setIsLoading(false);
         }
     }, [open]);
@@ -116,6 +119,10 @@ export function CompleteAppointmentModal({
             toast.error('Please enter the staff name');
             return;
         }
+        if (!customerType) {
+            toast.error('Please select a customer type');
+            return;
+        }
 
         setIsLoading(true);
         try {
@@ -132,6 +139,7 @@ export function CompleteAppointmentModal({
                 selectedStaffId === 'OTHER' ? undefined : selectedStaffId,
                 selectedStaffId === 'OTHER' ? otherStaffName : undefined,
                 recommendation,
+                customerType as CustomerType,
             );
 
             if (result.success) {
@@ -435,6 +443,40 @@ export function CompleteAppointmentModal({
                             </div>
                         )}
                     </div>
+
+                    <Separator />
+
+                    {/* Customer Type */}
+                    <div>
+                        <Label className="flex items-center gap-2 mb-3">
+                            <User className="h-4 w-4" />
+                            Customer Type <span className="text-red-500">*</span>
+                        </Label>
+                        <div className="grid grid-cols-2 gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setCustomerType('POTENTIAL_CUSTOMER')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${customerType === 'POTENTIAL_CUSTOMER'
+                                        ? 'border-[#008E7E] bg-[#008E7E]/5'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="font-medium text-sm">🌱 Potential Customer</div>
+                                <p className="text-xs text-gray-500 mt-1">Pre-treatment. Gets free stemcells after review.</p>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setCustomerType('CLOSED_DEAL')}
+                                className={`p-4 rounded-xl border-2 text-left transition-all ${customerType === 'CLOSED_DEAL'
+                                        ? 'border-green-500 bg-green-50'
+                                        : 'border-gray-200 hover:border-gray-300'
+                                    }`}
+                            >
+                                <div className="font-medium text-sm">🤝 Closed Deal</div>
+                                <p className="text-xs text-gray-500 mt-1">Gets free items (health drink/voucher) after review.</p>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <DialogFooter>
@@ -443,7 +485,7 @@ export function CompleteAppointmentModal({
                     </Button>
                     <Button
                         onClick={handleComplete}
-                        disabled={isLoading || !treatmentReport.trim() || !selectedStaffId}
+                        disabled={isLoading || !treatmentReport.trim() || !selectedStaffId || !customerType}
                         className="bg-green-600 hover:bg-green-700"
                     >
                         {isLoading ? 'Completing...' : 'Complete & Send Report'}

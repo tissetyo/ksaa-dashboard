@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { auth } from '@/lib/auth';
 import { getReviewByToken } from '@/lib/actions/review';
 import { ReviewForm } from '@/components/reviews/ReviewForm';
@@ -58,6 +58,11 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
 
     const session = await auth();
 
+    // Login gate: redirect to login if not authenticated
+    if (!session?.user) {
+        redirect(`/login?callbackUrl=${encodeURIComponent(`/review?token=${token}`)}`);
+    }
+
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4 sm:p-8">
             <div className="w-full max-w-lg mb-8 text-center">
@@ -74,9 +79,11 @@ export default async function ReviewPage({ searchParams }: ReviewPageProps) {
                     consultationType: data.consultationType,
                     consultationAddress: data.consultationAddress,
                     durationMinutes: data.durationMinutes,
+                    customerType: data.customerType,
                 }}
                 user={session?.user}
             />
         </div>
     );
 }
+
